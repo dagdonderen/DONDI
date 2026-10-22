@@ -1,0 +1,106 @@
+<!DOCTYPE html>
+<html lang="tr">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="theme-color" content="#0d0c2b">
+<link rel="manifest" href="/manifest.json">
+<link rel="icon" href="/icon.svg">
+<title>Döndi</title>
+<style>
+:root{
+  --bg:#f1efff; --ink:#0d0c2b; --muted:#5f5b8f;
+  --me:#5b3fd6; --me-ink:#fff; --bot:#fff; --line:#dcd7f7; --accent:#b79cff;
+}
+@media (prefers-color-scheme:dark){
+  :root{ --bg:#0d0c2b; --ink:#ecebff; --muted:#9a96cc; --me:#6d4cf0; --bot:#1a1850; --line:#2d2a66; }
+}
+*{box-sizing:border-box}
+html,body{height:100%;margin:0}
+body{background:var(--bg);color:var(--ink);font:16px/1.5 system-ui,-apple-system,"Segoe UI",Roboto,sans-serif;display:flex;flex-direction:column}
+header{padding:calc(12px + env(safe-area-inset-top)) 16px 12px;border-bottom:1px solid var(--line);display:flex;align-items:center;gap:10px}
+header h1{font-size:18px;margin:0;font-weight:650}
+header .dot{width:10px;height:10px;border-radius:50%;background:var(--accent)}
+header button{margin-left:auto;background:none;border:0;color:var(--muted);font:inherit;font-size:14px;padding:6px}
+#log{flex:1;overflow-y:auto;padding:16px;display:flex;flex-direction:column;gap:10px}
+.msg{max-width:85%;padding:10px 14px;border-radius:18px;white-space:pre-wrap;overflow-wrap:anywhere}
+.me{align-self:flex-end;background:var(--me);color:var(--me-ink);border-bottom-right-radius:6px}
+.bot{align-self:flex-start;background:var(--bot);border:1px solid var(--line);border-bottom-left-radius:6px}
+.err{align-self:center;color:#b3402f;font-size:14px;text-align:center}
+.empty{margin:auto;text-align:center;color:var(--muted);max-width:260px}
+.empty b{display:block;color:var(--ink);font-size:20px;margin-bottom:6px}
+.typing{color:var(--muted)}
+form{display:flex;gap:8px;padding:10px 12px calc(10px + env(safe-area-inset-bottom));border-top:1px solid var(--line)}
+textarea{flex:1;resize:none;max-height:120px;border:1px solid var(--line);border-radius:20px;padding:10px 14px;font:inherit;background:var(--bot);color:var(--ink)}
+textarea:focus-visible,button:focus-visible{outline:2px solid var(--accent);outline-offset:2px}
+#send{border:0;border-radius:20px;padding:0 18px;background:var(--accent);color:#0d0c2b;font:inherit;font-weight:650}
+#send:disabled{opacity:.5}
+</style>
+</head>
+<body>
+<header><span class="dot"></span><h1>Döndi</h1><button id="clear" type="button">Yeni sohbet</button></header>
+<main id="log" aria-live="polite"></main>
+<form id="f">
+  <textarea id="t" rows="1" placeholder="Bir şey yaz…" aria-label="Mesaj"></textarea>
+  <button id="send" type="submit">Gönder</button>
+</form>
+<script>
+const log = document.getElementById("log");
+const form = document.getElementById("f");
+const input = document.getElementById("t");
+const sendBtn = document.getElementById("send");
+let history = [];
+try { history = JSON.parse(localStorage.getItem("chat") || "[]"); } catch {}
+
+function save(){ try { localStorage.setItem("chat", JSON.stringify(history)); } catch {} }
+function add(cls, text){
+  const d = document.createElement("div");
+  d.className = "msg " + cls; d.textContent = text;
+  log.appendChild(d); log.scrollTop = log.scrollHeight; return d;
+}
+function render(){
+  log.innerHTML = "";
+  if(!history.length){
+    log.innerHTML = '<div class="empty"><b>Merhaba, ben Döndi</b>Bana soru sorabilir, plan yaptırabilir ya da metin yazdırabilirsin.</div>';
+    return;
+  }
+  history.forEach(m => add(m.role === "user" ? "me" : "bot", m.content));
+}
+
+form.addEventListener("submit", async (e) => {
+  e.preventDefault();
+  const text = input.value.trim();
+  if(!text || sendBtn.disabled) return;
+  if(!history.length) log.innerHTML = "";
+  history.push({role:"user", content:text});
+  add("me", text); input.value = ""; input.style.height = "auto";
+  sendBtn.disabled = true;
+  const wait = add("bot typing", "Yazıyor…");
+  try{
+    const r = await fetch("/api/chat", {
+      method:"POST", headers:{"Content-Type":"application/json"},
+      body: JSON.stringify({messages: history})
+    });
+    const data = await r.json();
+    wait.remove();
+    if(!r.ok) throw new Error(data.error || "Bir hata oluştu.");
+    history.push({role:"assistant", content:data.reply});
+    add("bot", data.reply); save();
+  }catch(err){
+    wait.remove(); history.pop();
+    const d = add("err", err.message);
+  }
+  sendBtn.disabled = false; input.focus();
+});
+
+input.addEventListener("input", () => {
+  input.style.height = "auto";
+  input.style.height = Math.min(input.scrollHeight, 120) + "px";
+});
+document.getElementById("clear").addEventListener("click", () => {
+  history = []; save(); render();
+});
+render();
+</script>
+</body>
+</html>
