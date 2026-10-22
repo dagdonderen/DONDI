@@ -1,10 +1,12 @@
-// Döndi – Gemini sürümü + canlı hava durumu (Open-Meteo)
+// Döndi – Gemini sürümü + canlı hava durumu (Open-Meteo) + kalıcı günlük limit (Upstash Redis)
+import { createHash } from "node:crypto";
+
 const MODEL = process.env.GEMINI_MODEL || "gemini-flash-latest";
 const FALLBACK_MODEL = process.env.GEMINI_FALLBACK_MODEL || "gemini-2.5-flash-lite";
 const DAILY_LIMIT = 30;
 const MAX_HISTORY = 20;
- 
-function systemPrompt() {
+
+function systemPrompt(loc) {
   const now = new Intl.DateTimeFormat("tr-TR", {
     dateStyle: "full", timeStyle: "short", timeZone: "Europe/Istanbul",
   }).format(new Date());
@@ -14,9 +16,10 @@ Cevapları kısa tut; telefonda okunacağını unutma. Gerekirse madde işareti 
 Selamlamayı yalnızca sohbetin ilk mesajında yap; sonraki cevaplarda doğrudan konuya gir.
 Hava durumu sorulursa get_weather aracını kullan. Şehir belirtilmemişse önce hangi şehir olduğunu sor.
 Tıbbi, hukuki ve finansal konularda genel bilgi ver, uzmana danışmayı öner.
-Şu an (Türkiye saati): ${now}.`;
+Şu an (Türkiye saati): ${now}.${loc ? `
+Kullanıcının yaklaşık konumu biliniyor. Şehir belirtmeden hava durumu sorarsa get_weather aracını city alanını boş bırakarak çağır.` : ""}`;
 }
- 
+
 // ---- Hava durumu aracı ----
 const WEATHER_TEXT = (c) => {
   if (c === 0) return "açık";
@@ -31,7 +34,7 @@ const WEATHER_TEXT = (c) => {
   if (c >= 95) return "gök gürültülü fırtına";
   return "belirsiz";
 };
- 
+
 async function fetchJson(url, ms = 8000) {
   const ctrl = new AbortController();
   const timer = setTimeout(() => ctrl.abort(), ms);
@@ -43,24 +46,32 @@ async function fetchJson(url, ms = 8000) {
     clearTimeout(timer);
   }
 }
- 
-async function getWeather(city) {
+
+async function getWeather(city, loc) {
   const name = String(city || "").trim().slice(0, 80);
-  if (!name) return { error: "Şehir adı verilmedi." };
-  const g = await fetchJson(
-    `https://geocoding-api.open-meteo.com/v1/search?name=${encodeURIComponent(name)}&count=1&language=tr`
-  );
-  const p = g?.results?.[0];
-  if (!p) return { error: `"${name}" için konum bulunamadı.` };
+  let lat, lon, yer;
+  if (name) {
+    const g = await fetchJson(
+      `https://geocoding-api.open-meteo.com/v1/search?name=${encodeURIComponent(name)}&count=1&language=tr`
+    );
+    const p = g?.results?.[0];
+    if (!p) return { error: `"${name}" için konum bulunamadı.` };
+    lat = p.latitude; lon = p.longitude;
+    yer = [p.name, p.admin1, p.country].filter(Boolean).join(", ");
+  } else if (loc) {
+    lat = loc.lat; lon = loc.lon; yer = "Kullanıcının bulunduğu konum";
+  } else {
+    return { error: "Şehir adı verilmedi ve konum izni yok." };
+  }
   const w = await fetchJson(
-    `https://api.open-meteo.com/v1/forecast?latitude=${p.latitude}&longitude=${p.longitude}` +
+    `https://api.open-meteo.com/v1/forecast?latitude=${lat}&longitude=${lon}` +
       `&current=temperature_2m,apparent_temperature,relative_humidity_2m,weather_code,wind_speed_10m` +
       `&daily=weather_code,temperature_2m_max,temperature_2m_min,precipitation_probability_max` +
       `&timezone=auto&forecast_days=3`
   );
   const c = w.current, d = w.daily;
   return {
-    yer: [p.name, p.admin1, p.country].filter(Boolean).join(", "),
+    yer,
     su_an: {
       durum: WEATHER_TEXT(c.weather_code),
       sicaklik_c: c.temperature_2m,
@@ -77,26 +88,25 @@ async function getWeather(city) {
     })),
   };
 }
- 
+
 const TOOLS = [{
   functionDeclarations: [{
     name: "get_weather",
     description: "Bir şehir için güncel hava durumunu ve 3 günlük tahmini getirir.",
     parameters: {
       type: "object",
-      properties: { city: { type: "string", description: "Şehir adı, örn. Kütahya" } },
-      required: ["city"],
-    },
+      properties: { city: { type: "string", description: "Şehir adı, örn. Kütahya. Kullanıcı şehir söylemediyse boş bırak." } },
+          },
   }],
 }];
- 
+
 // ---- Gemini çağrısı ----
-async function callGemini(model, apiKey, contents, allowTools) {
+async function callGemini(model, apiKey, contents, allowTools, loc) {
   const ctrl = new AbortController();
   const timer = setTimeout(() => ctrl.abort(), 18000);
   try {
     const body = {
-      systemInstruction: { parts: [{ text: systemPrompt() }] },
+      systemInstruction: { parts: [{ text: systemPrompt(loc) }] },
       contents,
       tools: TOOLS,
       generationConfig: { maxOutputTokens: 2048 },
@@ -117,14 +127,14 @@ async function callGemini(model, apiKey, contents, allowTools) {
     clearTimeout(timer);
   }
 }
- 
+
 // Bir modeli dener. { text } | { retry: true } | { fatal: true } döner.
-async function tryModel(model, apiKey, base) {
+async function tryModel(model, apiKey, base, loc) {
   let contents = base;
   for (let step = 0; step < 2; step++) {
     let res;
     try {
-      res = await callGemini(model, apiKey, contents, step === 0);
+      res = await callGemini(model, apiKey, contents, step === 0, loc);
     } catch (err) {
       console.error("İstek hatası:", model, err?.name, err?.message);
       return { retry: true };
@@ -140,7 +150,7 @@ async function tryModel(model, apiKey, base) {
     if (call && step === 0) {
       let result;
       try {
-        result = await getWeather(call.functionCall.args?.city);
+        result = await getWeather(call.functionCall.args?.city, loc);
       } catch (e) {
         console.error("Hava servisi hatası:", e?.message);
         result = { error: "Hava durumu servisine şu an ulaşılamadı." };
@@ -159,56 +169,84 @@ async function tryModel(model, apiKey, base) {
   }
   return { retry: true };
 }
- 
-// Not: serverless ortamda bu sayaç "en iyi çaba" düzeyindedir.
+
+// ---- Günlük mesaj limiti ----
+// Upstash Redis tanımlıysa kalıcı sayaç kullanılır, değilse bellek içi (en iyi çaba) sayaç.
+const REDIS_URL = process.env.UPSTASH_REDIS_REST_URL || process.env.KV_REST_API_URL;
+const REDIS_TOKEN = process.env.UPSTASH_REDIS_REST_TOKEN || process.env.KV_REST_API_TOKEN;
+
 const usage = new Map();
-function checkLimit(ip) {
+function checkLimitMemory(id) {
   const day = new Date().toISOString().slice(0, 10);
-  const rec = usage.get(ip);
-  if (!rec || rec.day !== day) { usage.set(ip, { day, count: 1 }); return true; }
+  const rec = usage.get(id);
+  if (!rec || rec.day !== day) { usage.set(id, { day, count: 1 }); return true; }
   if (rec.count >= DAILY_LIMIT) return false;
   rec.count++;
   return true;
 }
- 
+
+async function checkLimit(ip) {
+  // IP adresi düz metin olarak saklanmaz, özetlenir (gizlilik)
+  const id = createHash("sha256").update(ip).digest("hex").slice(0, 24);
+  if (!REDIS_URL || !REDIS_TOKEN) return checkLimitMemory(id);
+  try {
+    const day = new Date().toISOString().slice(0, 10);
+    const key = `dondi:rl:${day}:${id}`;
+    const r = await fetch(`${REDIS_URL}/pipeline`, {
+      method: "POST",
+      headers: { Authorization: `Bearer ${REDIS_TOKEN}`, "Content-Type": "application/json" },
+      body: JSON.stringify([["INCR", key], ["EXPIRE", key, 90000]]),
+    });
+    if (!r.ok) throw new Error("Redis HTTP " + r.status);
+    const out = await r.json();
+    const count = Number(out?.[0]?.result);
+    if (!Number.isFinite(count)) throw new Error("Redis beklenmeyen cevap");
+    return count <= DAILY_LIMIT;
+  } catch (e) {
+    console.error("Limit sayacı hatası, bellek içi sayaca geçildi:", e?.message);
+    return checkLimitMemory(id);
+  }
+}
+
 export default async function handler(req, res) {
   if (req.method !== "POST") return res.status(405).json({ error: "Yalnızca POST." });
- 
-  const { messages } = req.body ?? {};
+
+  const { messages, location } = req.body ?? {};
+  const loc = location && Math.abs(location.lat) <= 90 && Math.abs(location.lon) <= 180
+    ? { lat: Number(location.lat.toFixed?.(2) ?? location.lat), lon: Number(location.lon.toFixed?.(2) ?? location.lon) } : null;
   if (!Array.isArray(messages) || messages.length === 0) {
     return res.status(400).json({ error: "Mesaj bulunamadı." });
   }
   const ip = (req.headers["x-forwarded-for"] || "").split(",")[0].trim() || "bilinmiyor";
-  if (!checkLimit(ip)) {
+  if (!(await checkLimit(ip))) {
     return res.status(429).json({ error: "Günlük mesaj limitine ulaştın. Yarın tekrar dene." });
   }
- 
+
   const clean = messages
     .filter((m) => (m.role === "user" || m.role === "assistant") && typeof m.content === "string")
     .slice(-MAX_HISTORY)
     .map((m) => ({ role: m.role, content: m.content.slice(0, 4000) }));
   while (clean.length && clean[0].role !== "user") clean.shift();
   if (!clean.length) return res.status(400).json({ error: "Geçersiz mesaj." });
- 
+
   const apiKey = process.env.GEMINI_API_KEY;
   if (!apiKey) {
     console.error("GEMINI_API_KEY tanımlı değil.");
     return res.status(500).json({ error: "Sunucu ayarı eksik (anahtar bulunamadı)." });
   }
- 
+
   const base = clean.map((m) => ({
     role: m.role === "assistant" ? "model" : "user",
     parts: [{ text: m.content }],
   }));
- 
+
   const models = [MODEL, FALLBACK_MODEL].filter((m, i, a) => m && a.indexOf(m) === i);
   const t0 = Date.now();
   for (const model of models) {
     if (Date.now() - t0 > 35000) break; // zaman sınırına yaklaşıldı
-    const out = await tryModel(model, apiKey, base);
+    const out = await tryModel(model, apiKey, base, loc);
     if (out.text) return res.status(200).json({ reply: out.text });
     if (out.fatal) break;
   }
   return res.status(500).json({ error: "Şu an cevap veremiyorum. Biraz sonra tekrar dene." });
 }
- 
