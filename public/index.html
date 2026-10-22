@@ -3,104 +3,216 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
-<meta name="theme-color" content="#0d0c2b">
+<meta name="theme-color" content="#030a1c">
 <link rel="manifest" href="/manifest.json">
 <link rel="icon" href="/icon.svg">
 <title>Döndi</title>
 <style>
-:root{
-  --bg:#f1efff; --ink:#0d0c2b; --muted:#5f5b8f;
-  --me:#5b3fd6; --me-ink:#fff; --bot:#fff; --line:#dcd7f7; --accent:#b79cff;
-}
-@media (prefers-color-scheme:dark){
-  :root{ --bg:#0d0c2b; --ink:#ecebff; --muted:#9a96cc; --me:#6d4cf0; --bot:#1a1850; --line:#2d2a66; }
-}
+:root{--bg:#030a1c;--c:#3de1ff;--v:#8b6cff;--ink:#d9f3ff;--mut:#7fa6bd;--line:rgba(61,225,255,.25);--panel:rgba(6,20,44,.82)}
 *{box-sizing:border-box}
 html,body{height:100%;margin:0}
-body{background:var(--bg);color:var(--ink);font:16px/1.5 system-ui,-apple-system,"Segoe UI",Roboto,sans-serif;display:flex;flex-direction:column}
-header{padding:calc(12px + env(safe-area-inset-top)) 16px 12px;border-bottom:1px solid var(--line);display:flex;align-items:center;gap:10px}
-header h1{font-size:18px;margin:0;font-weight:650}
-header .dot{width:10px;height:10px;border-radius:50%;background:var(--accent)}
-header button{margin-left:auto;background:none;border:0;color:var(--muted);font:inherit;font-size:14px;padding:6px}
-#log{flex:1;overflow-y:auto;padding:16px;display:flex;flex-direction:column;gap:10px}
-.msg{max-width:85%;padding:10px 14px;border-radius:18px;white-space:pre-wrap;overflow-wrap:anywhere}
-.me{align-self:flex-end;background:var(--me);color:var(--me-ink);border-bottom-right-radius:6px}
-.bot{align-self:flex-start;background:var(--bot);border:1px solid var(--line);border-bottom-left-radius:6px}
-.err{align-self:center;color:#b3402f;font-size:14px;text-align:center}
-.empty{margin:auto;text-align:center;color:var(--muted);max-width:260px}
-.empty b{display:block;color:var(--ink);font-size:20px;margin-bottom:6px}
-.typing{color:var(--muted)}
-form{display:flex;gap:8px;padding:10px 12px calc(10px + env(safe-area-inset-bottom));border-top:1px solid var(--line)}
-textarea{flex:1;resize:none;max-height:120px;border:1px solid var(--line);border-radius:20px;padding:10px 14px;font:inherit;background:var(--bot);color:var(--ink)}
-textarea:focus-visible,button:focus-visible{outline:2px solid var(--accent);outline-offset:2px}
-#send{border:0;border-radius:20px;padding:0 18px;background:var(--accent);color:#0d0c2b;font:inherit;font-weight:650}
-#send:disabled{opacity:.5}
+body{background:radial-gradient(ellipse at 50% 45%,#0a2350 0,#030a1c 62%);color:var(--ink);font:16px/1.5 system-ui,-apple-system,"Segoe UI",Roboto,sans-serif;height:100dvh;overflow:hidden;display:flex;flex-direction:column;position:relative}
+body::before{content:"";position:fixed;inset:0;background-image:linear-gradient(var(--line) 1px,transparent 1px),linear-gradient(90deg,var(--line) 1px,transparent 1px);background-size:56px 56px;opacity:.12;pointer-events:none}
+button{font:inherit;color:inherit;cursor:pointer}
+button:focus-visible{outline:2px solid var(--c);outline-offset:2px}
+.top{position:relative;z-index:2;display:flex;align-items:center;gap:10px;padding:calc(12px + env(safe-area-inset-top)) 16px 10px;border-bottom:1px solid var(--line)}
+.brand{font-weight:800;letter-spacing:.3em;font-size:15px;color:var(--c)}
+.clock{margin:0 auto;text-align:center;font-variant-numeric:tabular-nums;line-height:1.1}
+.clock b{display:block;font-size:22px;letter-spacing:.12em;font-weight:600}
+.clock span{font-size:12px;color:var(--mut);text-transform:capitalize}
+.tbtn{border:1px solid var(--line);background:transparent;border-radius:6px;padding:6px 10px;font-size:12px;letter-spacing:.08em;text-transform:uppercase;color:var(--ink)}
+.tbtn[aria-pressed=true]{border-color:var(--c);color:var(--c);box-shadow:0 0 10px rgba(61,225,255,.35)}
+main{position:relative;z-index:1;flex:1;display:grid;grid-template-columns:1fr minmax(280px,420px) 1fr;align-items:center;min-height:0}
+.side{display:none;padding:0 24px;gap:14px;flex-direction:column}
+.w{border:1px solid var(--line);background:var(--panel);padding:12px 14px;clip-path:polygon(0 0,calc(100% - 14px) 0,100% 14px,100% 100%,14px 100%,0 calc(100% - 14px))}
+.w h3{margin:0 0 6px;font-size:11px;letter-spacing:.2em;color:var(--c);font-weight:600}
+.w p{margin:2px 0;font-size:14px;color:var(--ink)}
+.w .q{display:block;width:100%;text-align:left;background:none;border:0;border-bottom:1px solid var(--line);padding:7px 0;font-size:14px;color:var(--ink)}
+.w .q:last-child{border:0}
+.w .q:hover{color:var(--c)}
+.stage{display:flex;flex-direction:column;align-items:center;gap:14px;padding:8px 16px}
+.core{position:relative;width:min(300px,68vw);aspect-ratio:1}
+.core i{position:absolute;border-radius:50%}
+.r1{inset:0;border:2px solid rgba(61,225,255,.25);border-top-color:var(--c);animation:spin 14s linear infinite}
+.r2{inset:7%;border:1px dashed rgba(61,225,255,.45);animation:spin 26s linear infinite reverse}
+.r3{inset:15%;border:5px solid transparent;border-top-color:var(--v);border-bottom-color:var(--v);animation:spin 9s linear infinite}
+.r4{inset:3%;background:repeating-conic-gradient(var(--c) 0 .8deg,transparent .8deg 6deg);-webkit-mask:radial-gradient(circle,transparent 70%,#000 71%,#000 74%,transparent 75%);mask:radial-gradient(circle,transparent 70%,#000 71%,#000 74%,transparent 75%);opacity:.55;animation:spin 60s linear infinite}
+.glow{inset:27%;background:radial-gradient(circle,rgba(61,225,255,.55),rgba(61,225,255,.05) 70%);filter:blur(2px);animation:breathe 4s ease-in-out infinite}
+#orb{position:absolute;inset:30%;border-radius:50%;border:2px solid var(--c);background:rgba(3,10,28,.85);display:grid;place-items:center;box-shadow:0 0 24px rgba(61,225,255,.5),inset 0 0 18px rgba(61,225,255,.3)}
+#orb svg{width:42%;height:42%;stroke:var(--c);fill:none;stroke-width:1.8;stroke-linecap:round}
+.core[data-s=listening] .r1{animation-duration:3s}
+.core[data-s=listening] .glow{animation:breathe .9s ease-in-out infinite}
+.core[data-s=thinking] .r3{animation-duration:1s;border-top-color:#fff}
+.core[data-s=speaking] .glow{animation:breathe .55s ease-in-out infinite}
+.core[data-s=speaking] #orb{border-color:var(--v);box-shadow:0 0 30px rgba(139,108,255,.7)}
+@keyframes spin{to{transform:rotate(360deg)}}
+@keyframes breathe{50%{transform:scale(1.18);opacity:.75}}
+#status{font-size:12px;letter-spacing:.3em;text-transform:uppercase;color:var(--c)}
+#cap{min-height:4.5em;max-width:420px;text-align:center;color:var(--ink);font-size:15px;overflow:hidden;display:-webkit-box;-webkit-line-clamp:3;-webkit-box-orient:vertical}
+#cap.me{color:var(--mut)}
+.chips{display:flex;flex-wrap:wrap;gap:8px;justify-content:center}
+.chip{border:1px solid var(--line);background:transparent;border-radius:16px;padding:5px 12px;font-size:13px;color:var(--ink)}
+.chip:hover{border-color:var(--c)}
+.chat{position:fixed;z-index:5;right:0;top:0;bottom:0;width:min(420px,100%);background:var(--panel);backdrop-filter:blur(14px);border-left:1px solid var(--line);display:flex;flex-direction:column;transform:translateX(100%);transition:transform .25s;padding-top:env(safe-area-inset-top)}
+.chat.open{transform:none}
+.chat header{display:flex;align-items:center;justify-content:space-between;padding:12px 16px;border-bottom:1px solid var(--line);font-size:12px;letter-spacing:.2em;color:var(--c)}
+.chat header button{background:none;border:0;font-size:20px;line-height:1}
+#log{flex:1;overflow-y:auto;padding:14px;display:flex;flex-direction:column;gap:10px}
+.msg{max-width:88%;padding:9px 13px;border-radius:12px;overflow-wrap:anywhere;font-size:15px}
+.me{align-self:flex-end;background:rgba(139,108,255,.3);border:1px solid rgba(139,108,255,.6);white-space:pre-wrap}
+.bot{align-self:flex-start;background:rgba(61,225,255,.08);border:1px solid var(--line)}
+.bot p{margin:0 0 .5em}.bot p:last-child{margin:0}.bot ul,.bot ol{margin:.2em 0 .5em;padding-left:1.3em}
+.err{align-self:center;color:#ff9d8a;font-size:14px;text-align:center}
+.empty{margin:auto;color:var(--mut);text-align:center;font-size:14px}
+.chat form{display:flex;gap:8px;padding:10px 12px calc(10px + env(safe-area-inset-bottom));border-top:1px solid var(--line)}
+textarea{flex:1;resize:none;max-height:110px;border:1px solid var(--line);border-radius:10px;padding:9px 12px;font:inherit;background:rgba(3,10,28,.8);color:var(--ink)}
+#send{border:1px solid var(--c);background:transparent;color:var(--c);border-radius:10px;padding:0 16px;font-weight:600}
+#send:disabled{opacity:.4}
+@media(min-width:900px){.side{display:flex}.top{padding-inline:28px}}
+@media(max-width:899px){main{grid-template-columns:1fr}}
+@media(prefers-reduced-motion:reduce){.core i{animation:none!important}}
 </style>
 </head>
 <body>
-<header><span class="dot"></span><h1>Döndi</h1><button id="clear" type="button">Yeni sohbet</button></header>
-<main id="log" aria-live="polite"></main>
-<form id="f">
-  <textarea id="t" rows="1" placeholder="Bir şey yaz…" aria-label="Mesaj"></textarea>
-  <button id="send" type="submit">Gönder</button>
-</form>
+<div class="top">
+  <div class="brand">DÖNDİ</div>
+  <div class="clock"><b id="time">--:--</b><span id="date"></span></div>
+  <button class="tbtn" id="voiceBtn" type="button" aria-pressed="true">Ses</button>
+  <button class="tbtn" id="autoBtn" type="button" aria-pressed="false">Sürekli</button>
+  <button class="tbtn" id="chatBtn" type="button">Mesajlaş</button>
+</div>
+<main>
+  <aside class="side">
+    <div class="w"><h3>SİSTEM</h3><p id="sMic">Mikrofon: bekleniyor</p><p id="sTts">Ses çıkışı: bekleniyor</p></div>
+    <div class="w"><h3>NASIL KULLANILIR</h3><p>Ortadaki halkaya dokun, konuş.</p><p>Konuşurken tekrar dokunursan durur.</p></div>
+  </aside>
+  <section class="stage">
+    <div class="core" id="core" data-s="idle">
+      <i class="r4"></i><i class="r1"></i><i class="r2"></i><i class="r3"></i><i class="glow"></i>
+      <button id="orb" type="button" aria-label="Konuşmak için dokun">
+        <svg viewBox="0 0 24 24"><rect x="9" y="3" width="6" height="11" rx="3"/><path d="M5 11a7 7 0 0 0 14 0M12 18v3"/></svg>
+      </button>
+    </div>
+    <div id="status" aria-live="polite">HAZIR</div>
+    <div id="cap">Dokun ve konuş.</div>
+    <div class="chips" id="chips"></div>
+  </section>
+  <aside class="side">
+    <div class="w"><h3>HIZLI KOMUTLAR</h3><div id="quick"></div></div>
+  </aside>
+</main>
+<div class="chat" id="chat">
+  <header><span>MESAJLAŞMA</span><button id="chatClose" type="button" aria-label="Kapat">×</button></header>
+  <div id="log"></div>
+  <form id="f"><textarea id="t" rows="1" placeholder="Bir şey yaz…" aria-label="Mesaj"></textarea><button id="send" type="submit">Gönder</button></form>
+</div>
 <script>
-const log = document.getElementById("log");
-const form = document.getElementById("f");
-const input = document.getElementById("t");
-const sendBtn = document.getElementById("send");
-let history = [];
-try { history = JSON.parse(localStorage.getItem("chat") || "[]"); } catch {}
+const $ = id => document.getElementById(id);
+const core = $("core"), status = $("status"), cap = $("cap"), log = $("log"), input = $("t"), sendBtn = $("send");
+const SUG = [["Hava durumu","Bugün hava nasıl olacak? Şehrimi söyleyeyim."],["Plan yap","Yarın için 3 maddelik bir günlük plan hazırla."],["Mesaj yaz","Bir arkadaşıma doğum günü mesajı yazar mısın?"],["Özetle","Sana yapıştıracağım metni 3 cümlede özetler misin?"]];
+let history = []; try { history = JSON.parse(localStorage.getItem("chat") || "[]"); } catch {}
+let voiceOn = true, auto = false, busy = false, state = "idle";
+const save = () => { try { localStorage.setItem("chat", JSON.stringify(history)); } catch {} };
+const LABEL = {idle:"HAZIR", listening:"DİNLİYORUM", thinking:"DÜŞÜNÜYORUM", speaking:"KONUŞUYORUM"};
+function setState(s){ state = s; core.dataset.s = s; status.textContent = LABEL[s]; }
 
-function save(){ try { localStorage.setItem("chat", JSON.stringify(history)); } catch {} }
-function add(cls, text){
-  const d = document.createElement("div");
-  d.className = "msg " + cls; d.textContent = text;
+// Saat
+function tick(){ const d = new Date(); $("time").textContent = d.toLocaleTimeString("tr-TR",{hour:"2-digit",minute:"2-digit"}); $("date").textContent = d.toLocaleDateString("tr-TR",{weekday:"long",day:"numeric",month:"long"}); }
+tick(); setInterval(tick, 15000);
+
+// Biçimlendirme
+const esc = s => s.replace(/[&<>"']/g, c => ({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c]));
+function fmt(t){
+  let h = "", list = null; const close = () => { if(list){ h += "</"+list+">"; list = null; } };
+  for(const raw of esc(t).split("\n")){
+    const l = raw.replace(/\*\*(.+?)\*\*/g,"<strong>$1</strong>"); let m;
+    if((m = l.match(/^\s*[-*•]\s+(.*)/))){ if(list!=="ul"){ close(); h+="<ul>"; list="ul"; } h+="<li>"+m[1]+"</li>"; }
+    else if((m = l.match(/^\s*\d+[.)]\s+(.*)/))){ if(list!=="ol"){ close(); h+="<ol>"; list="ol"; } h+="<li>"+m[1]+"</li>"; }
+    else { close(); if(l.trim()) h += "<p>"+l+"</p>"; }
+  } close(); return h;
+}
+function addMsg(role, text){
+  const d = document.createElement("div"); d.className = "msg " + (role==="user" ? "me" : "bot");
+  if(role==="user") d.textContent = text; else d.innerHTML = fmt(text);
   log.appendChild(d); log.scrollTop = log.scrollHeight; return d;
 }
-function render(){
-  log.innerHTML = "";
-  if(!history.length){
-    log.innerHTML = '<div class="empty"><b>Merhaba, ben Döndi</b>Bana soru sorabilir, plan yaptırabilir ya da metin yazdırabilirsin.</div>';
-    return;
+function renderLog(){ log.innerHTML = ""; if(!history.length){ log.innerHTML = '<div class="empty">Henüz mesaj yok.<br>Yazabilir ya da halkaya dokunup konuşabilirsin.</div>'; return; } history.forEach(m => addMsg(m.role, m.content)); }
+
+// Ses çıkışı
+const synth = window.speechSynthesis; let trVoice = null;
+function pickVoice(){ if(!synth) return; const v = synth.getVoices(); trVoice = v.find(x => /^tr/i.test(x.lang)) || null; $("sTts").textContent = "Ses çıkışı: " + (trVoice ? "hazır" : "Türkçe ses bulunamadı"); }
+if(synth){ pickVoice(); synth.onvoiceschanged = pickVoice; } else $("sTts").textContent = "Ses çıkışı: desteklenmiyor";
+function speak(text, done){
+  if(!synth || !voiceOn){ done && done(); return; }
+  synth.cancel();
+  const plain = text.replace(/\*\*/g,"").replace(/^\s*[-*•]\s+/gm,"").replace(/[#`_]/g,"");
+  const parts = plain.match(/[^.!?\n]+[.!?]*/g) || [plain];
+  setState("speaking");
+  parts.forEach((p, i) => {
+    if(!p.trim()) return;
+    const u = new SpeechSynthesisUtterance(p.trim()); u.lang = "tr-TR"; if(trVoice) u.voice = trVoice;
+    if(i === parts.length - 1) { u.onend = () => { done && done(); }; u.onerror = () => { done && done(); }; }
+    synth.speak(u);
+  });
+}
+function stopSpeak(){ if(synth) synth.cancel(); }
+
+// Ses girişi
+const SR = window.SpeechRecognition || window.webkitSpeechRecognition; let rec = null, heard = "";
+$("sMic").textContent = "Mikrofon: " + (SR ? "hazır" : "bu tarayıcıda desteklenmiyor");
+function listen(){
+  if(!SR){ cap.textContent = "Bu tarayıcı sesli komutu desteklemiyor. Chrome ya da Edge dene, ya da Mesajlaş'ı kullan."; cap.className = ""; return; }
+  if(busy) return;
+  stopSpeak(); heard = ""; rec = new SR(); rec.lang = "tr-TR"; rec.interimResults = true; rec.continuous = false;
+  rec.onstart = () => { setState("listening"); cap.className = "me"; cap.textContent = "…"; };
+  rec.onresult = e => { let t = ""; for(const r of e.results) t += r[0].transcript; heard = t; cap.textContent = t; };
+  rec.onerror = e => { if(e.error === "not-allowed" || e.error === "service-not-allowed"){ cap.className = ""; cap.textContent = "Mikrofon izni verilmedi. Adres çubuğundaki kilit simgesinden izin ver."; $("sMic").textContent = "Mikrofon: izin yok"; auto = false; $("autoBtn").setAttribute("aria-pressed","false"); } };
+  rec.onend = () => { if(state !== "listening") return; if(heard.trim()) send(heard, true); else { setState("idle"); cap.className = ""; cap.textContent = "Seni duyamadım. Tekrar dokun."; } };
+  try { rec.start(); } catch {}
+}
+$("orb").addEventListener("click", () => {
+  if(state === "speaking"){ stopSpeak(); setState("idle"); return; }
+  if(state === "listening"){ try { rec.stop(); } catch {} return; }
+  if(state === "idle") listen();
+});
+
+// Gönderme
+async function send(text, viaVoice){
+  text = (text || "").trim(); if(!text || busy) return;
+  busy = true; sendBtn.disabled = true; setState("thinking");
+  cap.className = "me"; cap.textContent = text;
+  if(!history.length) log.innerHTML = "";
+  history.push({role:"user", content:text}); const userEl = addMsg("user", text);
+  let wait = document.createElement("div"); wait.className = "msg bot"; wait.textContent = "…"; log.appendChild(wait);
+  try{
+    const r = await fetch("/api/chat", {method:"POST", headers:{"Content-Type":"application/json"}, body: JSON.stringify({messages: history})});
+    let data = {}; try { data = await r.json(); } catch {}
+    wait.remove();
+    if(!r.ok || !data.reply) throw new Error(data.error || "Şu an cevap veremiyorum. Biraz sonra tekrar dene.");
+    history.push({role:"assistant", content:data.reply}); save(); addMsg("assistant", data.reply);
+    cap.className = ""; cap.textContent = data.reply.replace(/\*\*/g,"");
+    busy = false;
+    if(viaVoice && voiceOn && synth) speak(data.reply, () => { setState("idle"); if(auto) setTimeout(listen, 400); });
+    else setState("idle");
+  }catch(err){
+    wait.remove(); history.pop(); userEl.remove(); busy = false; setState("idle");
+    cap.className = ""; cap.textContent = err.message;
+    const e = document.createElement("div"); e.className = "err"; e.textContent = err.message; log.appendChild(e);
   }
-  history.forEach(m => add(m.role === "user" ? "me" : "bot", m.content));
+  sendBtn.disabled = false;
 }
 
-form.addEventListener("submit", async (e) => {
-  e.preventDefault();
-  const text = input.value.trim();
-  if(!text || sendBtn.disabled) return;
-  if(!history.length) log.innerHTML = "";
-  history.push({role:"user", content:text});
-  add("me", text); input.value = ""; input.style.height = "auto";
-  sendBtn.disabled = true;
-  const wait = add("bot typing", "Yazıyor…");
-  try{
-    const r = await fetch("/api/chat", {
-      method:"POST", headers:{"Content-Type":"application/json"},
-      body: JSON.stringify({messages: history})
-    });
-    const data = await r.json();
-    wait.remove();
-    if(!r.ok) throw new Error(data.error || "Bir hata oluştu.");
-    history.push({role:"assistant", content:data.reply});
-    add("bot", data.reply); save();
-  }catch(err){
-    wait.remove(); history.pop();
-    const d = add("err", err.message);
-  }
-  sendBtn.disabled = false; input.focus();
-});
-
-input.addEventListener("input", () => {
-  input.style.height = "auto";
-  input.style.height = Math.min(input.scrollHeight, 120) + "px";
-});
-document.getElementById("clear").addEventListener("click", () => {
-  history = []; save(); render();
-});
-render();
+// Arayüz bağlantıları
+$("f").addEventListener("submit", e => { e.preventDefault(); const v = input.value; input.value = ""; input.style.height = "auto"; send(v, false); });
+input.addEventListener("keydown", e => { if(e.key === "Enter" && !e.shiftKey && matchMedia("(pointer:fine)").matches){ e.preventDefault(); $("f").requestSubmit(); } });
+input.addEventListener("input", () => { input.style.height = "auto"; input.style.height = Math.min(input.scrollHeight, 110) + "px"; });
+$("chatBtn").addEventListener("click", () => { $("chat").classList.add("open"); renderLog(); });
+$("chatClose").addEventListener("click", () => $("chat").classList.remove("open"));
+$("voiceBtn").addEventListener("click", e => { voiceOn = !voiceOn; e.currentTarget.setAttribute("aria-pressed", voiceOn); if(!voiceOn) stopSpeak(); });
+$("autoBtn").addEventListener("click", e => { auto = !auto; e.currentTarget.setAttribute("aria-pressed", auto); });
+function chip(parent, cls, label, text){ const b = document.createElement("button"); b.type = "button"; b.className = cls; b.textContent = label; b.addEventListener("click", () => send(text, true)); parent.appendChild(b); }
+SUG.forEach(([l, t]) => { chip($("chips"), "chip", l, t); chip($("quick"), "q", l, t); });
+renderLog();
 </script>
 </body>
 </html>
