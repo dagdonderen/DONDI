@@ -68,6 +68,13 @@ main{position:relative;z-index:1;flex:1;display:grid;grid-template-columns:1fr m
 textarea{flex:1;resize:none;max-height:110px;border:1px solid var(--line);border-radius:10px;padding:9px 12px;font:inherit;background:rgba(3,10,28,.8);color:var(--ink)}
 #send{border:1px solid var(--c);background:transparent;color:var(--c);border-radius:10px;padding:0 16px;font-weight:600}
 #send:disabled{opacity:.4}
+.onb{position:fixed;inset:0;z-index:9;background:rgba(3,10,28,.94);display:grid;place-items:center;padding:20px}
+.onb[hidden]{display:none}
+.onb .card{max-width:420px;width:100%;border:1px solid var(--line);background:var(--panel);padding:22px;clip-path:polygon(0 0,calc(100% - 18px) 0,100% 18px,100% 100%,18px 100%,0 calc(100% - 18px))}
+.onb .st{font-size:11px;letter-spacing:.25em;color:var(--c)}
+.onb h2{margin:8px 0;font-size:22px}.onb p{margin:6px 0;color:var(--ink);font-size:15px}.onb .nt{color:var(--mut);font-size:13px}
+.onb .row{display:flex;gap:10px;justify-content:flex-end;margin-top:18px}.onb .tbtn{padding:9px 14px;font-size:13px}
+.onb li{margin:4px 0;font-size:14px;list-style:none}
 @media(min-width:900px){.side{display:flex}.top{padding-inline:28px}}
 @media(max-width:899px){main{grid-template-columns:1fr}}
 @media(prefers-reduced-motion:reduce){.core i{animation:none!important}}
@@ -79,6 +86,7 @@ textarea{flex:1;resize:none;max-height:110px;border:1px solid var(--line);border
   <div class="clock"><b id="time">--:--</b><span id="date"></span></div>
   <button class="tbtn" id="voiceBtn" type="button" aria-pressed="true">Ses</button>
   <button class="tbtn" id="autoBtn" type="button" aria-pressed="false">Sürekli</button>
+  <button class="tbtn" id="permBtn" type="button">İzinler</button>
   <button class="tbtn" id="chatBtn" type="button">Mesajlaş</button>
 </div>
 <main>
@@ -106,6 +114,7 @@ textarea{flex:1;resize:none;max-height:110px;border:1px solid var(--line);border
   <div id="log"></div>
   <form id="f"><textarea id="t" rows="1" placeholder="Bir şey yaz…" aria-label="Mesaj"></textarea><button id="send" type="submit">Gönder</button></form>
 </div>
+<div class="onb" id="onb" hidden><div class="card"><div class="st" id="oSt"></div><h2 id="oT"></h2><div id="oX"></div><p class="nt" id="oN"></p><div class="row"><button class="tbtn" id="oSkip" type="button">Şimdilik geç</button><button class="tbtn" id="oOk" type="button" aria-pressed="true">İzin ver</button></div></div></div>
 <script>
 const $ = id => document.getElementById(id);
 const core = $("core"), status = $("status"), cap = $("cap"), log = $("log"), input = $("t"), sendBtn = $("send");
@@ -185,7 +194,7 @@ async function send(text, viaVoice){
   history.push({role:"user", content:text}); const userEl = addMsg("user", text);
   let wait = document.createElement("div"); wait.className = "msg bot"; wait.textContent = "…"; log.appendChild(wait);
   try{
-    const r = await fetch("/api/chat", {method:"POST", headers:{"Content-Type":"application/json"}, body: JSON.stringify({messages: history})});
+    const r = await fetch("/api/chat", {method:"POST", headers:{"Content-Type":"application/json"}, body: JSON.stringify({messages: history, location: (()=>{ try { return JSON.parse(localStorage.getItem("loc")||"null"); } catch { return null; } })()})});
     let data = {}; try { data = await r.json(); } catch {}
     wait.remove();
     if(!r.ok || !data.reply) throw new Error(data.error || "Şu an cevap veremiyorum. Biraz sonra tekrar dene.");
@@ -213,6 +222,44 @@ $("autoBtn").addEventListener("click", e => { auto = !auto; e.currentTarget.setA
 function chip(parent, cls, label, text){ const b = document.createElement("button"); b.type = "button"; b.className = cls; b.textContent = label; b.addEventListener("click", () => send(text, true)); parent.appendChild(b); }
 SUG.forEach(([l, t]) => { chip($("chips"), "chip", l, t); chip($("quick"), "q", l, t); });
 renderLog();
+
+// ---- İzin sihirbazı: izinler tek tek istenir ----
+const media = k => async () => { const s = await navigator.mediaDevices.getUserMedia(k); s.getTracks().forEach(t => t.stop()); };
+const PERMS = [
+  {k:"mic", t:"Mikrofon", x:"Sesinle konuşabilmen için gerekli. Mikrofon yalnızca halkaya dokunduğunda dinler.", ok:()=>!!(navigator.mediaDevices&&navigator.mediaDevices.getUserMedia), ask:media({audio:true})},
+  {k:"loc", t:"Konum", x:"Hava durumunu şehir söylemeden verebilmem için. Konum yaklaşık (yaklaşık 1 km) olarak kullanılır ve sohbetle birlikte sunucuya gönderilir.", ok:()=>!!navigator.geolocation, ask:()=>new Promise((res,rej)=>navigator.geolocation.getCurrentPosition(p=>{try{localStorage.setItem("loc",JSON.stringify({lat:+p.coords.latitude.toFixed(2),lon:+p.coords.longitude.toFixed(2)}));}catch{}res();},rej,{timeout:15000}))},
+  {k:"notif", t:"Bildirimler", x:"Hatırlatmalar için. Hatırlatma özelliği henüz yok, izni şimdiden alıyoruz.", nt:"iPhone'da yalnızca uygulamayı ana ekrana ekleyince çalışır.", ok:()=>"Notification" in window, ask:async()=>{ if(await Notification.requestPermission()!=="granted") throw new Error("denied"); }},
+  {k:"cam", t:"Kamera", x:"İleride bir fotoğrafa bakıp yorumlayabilmem için. Şu an kamerayı kullanan bir özellik yok.", ok:()=>!!(navigator.mediaDevices&&navigator.mediaDevices.getUserMedia), ask:media({video:true})},
+  {k:"cal", t:"Takvim ve anımsatıcılar", x:"Bu iki izin web uygulamasında verilemez, tarayıcılar telefonun takvimine ve anımsatıcılarına erişim sunmuyor.", nt:"Mobil uygulama sürümünde eklenecek.", info:true}
+];
+let perm = {}; try { perm = JSON.parse(localStorage.getItem("perm") || "{}"); } catch {}
+let pi = 0;
+const SL = {granted:"Verildi", denied:"Reddedildi", skipped:"Geçildi", unsupported:"Desteklenmiyor", info:"Web'de yok"};
+function permStep(){
+  const o = $("onb"); o.hidden = false;
+  if(pi >= PERMS.length){
+    $("oSt").textContent = "TAMAMLANDI"; $("oT").textContent = "Hazırsın";
+    $("oX").innerHTML = "<ul>" + PERMS.map(p => "<li>" + p.t + ": <b>" + (SL[perm[p.k]] || "—") + "</b></li>").join("") + "</ul>";
+    $("oN").textContent = "İzinleri üstteki İzinler butonundan yeniden açabilirsin."; $("oSkip").hidden = true; $("oOk").textContent = "Başla";
+    return;
+  }
+  const p = PERMS[pi];
+  $("oSt").textContent = "İZİN " + (pi+1) + " / " + PERMS.length; $("oT").textContent = p.t;
+  $("oX").innerHTML = "<p></p>"; $("oX").firstChild.textContent = p.x; $("oN").textContent = p.nt || "";
+  $("oSkip").hidden = !!p.info; $("oSkip").textContent = "Şimdilik geç"; $("oOk").textContent = p.info ? "Anladım" : "İzin ver";
+}
+function permNext(){ pi++; try { localStorage.setItem("perm", JSON.stringify(perm)); } catch {} permStep(); }
+$("oSkip").addEventListener("click", () => { perm[PERMS[pi].k] = "skipped"; permNext(); });
+$("oOk").addEventListener("click", async () => {
+  if(pi >= PERMS.length){ try { localStorage.setItem("onb", "1"); } catch {} $("onb").hidden = true; return; }
+  const p = PERMS[pi];
+  if(p.info){ perm[p.k] = "info"; return permNext(); }
+  if(!p.ok()){ perm[p.k] = "unsupported"; return permNext(); }
+  try { await p.ask(); perm[p.k] = "granted"; } catch { perm[p.k] = "denied"; }
+  permNext();
+});
+$("permBtn").addEventListener("click", () => { pi = 0; permStep(); });
+if(!localStorage.getItem("onb")) { pi = 0; permStep(); }
 </script>
 </body>
 </html>
