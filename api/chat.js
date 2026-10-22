@@ -2,7 +2,7 @@
 import { createHash } from "node:crypto";
 
 const MODEL = process.env.GEMINI_MODEL || "gemini-flash-latest";
-const FALLBACK_MODEL = process.env.GEMINI_FALLBACK_MODEL || "gemini-2.5-flash-lite";
+const FALLBACK_MODEL = process.env.GEMINI_FALLBACK_MODEL || "gemini-3.5-flash-lite";
 const DAILY_LIMIT = 30;
 const MAX_HISTORY = 20;
 
