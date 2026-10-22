@@ -1,5 +1,6 @@
 // Döndi – Gemini sürümü (Google AI Studio anahtarı ile çalışır)
-const MODEL = process.env.GEMINI_MODEL || "gemini-2.5-flash";
+const MODEL = process.env.GEMINI_MODEL || "gemini-flash-latest";
+const FALLBACK_MODEL = process.env.GEMINI_FALLBACK_MODEL || "gemini-2.5-flash-lite";
 const DAILY_LIMIT = 30;
 const MAX_HISTORY = 20;
  
@@ -44,36 +45,43 @@ export default async function handler(req, res) {
     return res.status(500).json({ error: "Sunucu ayarı eksik (anahtar bulunamadı)." });
   }
  
-  try {
-    const url = `https://generativelanguage.googleapis.com/v1beta/models/${MODEL}:generateContent`;
-    const r = await fetch(url, {
-      method: "POST",
-      headers: { "Content-Type": "application/json", "x-goog-api-key": apiKey },
-      body: JSON.stringify({
-        systemInstruction: { parts: [{ text: SYSTEM }] },
-        contents: clean.map((m) => ({
-          role: m.role === "assistant" ? "model" : "user",
-          parts: [{ text: m.content }],
-        })),
-        generationConfig: { maxOutputTokens: 1000 },
-      }),
-    });
+  const models = [MODEL, FALLBACK_MODEL].filter((m, i, arr) => m && arr.indexOf(m) === i);
+  const body = JSON.stringify({
+    systemInstruction: { parts: [{ text: SYSTEM }] },
+    contents: clean.map((m) => ({
+      role: m.role === "assistant" ? "model" : "user",
+      parts: [{ text: m.content }],
+    })),
+    generationConfig: { maxOutputTokens: 2048 },
+  });
  
-    const data = await r.json();
-    if (!r.ok) {
-      console.error("Gemini hata:", r.status, JSON.stringify(data));
-      const msg = r.status === 429
-        ? "Şu an çok yoğunum, biraz sonra tekrar dene."
-        : "Şu an cevap veremiyorum. Biraz sonra tekrar dene.";
-      return res.status(500).json({ error: msg });
+  let text = "";
+  for (const model of models) {
+    try {
+      const ctrl = new AbortController();
+      const timer = setTimeout(() => ctrl.abort(), 22000);
+      const r = await fetch(
+        `https://generativelanguage.googleapis.com/v1beta/models/${model}:generateContent`,
+        { method: "POST", headers: { "Content-Type": "application/json", "x-goog-api-key": apiKey }, body, signal: ctrl.signal }
+      );
+      clearTimeout(timer);
+      const data = await r.json();
+      if (!r.ok) {
+        console.error("Gemini hata:", model, r.status, JSON.stringify(data));
+        if ([404, 429, 500, 503].includes(r.status)) continue; // sıradaki modeli dene
+        break;
+      }
+      text = (data.candidates?.[0]?.content?.parts || []).map((p) => p.text || "").join("\n").trim();
+      if (text) break;
+      console.error("Boş cevap:", model, JSON.stringify(data).slice(0, 500));
+    } catch (err) {
+      console.error("İstek hatası:", model, err?.name, err?.message);
     }
- 
-    const text = (data.candidates?.[0]?.content?.parts || []).map((p) => p.text || "").join("\n").trim();
-    if (!text) return res.status(500).json({ error: "Boş cevap geldi, tekrar dene." });
-    res.status(200).json({ reply: text });
-  } catch (err) {
-    console.error(err);
-    res.status(500).json({ error: "Şu an cevap veremiyorum. Biraz sonra tekrar dene." });
   }
+ 
+  if (!text) {
+    return res.status(500).json({ error: "Şu an cevap veremiyorum. Biraz sonra tekrar dene." });
+  }
+  res.status(200).json({ reply: text });
 }
  
