@@ -6,7 +6,15 @@ const FALLBACK_MODEL = process.env.GEMINI_FALLBACK_MODEL || "gemini-2.5-flash-li
 const DAILY_LIMIT = 30;
 const MAX_HISTORY = 20;
 
-function systemPrompt(loc) {
+const IMAGE_RULES = `
+Bu mesajla birlikte kullanıcının kamerasından tek bir kare geldi. Görüntüye bakarak kısa ve net cevap ver.
+- Elindeki nesne sorulursa: nesneyi tanı, ne olduğunu ve gerekirse ne işe yaradığını kısaca söyle. Emin değilsen bunu belirt.
+- Çevre sorulursa: görünenleri kısaca anlat.
+- Cilt sorulursa: görünen özellikleri (renk, doku, kuruluk, kızarıklık, sivilce gibi) betimle ve genel bakım önerileri ver. Tanı koyma. Ben, yara ya da şüpheli bir değişiklik için dermatoloğa gitmeyi öner.
+- Kişileri yüzlerinden tanıma ve kim olduklarını tahmin etme; yalnızca görünür özelliklerini betimle.
+- Görüntü bulanık, karanlık ya da belirsizse bunu söyle ve yeniden denemesini iste.`;
+
+function systemPrompt(ctx) {
   const now = new Intl.DateTimeFormat("tr-TR", {
     dateStyle: "full", timeStyle: "short", timeZone: "Europe/Istanbul",
   }).format(new Date());
@@ -16,8 +24,8 @@ Cevapları kısa tut; telefonda okunacağını unutma. Gerekirse madde işareti 
 Selamlamayı yalnızca sohbetin ilk mesajında yap; sonraki cevaplarda doğrudan konuya gir.
 Hava durumu sorulursa get_weather aracını kullan. Şehir belirtilmemişse önce hangi şehir olduğunu sor.
 Tıbbi, hukuki ve finansal konularda genel bilgi ver, uzmana danışmayı öner.
-Şu an (Türkiye saati): ${now}.${loc ? `
-Kullanıcının yaklaşık konumu biliniyor. Şehir belirtmeden hava durumu sorarsa get_weather aracını city alanını boş bırakarak çağır.` : ""}`;
+Şu an (Türkiye saati): ${now}.${ctx.loc ? `
+Kullanıcının yaklaşık konumu biliniyor. Şehir belirtmeden hava durumu sorarsa get_weather aracını city alanını boş bırakarak çağır.` : ""}${ctx.hasImage ? IMAGE_RULES : ""}`;
 }
 
 // ---- Hava durumu aracı ----
@@ -101,12 +109,12 @@ const TOOLS = [{
 }];
 
 // ---- Gemini çağrısı ----
-async function callGemini(model, apiKey, contents, allowTools, loc) {
+async function callGemini(model, apiKey, contents, allowTools, ctx) {
   const ctrl = new AbortController();
   const timer = setTimeout(() => ctrl.abort(), 18000);
   try {
     const body = {
-      systemInstruction: { parts: [{ text: systemPrompt(loc) }] },
+      systemInstruction: { parts: [{ text: systemPrompt(ctx) }] },
       contents,
       tools: TOOLS,
       generationConfig: { maxOutputTokens: 2048 },
@@ -129,12 +137,12 @@ async function callGemini(model, apiKey, contents, allowTools, loc) {
 }
 
 // Bir modeli dener. { text } | { retry: true } | { fatal: true } döner.
-async function tryModel(model, apiKey, base, loc) {
+async function tryModel(model, apiKey, base, ctx) {
   let contents = base;
   for (let step = 0; step < 2; step++) {
     let res;
     try {
-      res = await callGemini(model, apiKey, contents, step === 0, loc);
+      res = await callGemini(model, apiKey, contents, step === 0, ctx);
     } catch (err) {
       console.error("İstek hatası:", model, err?.name, err?.message);
       return { retry: true };
@@ -150,7 +158,7 @@ async function tryModel(model, apiKey, base, loc) {
     if (call && step === 0) {
       let result;
       try {
-        result = await getWeather(call.functionCall.args?.city, loc);
+        result = await getWeather(call.functionCall.args?.city, ctx.loc);
       } catch (e) {
         console.error("Hava servisi hatası:", e?.message);
         result = { error: "Hava durumu servisine şu an ulaşılamadı." };
@@ -211,7 +219,8 @@ async function checkLimit(ip) {
 export default async function handler(req, res) {
   if (req.method !== "POST") return res.status(405).json({ error: "Yalnızca POST." });
 
-  const { messages, location } = req.body ?? {};
+  const { messages, location, image } = req.body ?? {};
+  const img = typeof image === "string" && image.length < 1500000 && /^[A-Za-z0-9+/=]+$/.test(image) ? image : null;
   const loc = location && Math.abs(location.lat) <= 90 && Math.abs(location.lon) <= 180
     ? { lat: Number(location.lat.toFixed?.(2) ?? location.lat), lon: Number(location.lon.toFixed?.(2) ?? location.lon) } : null;
   if (!Array.isArray(messages) || messages.length === 0) {
@@ -240,11 +249,13 @@ export default async function handler(req, res) {
     parts: [{ text: m.content }],
   }));
 
+  if (img) base[base.length - 1].parts.unshift({ inlineData: { mimeType: "image/jpeg", data: img } });
+
   const models = [MODEL, FALLBACK_MODEL].filter((m, i, a) => m && a.indexOf(m) === i);
   const t0 = Date.now();
   for (const model of models) {
     if (Date.now() - t0 > 35000) break; // zaman sınırına yaklaşıldı
-    const out = await tryModel(model, apiKey, base, loc);
+    const out = await tryModel(model, apiKey, base, { loc, hasImage: !!img });
     if (out.text) return res.status(200).json({ reply: out.text });
     if (out.fatal) break;
   }
