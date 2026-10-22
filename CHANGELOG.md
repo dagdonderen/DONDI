@@ -1,5 +1,11 @@
 # Döndi sürüm notları
 
+## v1.0.1
+- Kamera öncesi ayrı Açık Rıza Metni: özel nitelikli veri, Google aktarımı ve Vercel aktarımı için üç ayrı onay kutusu (katmanlı ayrıntılarla)
+- Rızayı geri alma butonu
+- 18+ yaş onayı (ilk açılış)
+- Veri sorumlusu ve iletişim bilgileri gizlilik metnine işlendi
+
 ## v1.0
 - Yazılı ve sesli sohbet, HUD arayüzü
 - Konuma göre hava durumu (Open-Meteo)
