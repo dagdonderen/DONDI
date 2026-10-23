@@ -195,7 +195,8 @@ textarea:focus{outline:none;border-color:var(--c)}
   <div class="st">AYARLAR · v1.1</div><h2>Döndi'yi sana göre ayarla</h2>
   <label class="fld">Adın<input id="sName" maxlength="30" placeholder="İstersen yaz" autocomplete="off"></label>
   <label class="fld">Konuşma tonu<select id="sTone"><option value="samimi">Samimi</option><option value="resmi">Resmi</option><option value="enerjik">Enerjik</option><option value="kisa">Kısa ve net</option></select></label>
-  <label class="fld">Ses<select id="sVoice"></select></label>
+  <label class="fld">Konuşma sesi<select id="sVoiceKind"><option value="dondi">Döndi sesi (erkek, yapay zekâ)</option><option value="telefon">Telefonun kendi sesi</option></select></label>
+  <label class="fld">Telefon sesi seçimi<select id="sVoice"></select></label>
   <label class="fld">Konuşma hızı: <span id="sRateV">1x</span><input id="sRate" type="range" min="0.7" max="1.3" step="0.1" value="1"></label>
   <div class="fld">Tema<div id="sTheme"><button class="tbtn" data-t="altin" type="button">Altın</button><button class="tbtn" data-t="mavi" type="button">Mavi</button><button class="tbtn" data-t="mor" type="button">Mor</button><button class="tbtn" data-t="yesil" type="button">Yeşil</button></div></div>
   <p class="nt">Tercihlerin cihazında saklanır. Adın ve tonun, cevap üretmek için sunucuya ve Google'a gönderilir.</p>
@@ -230,7 +231,7 @@ let history = cur.msgs;
 let voiceOn = true, auto = false, busy = false, state = "idle", camOn = false, stream = null, facing = "environment";
 const save = () => { cur.ts = Date.now(); if(!cur.title){ const f = history.find(m => m.role==="user"); if(f) cur.title = f.content.slice(0,40); } try { localStorage.setItem("chats", JSON.stringify(chats)); localStorage.setItem("curChat", cur.id); } catch {} };
 const THEMES = {altin:["#f0b94a","#d9733f"], mavi:["#3de1ff","#8b6cff"], mor:["#b79cff","#3de1ff"], yesil:["#4dffb0","#3de1ff"]};
-let settings = {name:"", tone:"samimi", voice:"", rate:1, theme:"altin"};
+let settings = {name:"", tone:"samimi", voice:"", rate:1, theme:"altin", voiceKind:"dondi"};
 try { Object.assign(settings, JSON.parse(localStorage.getItem("settings") || "{}")); } catch {}
 const saveSettings = () => { try { localStorage.setItem("settings", JSON.stringify(settings)); } catch {} };
 const cleanName = s => String(s || "").replace(/[^\p{L}\p{N} '’.-]/gu, "").trim().slice(0, 30);
@@ -293,19 +294,51 @@ const synth = window.speechSynthesis; let trVoice = null;
 function pickVoice(){ if(!synth) return; const v = synth.getVoices(); trVoice = v.find(x => /^tr/i.test(x.lang)) || null; $("sTts").textContent = "Ses çıkışı: " + (trVoice ? "hazır" : "Türkçe ses bulunamadı"); fillVoices(); }
 if(synth){ pickVoice(); synth.onvoiceschanged = pickVoice; } else $("sTts").textContent = "Ses çıkışı: desteklenmiyor";
 function speak(text, done){
-  if(!synth || !voiceOn){ done && done(); return; }
+  if(!voiceOn){ done && done(); return; }
+  if(settings.voiceKind !== "telefon" && ttsAudio){ speakServer(text, done); return; }
+  speakBrowser(text, done);
+}
+function speakBrowser(text, done){
+  if(!synth){ done && done(); return; }
   synth.cancel();
   const plain = text.replace(/\*\*/g,"").replace(/^\s*[-*•]\s+/gm,"").replace(/[#`_]/g,"");
   const parts = plain.match(/[^.!?\n]+[.!?]*/g) || [plain];
   setState("speaking");
   parts.forEach((p, i) => {
     if(!p.trim()) return;
-    const u = new SpeechSynthesisUtterance(p.trim()); u.lang = "tr-TR"; const cv = chosenVoice(); if(cv) u.voice = cv; u.rate = settings.rate || 1;
+    const u = new SpeechSynthesisUtterance(p.trim()); u.lang = "tr-TR"; const cv = chosenVoice(); if(cv) u.voice = cv; u.rate = settings.rate || 1; u.pitch = 0.8;
     if(i === parts.length - 1) { u.onend = () => { done && done(); }; u.onerror = () => { done && done(); }; }
     synth.speak(u);
   });
 }
-function stopSpeak(){ if(synth) synth.cancel(); }
+let ttsAudio = null, ttsRun = 0;
+function stopSpeak(){ ttsRun++; if(synth) synth.cancel(); if(ttsAudio){ try { ttsAudio.pause(); } catch {} } }
+function chunksOf(text){
+  const plain = text.replace(/\*\*/g,"").replace(/^\s*[-*•]\s+/gm,"").replace(/[#`_|]/g,"").replace(/\s+/g," ").trim();
+  const sents = plain.match(/[^.!?]+[.!?]*/g) || [plain]; const out = []; let cur = "";
+  for(const s of sents){ if((cur + s).length > 380 && cur){ out.push(cur.trim()); cur = ""; } cur += s + " "; }
+  if(cur.trim()) out.push(cur.trim()); return out.slice(0, 3);
+}
+async function fetchTts(t){
+  const r = await fetch("/api/tts", {method:"POST", headers:{"Content-Type":"application/json"}, body: JSON.stringify({text:t})});
+  const d = await r.json().catch(() => ({})); if(!r.ok || !d.audio) throw new Error("tts");
+  const bin = atob(d.audio), arr = new Uint8Array(bin.length); for(let i = 0; i < bin.length; i++) arr[i] = bin.charCodeAt(i);
+  return URL.createObjectURL(new Blob([arr], {type: d.mime || "audio/wav"}));
+}
+async function speakServer(text, done){
+  const run = ++ttsRun, chunks = chunksOf(text); if(!chunks.length){ done && done(); return; }
+  setState("speaking");
+  try {
+    let next = fetchTts(chunks[0]);
+    for(let i = 0; i < chunks.length; i++){
+      const url = await next; if(run !== ttsRun) return;
+      if(i + 1 < chunks.length) next = fetchTts(chunks[i+1]);
+      await new Promise((res, rej) => { ttsAudio.onended = res; ttsAudio.onerror = rej; ttsAudio.src = url; ttsAudio.play().catch(rej); });
+      if(run !== ttsRun) return;
+    }
+    done && done();
+  } catch { if(run !== ttsRun) return; speakBrowser(text, done); }
+}
 
 // Ses girişi
 const SR = window.SpeechRecognition || window.webkitSpeechRecognition; let rec = null, heard = "", silT = 0;
@@ -323,7 +356,7 @@ function listen(){
 }
 // iOS/Safari: konuşma çıkışı ancak kullanıcı dokunuşuyla açılır; ilk dokunuşta sessiz bir cümleyle kilidi aç
 let ttsUnlocked = false;
-function unlockTts(){ if(ttsUnlocked || !synth) return; ttsUnlocked = true; try { const u = new SpeechSynthesisUtterance(" "); u.volume = 0; u.lang = "tr-TR"; synth.speak(u); } catch {} }
+function unlockTts(){ if(ttsUnlocked) return; ttsUnlocked = true; try { ttsAudio = new Audio(); ttsAudio.src = "data:audio/wav;base64,UklGRiQAAABXQVZFZm10IBAAAAABAAEAQB8AAEAfAAABAAgAZGF0YQAAAAA="; ttsAudio.play().catch(() => {}); } catch {} if(!synth) return; try { const u = new SpeechSynthesisUtterance(" "); u.volume = 0; u.lang = "tr-TR"; synth.speak(u); } catch {} }
 $("orb").addEventListener("click", () => {
   unlockTts();
   if(state === "speaking"){ stopSpeak(); setState("idle"); return; }
@@ -466,7 +499,7 @@ $("voiceBtn").addEventListener("click", e => { voiceOn = !voiceOn; e.currentTarg
 $("autoBtn").addEventListener("click", e => { auto = !auto; e.currentTarget.setAttribute("aria-pressed", auto); });
 function chip(parent, cls, label, text){ const b = document.createElement("button"); b.type = "button"; b.className = cls; b.textContent = label; b.addEventListener("click", () => { unlockTts(); send(text, true); }); parent.appendChild(b); }
 SUG.forEach(([l, t]) => chip($("chips"), "chip", l, t));
-const APP_VERSION = "1.3.2";
+const APP_VERSION = "1.4.0";
 // ---- Ayarlar (v1.1) ----
 function fillVoices(){
   if(!synth) return; const sel = $("sVoice"); sel.innerHTML = "";
@@ -474,13 +507,13 @@ function fillVoices(){
   synth.getVoices().filter(x => /^tr/i.test(x.lang)).forEach(x => { const op = document.createElement("option"); op.value = x.name; op.textContent = x.name; sel.appendChild(op); });
   sel.value = settings.voice;
 }
-function chosenVoice(){ if(synth && settings.voice){ const f = synth.getVoices().find(x => x.name === settings.voice); if(f) return f; } return trVoice; }
+function chosenVoice(){ if(synth && settings.voice){ const f = synth.getVoices().find(x => x.name === settings.voice); if(f) return f; } if(synth){ const m = synth.getVoices().find(x => /^tr/i.test(x.lang) && /tolga|cem|erkek|male/i.test(x.name)); if(m) return m; } return trVoice; }
 function applyTheme(){ const t = THEMES[settings.theme] || THEMES.altin; document.documentElement.style.setProperty("--c", t[0]); document.documentElement.style.setProperty("--v", t[1]); }
 function themeBtns(){ document.querySelectorAll("#sTheme button").forEach(b => b.setAttribute("aria-pressed", String(b.dataset.t === settings.theme))); }
-$("setBtn").addEventListener("click", () => { $("sName").value = settings.name; $("sTone").value = settings.tone; $("sRate").value = settings.rate; $("sRateV").textContent = settings.rate + "x"; fillVoices(); themeBtns(); $("set").hidden = false; });
+$("setBtn").addEventListener("click", () => { $("sName").value = settings.name; $("sTone").value = settings.tone; $("sVoiceKind").value = settings.voiceKind || "dondi"; $("sRate").value = settings.rate; $("sRateV").textContent = settings.rate + "x"; fillVoices(); themeBtns(); $("set").hidden = false; });
 $("sRate").addEventListener("input", e => { $("sRateV").textContent = e.target.value + "x"; });
 $("sTest").addEventListener("click", () => { settings.voice = $("sVoice").value; settings.rate = Number($("sRate").value); const n = cleanName($("sName").value); speak((n ? n + ", " : "") + "merhaba, ben Döndi. Sesimi böyle duyacaksın.", () => setState("idle")); });
-$("sClose").addEventListener("click", () => { settings.name = cleanName($("sName").value); settings.tone = $("sTone").value; settings.voice = $("sVoice").value; settings.rate = Number($("sRate").value); saveSettings(); $("set").hidden = true; });
+$("sClose").addEventListener("click", () => { settings.name = cleanName($("sName").value); settings.tone = $("sTone").value; settings.voice = $("sVoice").value; settings.voiceKind = $("sVoiceKind").value; settings.rate = Number($("sRate").value); saveSettings(); $("set").hidden = true; });
 document.querySelectorAll("#sTheme button").forEach(b => b.addEventListener("click", () => { settings.theme = b.dataset.t; applyTheme(); saveSettings(); themeBtns(); }));
 applyTheme();
 $("ver").textContent = APP_VERSION;
