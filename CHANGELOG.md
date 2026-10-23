@@ -1,5 +1,12 @@
 # Döndi sürüm notları
 
+## v1.3.0 (arayüz yenilemesi)
+- Yeni tasarım: cam efektli, mobil öncelikli, tek sütun; HUD halkaları yerine nefes alan küre
+- Sağdaki hızlı komutlar paneli kaldırıldı
+- Sol bilgi/sistem kutusu yalnızca ilk kullanımda ~15 sn görünür
+- Mesaj kutusu artık ayrı buton değil: "Kamerayı aç" butonunun altında her zaman açık
+- Ses, Sürekli, Ayarlar, İzinler, Gizlilik, Verilerimi sil bir menüye taşındı
+
 ## v1.2.0
 - Belge yükleme (📎): Excel, Word (.docx), PDF, CSV, TXT analizi; ilk kullanımda ayrı onay + kayıt
 - Nakit akışı ve maliyet sonuçları Excel / CSV / PDF olarak indirilebilir
