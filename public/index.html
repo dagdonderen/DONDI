@@ -98,6 +98,15 @@ textarea{flex:1;resize:none;max-height:110px;border:1px solid var(--line);border
 .ck input{margin-top:3px;width:18px;height:18px;accent-color:#3de1ff;flex:none}
 .onb details{margin:2px 0 6px 28px;font-size:13px;color:var(--mut)}
 .onb details summary{cursor:pointer;color:var(--c)}
+.onb .card.wide{max-width:520px}
+.fld{display:block;margin:12px 0 0;font-size:13px;color:var(--mut)}
+.fld input,.fld select{display:block;width:100%;margin-top:4px;padding:9px 10px;background:rgba(3,10,28,.85);color:var(--ink);border:1px solid var(--line);border-radius:8px;font:inherit}
+.fld input[type=range]{padding:0}#sTheme{display:flex;gap:8px;margin-top:6px}
+.plist{margin:12px 0;border:1px solid var(--line)}
+.prow{display:flex;align-items:center;gap:12px;padding:10px 12px;border-bottom:1px solid var(--line)}
+.prow:last-child{border:0}.prow>div{flex:1}.prow b{display:block;font-size:15px}
+.prow .d{font-size:12px;color:var(--mut)}
+.pst{font-size:12px;letter-spacing:.08em;text-transform:uppercase;color:var(--mut);white-space:nowrap}.pst.ok{color:var(--c)}
 .onb .tbtn:disabled{opacity:.4;cursor:not-allowed}
 .foot{position:relative;z-index:2;text-align:center;font-size:11px;color:var(--mut);padding:4px 12px calc(8px + env(safe-area-inset-bottom))}
 .foot a,.foot button{color:var(--c);background:none;border:0;font:inherit;text-decoration:underline;cursor:pointer;padding:0}
@@ -112,6 +121,7 @@ textarea{flex:1;resize:none;max-height:110px;border:1px solid var(--line);border
   <div class="clock"><b id="time">--:--</b><span id="date"></span></div>
   <button class="tbtn" id="voiceBtn" type="button" aria-pressed="true">Ses</button>
   <button class="tbtn" id="autoBtn" type="button" aria-pressed="false">Sürekli</button>
+  <button class="tbtn" id="setBtn" type="button">Ayarlar</button>
   <button class="tbtn" id="permBtn" type="button">İzinler</button>
   <button class="tbtn" id="chatBtn" type="button">Mesajlaş</button>
 </div>
@@ -150,6 +160,16 @@ textarea{flex:1;resize:none;max-height:110px;border:1px solid var(--line);border
   <p class="nt">Rızanı istediğin zaman geri alabilirsin: kamera ekranındaki <b>Rızamı geri al</b> butonu. Geri alınca kamera kullanılamaz. Ayrıntılar: <a href="/gizlilik.html" target="_blank" rel="noopener" style="color:var(--c)">Gizlilik ve KVKK metni</a>. İletişim: info@dagdonderen.com.tr</p>
   <div class="row"><button class="tbtn" id="cNo" type="button">Vazgeç</button><button class="tbtn" id="cYes" type="button" aria-pressed="true" disabled>Onayla ve kamerayı aç</button></div>
 </div></div>
+<div class="onb" id="set" hidden><div class="card wide">
+  <div class="st">AYARLAR · v1.1</div><h2>Döndi'yi sana göre ayarla</h2>
+  <label class="fld">Adın<input id="sName" maxlength="30" placeholder="İstersen yaz" autocomplete="off"></label>
+  <label class="fld">Konuşma tonu<select id="sTone"><option value="samimi">Samimi</option><option value="resmi">Resmi</option><option value="enerjik">Enerjik</option><option value="kisa">Kısa ve net</option></select></label>
+  <label class="fld">Ses<select id="sVoice"></select></label>
+  <label class="fld">Konuşma hızı: <span id="sRateV">1x</span><input id="sRate" type="range" min="0.7" max="1.3" step="0.1" value="1"></label>
+  <div class="fld">Tema<div id="sTheme"><button class="tbtn" data-t="mavi" type="button">Mavi</button><button class="tbtn" data-t="mor" type="button">Mor</button><button class="tbtn" data-t="yesil" type="button">Yeşil</button></div></div>
+  <p class="nt">Tercihlerin cihazında saklanır. Adın ve tonun, cevap üretmek için sunucuya ve Google'a gönderilir.</p>
+  <div class="row"><button class="tbtn" id="sTest" type="button">Sesi dene</button><button class="tbtn" id="sClose" type="button" aria-pressed="true">Tamam</button></div>
+</div></div>
 <div class="cam" id="cam" hidden>
   <video id="vid" playsinline muted autoplay></video>
   <div class="frame"></div>
@@ -164,7 +184,13 @@ textarea{flex:1;resize:none;max-height:110px;border:1px solid var(--line);border
   <div id="log"></div>
   <form id="f"><textarea id="t" rows="1" placeholder="Bir şey yaz…" aria-label="Mesaj"></textarea><button id="send" type="submit">Gönder</button></form>
 </div>
-<div class="onb" id="onb" hidden><div class="card"><div class="st" id="oSt"></div><h2 id="oT"></h2><div id="oX"></div><p class="nt" id="oN"></p><div class="row"><button class="tbtn" id="oSkip" type="button">Şimdilik geç</button><button class="tbtn" id="oOk" type="button" aria-pressed="true">İzin ver</button></div></div></div>
+<div class="onb" id="onb" hidden><div class="card wide">
+  <div class="st">BAŞLANGIÇ</div><h2>Döndi'yi ayarlayalım</h2>
+  <label class="ck"><input type="checkbox" id="ageCk"><span><b>18 yaşından büyüğüm.</b> Döndi yalnızca 18 yaşını doldurmuş kullanıcılar içindir.</span></label>
+  <div class="plist" id="pList"></div>
+  <p class="nt">İzinleri sonradan <b>İzinler</b> butonundan değiştirebilirsin. <a href="/gizlilik.html" target="_blank" rel="noopener" style="color:var(--c)">Gizlilik ve KVKK metni</a></p>
+  <div class="row"><button class="tbtn" id="oAll" type="button">Mikrofon ve konumu iste</button><button class="tbtn" id="oOk" type="button" aria-pressed="true" disabled>Başla</button></div>
+</div></div>
 <script>
 const $ = id => document.getElementById(id);
 const core = $("core"), status = $("status"), cap = $("cap"), log = $("log"), input = $("t"), sendBtn = $("send");
@@ -172,6 +198,11 @@ const SUG = [["Hava durumu","Bugün hava nasıl olacak? Şehrimi söyleyeyim."],
 let history = []; try { history = JSON.parse(localStorage.getItem("chat") || "[]"); } catch {}
 let voiceOn = true, auto = false, busy = false, state = "idle", camOn = false, stream = null, facing = "environment";
 const save = () => { try { localStorage.setItem("chat", JSON.stringify(history)); } catch {} };
+const THEMES = {mavi:["#3de1ff","#8b6cff"], mor:["#b79cff","#3de1ff"], yesil:["#4dffb0","#3de1ff"]};
+let settings = {name:"", tone:"samimi", voice:"", rate:1, theme:"mavi"};
+try { Object.assign(settings, JSON.parse(localStorage.getItem("settings") || "{}")); } catch {}
+const saveSettings = () => { try { localStorage.setItem("settings", JSON.stringify(settings)); } catch {} };
+const cleanName = s => String(s || "").replace(/[^\p{L}\p{N} '’.-]/gu, "").trim().slice(0, 30);
 const LABEL = {idle:"HAZIR", listening:"DİNLİYORUM", thinking:"DÜŞÜNÜYORUM", speaking:"KONUŞUYORUM"};
 function setState(s){ state = s; core.dataset.s = s; status.textContent = LABEL[s]; }
 
@@ -199,7 +230,7 @@ function renderLog(){ log.innerHTML = ""; if(!history.length){ log.innerHTML = '
 
 // Ses çıkışı
 const synth = window.speechSynthesis; let trVoice = null;
-function pickVoice(){ if(!synth) return; const v = synth.getVoices(); trVoice = v.find(x => /^tr/i.test(x.lang)) || null; $("sTts").textContent = "Ses çıkışı: " + (trVoice ? "hazır" : "Türkçe ses bulunamadı"); }
+function pickVoice(){ if(!synth) return; const v = synth.getVoices(); trVoice = v.find(x => /^tr/i.test(x.lang)) || null; $("sTts").textContent = "Ses çıkışı: " + (trVoice ? "hazır" : "Türkçe ses bulunamadı"); fillVoices(); }
 if(synth){ pickVoice(); synth.onvoiceschanged = pickVoice; } else $("sTts").textContent = "Ses çıkışı: desteklenmiyor";
 function speak(text, done){
   if(!synth || !voiceOn){ done && done(); return; }
@@ -209,7 +240,7 @@ function speak(text, done){
   setState("speaking");
   parts.forEach((p, i) => {
     if(!p.trim()) return;
-    const u = new SpeechSynthesisUtterance(p.trim()); u.lang = "tr-TR"; if(trVoice) u.voice = trVoice;
+    const u = new SpeechSynthesisUtterance(p.trim()); u.lang = "tr-TR"; const cv = chosenVoice(); if(cv) u.voice = cv; u.rate = settings.rate || 1;
     if(i === parts.length - 1) { u.onend = () => { done && done(); }; u.onerror = () => { done && done(); }; }
     synth.speak(u);
   });
@@ -244,7 +275,7 @@ async function send(text, viaVoice, image){
   history.push({role:"user", content:text}); const userEl = addMsg("user", image ? "[Kamera] " + text : text);
   let wait = document.createElement("div"); wait.className = "msg bot"; wait.textContent = "…"; log.appendChild(wait);
   try{
-    const r = await fetch("/api/chat", {method:"POST", headers:{"Content-Type":"application/json"}, body: JSON.stringify({messages: history, image: image || undefined, location: (()=>{ try { return JSON.parse(localStorage.getItem("loc")||"null"); } catch { return null; } })()})});
+    const r = await fetch("/api/chat", {method:"POST", headers:{"Content-Type":"application/json"}, body: JSON.stringify({messages: history, image: image || undefined, profile: {name: settings.name, tone: settings.tone}, location: (()=>{ try { return JSON.parse(localStorage.getItem("loc")||"null"); } catch { return null; } })()})});
     let data = {}; try { data = await r.json(); } catch {}
     wait.remove();
     if(!r.ok || !data.reply) throw new Error(data.error || "Şu an cevap veremiyorum. Biraz sonra tekrar dene.");
@@ -271,7 +302,23 @@ $("voiceBtn").addEventListener("click", e => { voiceOn = !voiceOn; e.currentTarg
 $("autoBtn").addEventListener("click", e => { auto = !auto; e.currentTarget.setAttribute("aria-pressed", auto); });
 function chip(parent, cls, label, text){ const b = document.createElement("button"); b.type = "button"; b.className = cls; b.textContent = label; b.addEventListener("click", () => send(text, true)); parent.appendChild(b); }
 SUG.forEach(([l, t]) => { chip($("chips"), "chip", l, t); chip($("quick"), "q", l, t); });
-const APP_VERSION = "1.0.1";
+const APP_VERSION = "1.1.0-beta";
+// ---- Ayarlar (v1.1) ----
+function fillVoices(){
+  if(!synth) return; const sel = $("sVoice"); sel.innerHTML = "";
+  const o = document.createElement("option"); o.value = ""; o.textContent = "Otomatik"; sel.appendChild(o);
+  synth.getVoices().filter(x => /^tr/i.test(x.lang)).forEach(x => { const op = document.createElement("option"); op.value = x.name; op.textContent = x.name; sel.appendChild(op); });
+  sel.value = settings.voice;
+}
+function chosenVoice(){ if(synth && settings.voice){ const f = synth.getVoices().find(x => x.name === settings.voice); if(f) return f; } return trVoice; }
+function applyTheme(){ const t = THEMES[settings.theme] || THEMES.mavi; document.documentElement.style.setProperty("--c", t[0]); document.documentElement.style.setProperty("--v", t[1]); }
+function themeBtns(){ document.querySelectorAll("#sTheme button").forEach(b => b.setAttribute("aria-pressed", String(b.dataset.t === settings.theme))); }
+$("setBtn").addEventListener("click", () => { $("sName").value = settings.name; $("sTone").value = settings.tone; $("sRate").value = settings.rate; $("sRateV").textContent = settings.rate + "x"; fillVoices(); themeBtns(); $("set").hidden = false; });
+$("sRate").addEventListener("input", e => { $("sRateV").textContent = e.target.value + "x"; });
+$("sTest").addEventListener("click", () => { settings.voice = $("sVoice").value; settings.rate = Number($("sRate").value); const n = cleanName($("sName").value); speak((n ? n + ", " : "") + "merhaba, ben Döndi. Sesimi böyle duyacaksın.", () => setState("idle")); });
+$("sClose").addEventListener("click", () => { settings.name = cleanName($("sName").value); settings.tone = $("sTone").value; settings.voice = $("sVoice").value; settings.rate = Number($("sRate").value); saveSettings(); $("set").hidden = true; });
+document.querySelectorAll("#sTheme button").forEach(b => b.addEventListener("click", () => { settings.theme = b.dataset.t; applyTheme(); saveSettings(); themeBtns(); }));
+applyTheme();
 $("ver").textContent = APP_VERSION;
 $("wipe").addEventListener("click", () => {
   if(!confirm("Bu cihazdaki sohbet geçmişi, konum, izin tercihleri ve diğer Döndi verileri silinecek. Devam edilsin mi?")) return;
@@ -301,9 +348,10 @@ function showConsent(){ ["c1","c2","c3"].forEach(i => $(i).checked = false); $("
 $("cNo").addEventListener("click", () => { $("consent").hidden = true; });
 $("cYes").addEventListener("click", () => {
   try { localStorage.setItem("camConsent", JSON.stringify({v:CONSENT_V, t:new Date().toISOString(), ozel:true, google:true, vercel:true})); } catch {}
+  logConsent("camera", {ozel:true, google:true, vercel:true});
   $("consent").hidden = true; beginCam();
 });
-$("camRevoke").addEventListener("click", () => { try { localStorage.removeItem("camConsent"); } catch {} closeCam(); cap.className = ""; cap.textContent = "Kamera rızan geri alındı."; });
+$("camRevoke").addEventListener("click", () => { try { localStorage.removeItem("camConsent"); } catch {} logConsent("camera_revoked", {ozel:false, google:false, vercel:false}); closeCam(); cap.className = ""; cap.textContent = "Kamera rızan geri alındı."; });
 function openCam(){
   if(!navigator.mediaDevices || !navigator.mediaDevices.getUserMedia){ cap.textContent = "Bu tarayıcı kamerayı desteklemiyor."; return; }
   if(!consentOk()){ showConsent(); return; }
@@ -328,49 +376,43 @@ $("camSend").addEventListener("click", () => askCam($("camIn").value));
 $("camIn").addEventListener("keydown", e => { if(e.key === "Enter"){ e.preventDefault(); askCam($("camIn").value); } });
 CAM_Q.forEach(([l, t]) => { const b = document.createElement("button"); b.type = "button"; b.className = "chip"; b.textContent = l; b.addEventListener("click", () => askCam(t)); $("camChips").appendChild(b); });
 
-// ---- İzin sihirbazı: izinler tek tek istenir ----
+// ---- İlk açılış paneli: izinler tek kutuda, satır satır ----
 const media = k => async () => { const s = await navigator.mediaDevices.getUserMedia(k); s.getTracks().forEach(t => t.stop()); };
-const PERMS = [
-  {k:"age", t:"Yaş onayı", x:"Döndi yalnızca 18 yaşını doldurmuş kullanıcılar içindir.", gate:true},
-  {k:"mic", t:"Mikrofon", x:"Sesinle konuşabilmen için gerekli. Mikrofon yalnızca halkaya dokunduğunda dinler.", ok:()=>!!(navigator.mediaDevices&&navigator.mediaDevices.getUserMedia), ask:media({audio:true})},
-  {k:"loc", t:"Konum", x:"Hava durumunu şehir söylemeden verebilmem için. Konum yaklaşık (yaklaşık 1 km) olarak kullanılır ve sohbetle birlikte sunucuya gönderilir.", ok:()=>!!navigator.geolocation, ask:()=>new Promise((res,rej)=>navigator.geolocation.getCurrentPosition(p=>{try{localStorage.setItem("loc",JSON.stringify({lat:+p.coords.latitude.toFixed(2),lon:+p.coords.longitude.toFixed(2)}));}catch{}res();},rej,{timeout:15000}))},
-  {k:"cam", t:"Kamera", x:"İleride bir fotoğrafa bakıp yorumlayabilmem için. Elinde ne olduğunu, çevreni ya da cildini sorduğunda tek kare çekip bakmam için.", ok:()=>!!(navigator.mediaDevices&&navigator.mediaDevices.getUserMedia), ask:media({video:true})},
-  {k:"cal", t:"Takvim ve anımsatıcılar", x:"Bu iki izin web uygulamasında verilemez, tarayıcılar telefonun takvimine ve anımsatıcılarına erişim sunmuyor.", nt:"Mobil uygulama sürümünde eklenecek.", info:true}
+const PROWS = [
+  {k:"mic", t:"Mikrofon", x:"Sesle konuşmak için", ok:()=>!!(navigator.mediaDevices&&navigator.mediaDevices.getUserMedia), ask:media({audio:true})},
+  {k:"loc", t:"Konum", x:"Hava durumu için (yaklaşık, ~1 km)", ok:()=>!!navigator.geolocation, ask:()=>new Promise((res,rej)=>navigator.geolocation.getCurrentPosition(p=>{try{localStorage.setItem("loc",JSON.stringify({lat:+p.coords.latitude.toFixed(2),lon:+p.coords.longitude.toFixed(2)}));}catch{}res();},rej,{timeout:15000})), log:"location"},
+  {k:"cam", t:"Kamera", x:"İlk açışında ayrı açık rıza ve izin istenir", info:"Kullanırken"},
+  {k:"cal", t:"Takvim ve anımsatıcılar", x:"Web'de verilemez, mobil sürümde gelecek", info:"Yakında"}
 ];
+const PST = {granted:"Verildi", denied:"Reddedildi", unsupported:"Desteklenmiyor"};
 let perm = {}; try { perm = JSON.parse(localStorage.getItem("perm") || "{}"); } catch {}
-let pi = 0;
-const SL = {granted:"Verildi", denied:"Reddedildi", skipped:"Geçildi", unsupported:"Desteklenmiyor", info:"Web'de yok"};
-function permStep(){
-  const o = $("onb"); o.hidden = false;
-  if(pi >= PERMS.length){
-    $("oSt").textContent = "TAMAMLANDI"; $("oT").textContent = "Hazırsın";
-    $("oX").innerHTML = "<ul>" + PERMS.map(p => "<li>" + p.t + ": <b>" + (SL[perm[p.k]] || "—") + "</b></li>").join("") + "</ul>";
-    $("oN").textContent = "İzinleri üstteki İzinler butonundan yeniden açabilirsin."; $("oSkip").hidden = true; $("oOk").disabled = false; $("oOk").textContent = "Başla";
-    return;
-  }
-  const p = PERMS[pi];
-  $("oSt").textContent = "İZİN " + (pi+1) + " / " + PERMS.length; $("oT").textContent = p.t;
-  $("oX").innerHTML = "<p></p>"; $("oX").firstChild.textContent = p.x; $("oN").textContent = p.nt || "";
-  $("oSkip").hidden = !!p.info; $("oSkip").textContent = "Şimdilik geç"; $("oOk").textContent = p.info ? "Anladım" : "İzin ver"; $("oOk").disabled = false;
-  if(p.gate){
-    $("oSkip").hidden = true; $("oOk").textContent = "Devam"; $("oOk").disabled = true;
-    const l = document.createElement("label"); l.className = "ck"; l.innerHTML = '<input type="checkbox" id="ageCk"><span>18 yaşından büyüğüm.</span>'; $("oX").appendChild(l);
-    $("ageCk").addEventListener("change", e => { $("oOk").disabled = !e.target.checked; });
-  }
+function deviceId(){ let d = null; try { d = localStorage.getItem("did"); } catch {} if(!d){ d = (crypto.randomUUID ? crypto.randomUUID() : Date.now() + "-" + Math.random().toString(16).slice(2)); try { localStorage.setItem("did", d); } catch {} } return d; }
+function logConsent(type, items){ try { fetch("/api/consent", {method:"POST", headers:{"Content-Type":"application/json"}, body: JSON.stringify({deviceId:deviceId(), type, version:CONSENT_V, items}), keepalive:true}).catch(()=>{}); } catch {} }
+async function askPerm(p){
+  if(!p.ok()){ perm[p.k] = "unsupported"; }
+  else { try { await p.ask(); perm[p.k] = "granted"; if(p.log) logConsent(p.log, {granted:true}); } catch { perm[p.k] = "denied"; } }
+  try { localStorage.setItem("perm", JSON.stringify(perm)); } catch {}
+  renderRows();
 }
-function permNext(){ pi++; try { localStorage.setItem("perm", JSON.stringify(perm)); } catch {} permStep(); }
-$("oSkip").addEventListener("click", () => { perm[PERMS[pi].k] = "skipped"; permNext(); });
-$("oOk").addEventListener("click", async () => {
-  if(pi >= PERMS.length){ try { localStorage.setItem("onb2", "1"); } catch {} $("onb").hidden = true; return; }
-  const p = PERMS[pi];
-  if(p.gate){ perm[p.k] = "granted"; return permNext(); }
-  if(p.info){ perm[p.k] = "info"; return permNext(); }
-  if(!p.ok()){ perm[p.k] = "unsupported"; return permNext(); }
-  try { await p.ask(); perm[p.k] = "granted"; } catch { perm[p.k] = "denied"; }
-  permNext();
+function renderRows(){
+  const box = $("pList"); box.innerHTML = "";
+  PROWS.forEach(p => {
+    const r = document.createElement("div"); r.className = "prow";
+    const l = document.createElement("div"); const b = document.createElement("b"); b.textContent = p.t; const d = document.createElement("span"); d.className = "d"; d.textContent = p.x; l.append(b, d); r.appendChild(l);
+    if(p.info || perm[p.k]){ const s = document.createElement("span"); s.className = "pst" + (perm[p.k] === "granted" ? " ok" : ""); s.textContent = p.info || PST[perm[p.k]]; r.appendChild(s); }
+    else { const bt = document.createElement("button"); bt.type = "button"; bt.className = "tbtn"; bt.textContent = "İzin ver"; bt.addEventListener("click", () => askPerm(p)); r.appendChild(bt); }
+    box.appendChild(r);
+  });
+}
+function openPanel(){ $("ageCk").checked = !!localStorage.getItem("onb3"); $("oOk").disabled = !$("ageCk").checked; renderRows(); $("onb").hidden = false; }
+$("ageCk").addEventListener("change", e => { $("oOk").disabled = !e.target.checked; });
+$("oAll").addEventListener("click", async () => { for(const p of PROWS){ if(p.ask && !perm[p.k]) await askPerm(p); } });
+$("oOk").addEventListener("click", () => {
+  if(!localStorage.getItem("onb3")){ logConsent("age18", {over18:true}); try { localStorage.setItem("onb3", "1"); } catch {} }
+  $("onb").hidden = true;
 });
-$("permBtn").addEventListener("click", () => { pi = 0; permStep(); });
-if(!localStorage.getItem("onb2")) { pi = 0; permStep(); }
+$("permBtn").addEventListener("click", openPanel);
+if(!localStorage.getItem("onb3")) openPanel();
 </script>
 </body>
 </html>
