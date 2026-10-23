@@ -1,5 +1,12 @@
 # Döndi sürüm notları
 
+## v1.4.1
+- Yazı ve ses eşleşti: sesli cevapta metin, ses başladığı anda ekrana gelir
+- İlk ses parçası kısa tutuldu, konuşma daha erken başlar
+
+## v1.4.0
+- Erkek ses (Gemini TTS, Orus), Ayarlar'dan telefon sesine dönülebilir; hata olursa telefon sesine otomatik düşer
+
 ## v1.3.2
 - Konuşma tanıma hızlandı: sustuğunda ~1 sn içinde gönderilir (önceden tarayıcının uzun sessizlik beklemesine bağlıydı)
 - iPhone/Safari'de sesli cevap için ses çıkışı ilk dokunuşta açılıyor

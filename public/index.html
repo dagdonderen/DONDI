@@ -293,14 +293,14 @@ $("cQ").addEventListener("input", renderList);
 const synth = window.speechSynthesis; let trVoice = null;
 function pickVoice(){ if(!synth) return; const v = synth.getVoices(); trVoice = v.find(x => /^tr/i.test(x.lang)) || null; $("sTts").textContent = "Ses çıkışı: " + (trVoice ? "hazır" : "Türkçe ses bulunamadı"); fillVoices(); }
 if(synth){ pickVoice(); synth.onvoiceschanged = pickVoice; } else $("sTts").textContent = "Ses çıkışı: desteklenmiyor";
-function speak(text, done){
+function speak(text, done, onStart){
   if(!voiceOn){ done && done(); return; }
-  if(settings.voiceKind !== "telefon" && ttsAudio){ speakServer(text, done); return; }
-  speakBrowser(text, done);
+  if(settings.voiceKind !== "telefon" && ttsAudio){ speakServer(text, done, onStart); return; }
+  speakBrowser(text, done, onStart);
 }
-function speakBrowser(text, done){
-  if(!synth){ done && done(); return; }
-  synth.cancel();
+function speakBrowser(text, done, onStart){
+  if(!synth){ onStart && onStart(); done && done(); return; }
+  synth.cancel(); onStart && onStart();
   const plain = text.replace(/\*\*/g,"").replace(/^\s*[-*•]\s+/gm,"").replace(/[#`_]/g,"");
   const parts = plain.match(/[^.!?\n]+[.!?]*/g) || [plain];
   setState("speaking");
@@ -316,7 +316,7 @@ function stopSpeak(){ ttsRun++; if(synth) synth.cancel(); if(ttsAudio){ try { tt
 function chunksOf(text){
   const plain = text.replace(/\*\*/g,"").replace(/^\s*[-*•]\s+/gm,"").replace(/[#`_|]/g,"").replace(/\s+/g," ").trim();
   const sents = plain.match(/[^.!?]+[.!?]*/g) || [plain]; const out = []; let cur = "";
-  for(const s of sents){ if((cur + s).length > 380 && cur){ out.push(cur.trim()); cur = ""; } cur += s + " "; }
+  for(const s of sents){ const lim = out.length ? 380 : 170; if((cur + s).length > lim && cur){ out.push(cur.trim()); cur = ""; } cur += s + " "; }
   if(cur.trim()) out.push(cur.trim()); return out.slice(0, 3);
 }
 async function fetchTts(t){
@@ -325,7 +325,7 @@ async function fetchTts(t){
   const bin = atob(d.audio), arr = new Uint8Array(bin.length); for(let i = 0; i < bin.length; i++) arr[i] = bin.charCodeAt(i);
   return URL.createObjectURL(new Blob([arr], {type: d.mime || "audio/wav"}));
 }
-async function speakServer(text, done){
+async function speakServer(text, done, onStart){
   const run = ++ttsRun, chunks = chunksOf(text); if(!chunks.length){ done && done(); return; }
   setState("speaking");
   try {
@@ -333,11 +333,11 @@ async function speakServer(text, done){
     for(let i = 0; i < chunks.length; i++){
       const url = await next; if(run !== ttsRun) return;
       if(i + 1 < chunks.length) next = fetchTts(chunks[i+1]);
-      await new Promise((res, rej) => { ttsAudio.onended = res; ttsAudio.onerror = rej; ttsAudio.src = url; ttsAudio.play().catch(rej); });
+      await new Promise((res, rej) => { ttsAudio.onended = res; ttsAudio.onerror = rej; ttsAudio.onplaying = () => { if(i === 0 && onStart) onStart(); }; ttsAudio.src = url; ttsAudio.play().catch(rej); });
       if(run !== ttsRun) return;
     }
     done && done();
-  } catch { if(run !== ttsRun) return; speakBrowser(text, done); }
+  } catch { if(run !== ttsRun) return; speakBrowser(text, done, onStart); }
 }
 
 // Ses girişi
@@ -375,13 +375,14 @@ async function send(text, viaVoice, image){
   try{
     const r = await fetch("/api/chat", {method:"POST", headers:{"Content-Type":"application/json"}, body: JSON.stringify({messages: history, image: image || undefined, profile: {name: settings.name, tone: settings.tone}, doc: attached && attached.text ? {name: attached.name, text: attached.text} : undefined, pdf: attached && attached.pdf ? attached.pdf : undefined, location: (()=>{ try { return JSON.parse(localStorage.getItem("loc")||"null"); } catch { return null; } })()})});
     let data = {}; try { data = await r.json(); } catch {}
-    wait.remove();
     if(!r.ok || !data.reply) throw new Error(data.error || "Şu an cevap veremiyorum. Biraz sonra tekrar dene.");
-    history.push({role:"assistant", content:data.reply}); save(); const botEl = addMsg("assistant", data.reply); handleResults(data.results, botEl);
-    cap.className = ""; cap.textContent = data.reply.replace(/\*\*/g,"");
+    history.push({role:"assistant", content:data.reply}); save();
+    let shown = false;
+    const reveal = () => { if(shown) return; shown = true; clearTimeout(revT); wait.remove(); const botEl = addMsg("assistant", data.reply); handleResults(data.results, botEl); cap.className = ""; cap.textContent = data.reply.replace(/\*\*/g,""); };
+    const revT = setTimeout(reveal, 14000);
     busy = false;
-    if(viaVoice && voiceOn && synth) speak(data.reply, () => { setState("idle"); if(auto) setTimeout(listen, 400); });
-    else setState("idle");
+    if(viaVoice && voiceOn && (synth || ttsAudio)) speak(data.reply, () => { reveal(); setState("idle"); if(auto) setTimeout(listen, 400); }, reveal);
+    else { reveal(); setState("idle"); }
   }catch(err){
     wait.remove(); history.pop(); userEl.remove(); syncChips(); busy = false; setState("idle");
     cap.className = ""; cap.textContent = err.message;
@@ -499,7 +500,7 @@ $("voiceBtn").addEventListener("click", e => { voiceOn = !voiceOn; e.currentTarg
 $("autoBtn").addEventListener("click", e => { auto = !auto; e.currentTarget.setAttribute("aria-pressed", auto); });
 function chip(parent, cls, label, text){ const b = document.createElement("button"); b.type = "button"; b.className = cls; b.textContent = label; b.addEventListener("click", () => { unlockTts(); send(text, true); }); parent.appendChild(b); }
 SUG.forEach(([l, t]) => chip($("chips"), "chip", l, t));
-const APP_VERSION = "1.4.0";
+const APP_VERSION = "1.4.1";
 // ---- Ayarlar (v1.1) ----
 function fillVoices(){
   if(!synth) return; const sel = $("sVoice"); sel.innerHTML = "";
