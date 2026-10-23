@@ -18,6 +18,12 @@ function profileText(p) {
   let t = "";
   if (p.name) t += `\nKullanıcının adı: ${p.name}. Ona zaman zaman adıyla hitap et.`;
   if (p.tone) t += `\n${TONES[p.tone]}`;
+  const f = p.fin;
+  if (f && (f.sektor || f.gelir || f.gider || f.nakit || f.borc)) {
+    t += `\nKullanıcının kendi girdiği işletme profili (tahmini; hesaplarda varsayılan olarak kullan ama önemli rakamları teyit et): ` +
+      [f.sektor && `sektör: ${f.sektor}`, f.gelir && `aylık gelir: ${f.gelir} TL`, f.gider && `aylık sabit gider: ${f.gider} TL`,
+       f.nakit && `mevcut nakit: ${f.nakit} TL`, f.borc && `toplam borç: ${f.borc} TL`, f.kdv != null && `KDV: %${f.kdv}`].filter(Boolean).join(", ") + ".";
+  }
   return t;
 }
 
@@ -27,7 +33,7 @@ Bu mesajla birlikte kullanıcının kamerasından tek bir kare geldi. Görüntü
 - Çevre sorulursa: görünenleri kısaca anlat.
 - Cilt sorulursa: görünen özellikleri (renk, doku, kuruluk, kızarıklık, sivilce gibi) betimle ve genel bakım önerileri ver. Tanı koyma. Ben, yara ya da şüpheli bir değişiklik için dermatoloğa gitmeyi öner.
 - Kişileri yüzlerinden tanıma ve kim olduklarını tahmin etme; yalnızca görünür özelliklerini betimle.
-- Görüntü bulanık, karanlık ya da belirsizse bunu söyle ve yeniden denemesini iste.`;
+- Görüntü bulanık, karanlık ya da belirsizse bunu söyle ve yeniden denemesini iste.\n- Görüntü fatura, fiş, ekstre ya da makbuzsa: satıcı, tarih, kalemler, KDV ve toplam gibi alanları yalnızca görünen rakamlarla çıkar, okunmayanı \"okunamadı\" diye işaretle, sonucu tablo olarak ver ve kullanıcıdan doğrulamasını iste.`;
 
 function systemPrompt(ctx) {
   const now = new Intl.DateTimeFormat("tr-TR", {
@@ -113,6 +119,34 @@ async function getWeather(city, loc) {
   };
 }
 
+async function webSearch(query, apiKey) {
+  const q = String(query || "").slice(0, 200).trim();
+  if (!q) return { error: "Sorgu boş." };
+  const ctrl = new AbortController();
+  const timer = setTimeout(() => ctrl.abort(), 15000);
+  try {
+    const r = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/${MODEL}:generateContent`, {
+      method: "POST",
+      headers: { "Content-Type": "application/json", "x-goog-api-key": apiKey },
+      body: JSON.stringify({
+        contents: [{ role: "user", parts: [{ text: q + "\n\nKısa, güncel ve kaynaklı yanıt ver. Tarihleri ve rakamları belirt." }] }],
+        tools: [{ google_search: {} }],
+        generationConfig: { maxOutputTokens: 800 },
+      }),
+      signal: ctrl.signal,
+    });
+    const d = await r.json().catch(() => ({}));
+    if (!r.ok) { console.error("Arama hata:", r.status, JSON.stringify(d).slice(0, 300)); return { error: "Web araması şu an çalışmadı." }; }
+    const cand = d.candidates?.[0];
+    const text = (cand?.content?.parts || []).map((p) => p.text || "").join("").trim();
+    const sources = (cand?.groundingMetadata?.groundingChunks || []).map((c) => c.web).filter(Boolean).slice(0, 4).map((w) => ({ baslik: w.title, adres: w.uri }));
+    return text ? { ozet: text.slice(0, 1800), kaynaklar: sources } : { error: "Sonuç bulunamadı." };
+  } catch (e) {
+    console.error("Arama istek hatası:", e?.message);
+    return { error: "Web araması zaman aşımına uğradı." };
+  } finally { clearTimeout(timer); }
+}
+
 const TOOLS = [{
   functionDeclarations: [...CFO_DECLS, ...ACTION_DECLS, {
     name: "get_weather",
@@ -180,6 +214,8 @@ async function tryModel(model, apiKey, base, ctx) {
           if (CFO_TOOLS[fc.name]) {
             result = CFO_TOOLS[fc.name](fc.args || {});
             if (!result.error) collected.push({ kind: fc.name, data: result, input: fc.args || {} });
+          } else if (fc.name === "web_search") {
+            result = await webSearch(fc.args?.query, apiKey);
           } else if (ACTION_TOOLS[fc.name]) {
             result = ACTION_TOOLS[fc.name](fc.args || {});
             if (!result.error) collected.push({ kind: fc.name, data: result });
@@ -241,6 +277,15 @@ async function checkLimit(ip) {
   }
 }
 
+function cleanFin(f) {
+  if (!f || typeof f !== "object") return null;
+  const n = (v) => { const x = Number(v); return Number.isFinite(x) && x >= 0 && x < 1e12 ? Math.round(x) : null; };
+  return {
+    sektor: String(f.sektor || "").replace(/[^\p{L}\p{N} ,.&/-]/gu, "").trim().slice(0, 60),
+    gelir: n(f.gelir), gider: n(f.gider), nakit: n(f.nakit), borc: n(f.borc), kdv: n(f.kdv),
+  };
+}
+
 export default async function handler(req, res) {
   if (req.method !== "POST") return res.status(405).json({ error: "Yalnızca POST." });
 
@@ -248,6 +293,7 @@ export default async function handler(req, res) {
   const prof = {
     name: String(profile?.name || "").replace(/[^\p{L}\p{N} '’.-]/gu, "").trim().slice(0, 30),
     tone: Object.hasOwn(TONES, profile?.tone) ? profile.tone : "",
+    fin: cleanFin(profile?.fin),
   };
   const img = typeof image === "string" && image.length < 1500000 && /^[A-Za-z0-9+/=]+$/.test(image) ? image : null;
   const docText = doc && typeof doc.text === "string" ? { name: String(doc.name || "belge").replace(/[^\p{L}\p{N} ._-]/gu, "").slice(0, 80), text: doc.text.slice(0, 40000) } : null;

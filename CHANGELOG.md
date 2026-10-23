@@ -1,5 +1,19 @@
 # Döndi sürüm notları
 
+## v1.7.0
+- Senaryo karşılaştırma aracı (fiyat, adet, maliyet, sabit gider, tek seferlik harcama)
+- Tarihli ödeme/vade hatırlatıcıları ("her ayın 26'sı KDV")
+- Word (.doc) raporu: tüm CFO sonuçlarında Excel / Word / CSV / PDF
+- İşletme profili (Ayarlar): sektör, gelir, gider, nakit, borç, KDV; hesaplarda varsayılan
+- Web arama aracı (Google Arama ile kaynaklı güncel veri: kur, faiz, mevzuat)
+- Fatura/fiş/ekstre fotoğrafı veya PDF'inden kalem çıkarma kuralları
+- Yeni kısayollar: Ya şöyle olsa?, Vergi takvimi, Güncel kur
+
+## v1.6.0
+- Kamera ekranı yeni tasarım
+- 8 erkek ses seçeneği (Orus, Charon, Algenib…)
+- Açık tema ve büyük yazı boyutu
+
 ## v1.5.0
 - Sohbet modu: küreye bir kez dokununca Döndi sürekli dinler ve cevap verir; tekrar dokununca durur
 - Seni duymazsa kendini yeniden başlatır; art arda 6 kez duymazsa durup uyarır

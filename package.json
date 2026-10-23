@@ -1,9 +1,6 @@
 {
-  "name": "asistan",
+  "name": "dondi",
   "version": "1.0.0",
   "private": true,
-  "type": "module",
-  "dependencies": {
-    "@anthropic-ai/sdk": "^0.65.0"
-  }
+  "type": "module"
 }

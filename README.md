@@ -1,9 +1,14 @@
-# Döndi – Vercel Kurulumu
+# Döndi
 
-1. GitHub'da yeni repo aç, bu klasördeki her şeyi yükle (api ve public klasörleriyle birlikte).
-2. vercel.com → GitHub ile giriş → Add New → Project → reponu seç.
-3. Framework Preset: "Other" (build ayarlarına dokunma).
-4. Environment Variables: ANTHROPIC_API_KEY = (sk-ant-... anahtarın)
-5. Deploy. Verdiği adresi telefonda aç:
-   - iPhone: Safari → Paylaş → Ana Ekrana Ekle
-   - Android: Chrome → ⋮ → Uygulamayı yükle
+Sesle ve yazıyla konuşan, kamerayla görebilen, nakit akışı ve maliyet hesabı yapabilen kişisel asistan (PWA).
+Marka: DAĞDÖNDEREN · Yalnızca 18 yaş ve üzeri.
+
+- `public/` — arayüz (index.html, gizlilik.html, manifest, ikonlar)
+- `api/chat.js` — Gemini sohbet, araçlar (hava, CFO, hatırlatıcı, web arama)
+- `api/tts.js` — Döndi erkek sesi (Gemini TTS)
+- `api/consent.js` — rıza kayıtları (Upstash Redis)
+- `lib/cfo.js` — nakit akışı, maliyet, senaryo hesapları
+
+Kurulum ve kontrol listesi: [KURULUM.md](KURULUM.md) · Sürüm notları: [CHANGELOG.md](CHANGELOG.md)
+
+Yerelde denemek için: `npx vercel dev` (ortam değişkenleri gerekir).

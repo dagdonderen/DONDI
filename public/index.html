@@ -38,19 +38,19 @@ button:focus-visible{outline:2px solid var(--c);outline-offset:2px}
 .cam{position:fixed;inset:0;z-index:8;background:#000;display:flex;flex-direction:column}
 .cam[hidden]{display:none}
 .cam video{position:absolute;inset:0;width:100%;height:100%;object-fit:cover}
-.cam .frame{position:absolute;inset:14% 8% 38%;pointer-events:none;background:
- linear-gradient(var(--c),var(--c)) 0 0/28px 2px,linear-gradient(var(--c),var(--c)) 0 0/2px 28px,
- linear-gradient(var(--c),var(--c)) 100% 0/28px 2px,linear-gradient(var(--c),var(--c)) 100% 0/2px 28px,
- linear-gradient(var(--c),var(--c)) 0 100%/28px 2px,linear-gradient(var(--c),var(--c)) 0 100%/2px 28px,
- linear-gradient(var(--c),var(--c)) 100% 100%/28px 2px,linear-gradient(var(--c),var(--c)) 100% 100%/2px 28px;background-repeat:no-repeat}
+.cam .frame{position:absolute;inset:16% 9% 40%;pointer-events:none;border-radius:26px;box-shadow:0 0 0 9999px rgba(10,8,6,.28);border:2px solid color-mix(in srgb,var(--c) 70%,transparent)}
+.cam .frame::before,.cam .frame::after{content:"";position:absolute;left:50%;top:50%;width:22px;height:22px;margin:-11px;border:2px solid var(--c);border-radius:50%;opacity:.8}
+.cam .frame::after{width:4px;height:4px;margin:-2px;background:var(--c);border:0}
 .camtop{position:relative;display:flex;justify-content:space-between;padding:calc(12px + env(safe-area-inset-top)) 14px}
-.camtop .tbtn{background:rgba(10,8,6,.7)}
+.camtop .tbtn{background:rgba(10,8,6,.62);backdrop-filter:blur(10px);-webkit-backdrop-filter:blur(10px);border-radius:14px;padding:10px 14px;color:#fff;border-color:rgba(255,255,255,.2)}
 .cambot{position:relative;margin-top:auto;padding:12px 14px calc(14px + env(safe-area-inset-bottom));background:linear-gradient(transparent,rgba(10,8,6,.92) 28%);display:flex;flex-direction:column;align-items:center;gap:8px}
-.cam #cap{background:rgba(10,8,6,.75);border:1px solid var(--line);border-radius:8px;padding:8px 12px;min-height:0;width:100%;max-width:520px;-webkit-line-clamp:5}
+.cam #cap{background:rgba(10,8,6,.7);backdrop-filter:blur(10px);-webkit-backdrop-filter:blur(10px);color:#fff;border:1px solid rgba(255,255,255,.18);border-radius:18px;padding:8px 12px;min-height:0;width:100%;max-width:520px;-webkit-line-clamp:5}
 .camrow{display:flex;gap:8px;width:100%;max-width:520px}
-.camrow input{flex:1;border:1px solid var(--line);border-radius:10px;padding:9px 12px;font:inherit;background:rgba(10,8,6,.85);color:var(--ink)}
-.camrow button{border:1px solid var(--c);background:rgba(10,8,6,.85);color:var(--c);border-radius:10px;padding:0 14px;font-weight:600}
-.cam .chip{background:rgba(10,8,6,.6)}
+.camrow input{flex:1;border:1px solid rgba(255,255,255,.2);border-radius:18px;padding:11px 14px;font:inherit;background:rgba(10,8,6,.75);color:#fff}
+.camrow button{border:1px solid rgba(255,255,255,.25);background:rgba(10,8,6,.75);color:#fff;border-radius:18px;padding:0 16px;font-weight:600}
+.camrow #camSend{border:0;background:linear-gradient(135deg,var(--c),var(--v));color:#06101e}
+.cam .chip{background:rgba(10,8,6,.6);color:#fff;border-color:rgba(255,255,255,.25)}
+.camrow input{min-width:0}.camrow button{flex:none}
 .onb .card{max-height:92dvh;overflow:auto}
 .ck{display:flex;gap:10px;align-items:flex-start;margin:12px 0 4px;font-size:14px;line-height:1.45}
 .ck input{margin-top:3px;width:18px;height:18px;accent-color:#3de1ff;flex:none}
@@ -67,7 +67,11 @@ button:focus-visible{outline:2px solid var(--c);outline-offset:2px}
 .pst{font-size:12px;letter-spacing:.08em;text-transform:uppercase;color:var(--mut);white-space:nowrap}.pst.ok{color:var(--c)}
 .onb .tbtn:disabled{opacity:.4;cursor:not-allowed}
 
-:root{--bg:#0b0907;--c:#3de1ff;--v:#8b6cff;--ink:#e8eefc;--mut:#8a97b8;--line:rgba(255,255,255,.12);--panel:rgba(30,24,17,.72)}
+:root{--bg:#0b0907;--c:#3de1ff;--v:#8b6cff;--ink:#e8eefc;--mut:#8a97b8;--line:rgba(255,255,255,.12);--panel:rgba(30,24,17,.72);--pop:rgba(22,18,13,.97);--inp:rgba(0,0,0,.28);--botbg:rgba(255,255,255,.07);--hov:rgba(255,255,255,.07);--chipbg:rgba(255,255,255,.05)}
+:root[data-mode=light]{--bg:#f6f1e8;--ink:#1b1712;--mut:#6b6254;--line:rgba(0,0,0,.15);--panel:rgba(255,255,255,.78);--pop:rgba(255,252,246,.99);--inp:rgba(255,255,255,.9);--botbg:rgba(0,0,0,.05);--hov:rgba(0,0,0,.06);--chipbg:rgba(255,255,255,.7)}
+:root[data-mode=light] body::before{opacity:.45}
+:root[data-big="1"]{font-size:19px}
+:root[data-big="1"] .msg,:root[data-big="1"] #cap{font-size:17px}
 *{-webkit-tap-highlight-color:transparent}
 body{background:var(--bg);color:var(--ink);font:16px/1.5 system-ui,-apple-system,"Segoe UI",Roboto,sans-serif;height:100dvh;overflow:hidden;display:flex;flex-direction:column;position:relative}
 body::before{content:"";position:fixed;inset:0;pointer-events:none;background:radial-gradient(60% 45% at 15% 0%,color-mix(in srgb,var(--v) 38%,transparent),transparent 70%),radial-gradient(55% 45% at 100% 100%,color-mix(in srgb,var(--c) 26%,transparent),transparent 70%)}
@@ -76,10 +80,10 @@ body::before{content:"";position:fixed;inset:0;pointer-events:none;background:ra
 .clock{margin-left:auto;text-align:right;font-variant-numeric:tabular-nums;line-height:1.1}
 .clock b{font-size:17px;font-weight:600}.clock span{display:none;font-size:11px;color:var(--mut);text-transform:capitalize;margin-left:8px}
 .ibtn{width:42px;height:42px;display:grid;place-items:center;border:1px solid var(--line);background:var(--panel);border-radius:14px;color:var(--ink)}
-.menu{position:absolute;right:16px;top:calc(56px + env(safe-area-inset-top));min-width:230px;background:rgba(22,18,13,.97);border:1px solid var(--line);border-radius:16px;padding:6px;box-shadow:0 18px 50px rgba(0,0,0,.55)}
+.menu{position:absolute;right:16px;top:calc(56px + env(safe-area-inset-top));min-width:230px;background:var(--pop);border:1px solid var(--line);border-radius:16px;padding:6px;box-shadow:0 18px 50px rgba(0,0,0,.55)}
 .menu[hidden]{display:none}
 .mi{display:flex;align-items:center;justify-content:space-between;width:100%;text-align:left;border:0;background:none;color:var(--ink);padding:12px 12px;border-radius:10px;font-size:15px;text-decoration:none}
-.mi:hover{background:rgba(255,255,255,.07)}
+.mi:hover{background:var(--hov)}
 .mi[aria-pressed]::after{content:"Kapalı";font-size:12px;color:var(--mut)}
 .mi[aria-pressed=true]::after{content:"Açık";color:var(--c)}
 .mi.sm{font-size:13px;color:var(--mut)}.menu hr{border:0;border-top:1px solid var(--line);margin:4px 6px}
@@ -108,8 +112,8 @@ main{position:relative;z-index:1;width:100%;max-width:760px;margin:0 auto;flex:1
 #status{font-size:11px;letter-spacing:.28em;text-transform:uppercase;color:var(--c)}
 #cap{max-width:560px;text-align:center;color:var(--ink);font-size:15px;overflow:hidden;display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;min-height:1.5em}
 #cap.me{color:var(--mut)}
-.chips{display:flex;flex-wrap:wrap;gap:8px;justify-content:center}
-.chip{border:1px solid var(--line);background:rgba(255,255,255,.05);border-radius:999px;padding:7px 14px;font-size:13px;color:var(--ink)}
+.chips{display:flex;flex-wrap:nowrap;gap:8px;overflow-x:auto;max-width:100%;scrollbar-width:none;padding:2px 2px}.chips::-webkit-scrollbar{display:none}
+.chip{flex:none;white-space:nowrap;border:1px solid var(--line);background:var(--chipbg);border-radius:999px;padding:7px 14px;font-size:13px;color:var(--ink)}
 .chip:hover{border-color:var(--c)}
 .camcta{display:flex;align-items:center;justify-content:center;gap:10px;width:100%;max-width:420px;padding:12px 18px;border-radius:16px;border:1px solid var(--line);background:var(--panel);color:var(--ink);font-weight:600;font-size:15px}
 .camcta svg{width:20px;height:20px;stroke:var(--c);fill:none;stroke-width:1.9;stroke-linecap:round;stroke-linejoin:round}
@@ -121,14 +125,14 @@ main{position:relative;z-index:1;width:100%;max-width:760px;margin:0 auto;flex:1
 #log{flex:1;overflow-y:auto;padding:12px;display:flex;flex-direction:column;gap:10px;min-height:0}
 .msg{max-width:88%;padding:9px 14px;border-radius:18px;overflow-wrap:anywhere;font-size:15px}
 .me{align-self:flex-end;background:linear-gradient(135deg,color-mix(in srgb,var(--v) 70%,#000),color-mix(in srgb,var(--c) 40%,var(--v)));border-bottom-right-radius:6px;white-space:pre-wrap;color:#fff}
-.bot{align-self:flex-start;background:rgba(255,255,255,.07);border:1px solid var(--line);border-bottom-left-radius:6px}
+.bot{align-self:flex-start;background:var(--botbg);border:1px solid var(--line);border-bottom-left-radius:6px}
 .chat form{display:flex;align-items:flex-end;gap:8px;padding:8px 10px calc(8px + env(safe-area-inset-bottom) * 0)}
-textarea{flex:1;resize:none;max-height:110px;border:1px solid var(--line);border-radius:18px;padding:10px 14px;font:inherit;background:rgba(0,0,0,.28);color:var(--ink)}
+textarea{flex:1;resize:none;max-height:110px;border:1px solid var(--line);border-radius:18px;padding:10px 14px;font:inherit;background:var(--inp);color:var(--ink)}
 textarea:focus{outline:none;border-color:var(--c)}
 #send{border:0;background:linear-gradient(135deg,var(--c),var(--v));color:#06101e;border-radius:18px;padding:0 18px;height:44px;font-weight:700}
 #send:disabled{opacity:.4}
 #clip{border:1px solid var(--line);background:transparent;border-radius:50%;width:44px;height:44px;font-size:18px;flex:none}
-.hint{position:fixed;z-index:15;left:16px;right:16px;bottom:calc(86px + env(safe-area-inset-bottom));max-width:420px;margin:0 auto;background:rgba(22,18,13,.97);border:1px solid var(--c);border-radius:18px;padding:14px 16px 18px;box-shadow:0 18px 50px rgba(0,0,0,.55);animation:rise .35s ease}
+.hint{position:fixed;z-index:15;left:16px;right:16px;bottom:calc(86px + env(safe-area-inset-bottom));max-width:420px;margin:0 auto;background:var(--pop);border:1px solid var(--c);border-radius:18px;padding:14px 16px 18px;box-shadow:0 18px 50px rgba(0,0,0,.55);animation:rise .35s ease}
 .hint[hidden]{display:none}.hint b{font-size:14px;letter-spacing:.06em;color:var(--c)}.hint p{margin:6px 0 0;font-size:14px}.hint .sys{color:var(--mut);font-size:12px}
 .hint .hx{position:absolute;right:8px;top:6px;background:none;border:0;color:var(--mut);font-size:22px;width:36px;height:36px}
 .hint .bar{position:absolute;left:16px;right:16px;bottom:8px;height:3px;border-radius:3px;background:linear-gradient(90deg,var(--c),var(--v));transform-origin:left;animation:drain 15s linear forwards}
@@ -197,7 +201,18 @@ textarea:focus{outline:none;border-color:var(--c)}
   <label class="fld">Adın<input id="sName" maxlength="30" placeholder="İstersen yaz" autocomplete="off"></label>
   <label class="fld">Konuşma tonu<select id="sTone"><option value="samimi">Samimi</option><option value="resmi">Resmi</option><option value="enerjik">Enerjik</option><option value="kisa">Kısa ve net</option></select></label>
   <label class="fld">Konuşma sesi<select id="sVoiceKind"><option value="dondi">Döndi sesi (erkek, yapay zekâ)</option><option value="telefon">Telefonun kendi sesi</option></select></label>
+  <label class="fld">Döndi sesi (erkek)<select id="sTtsVoice"><option value="Orus">Orus · kararlı</option><option value="Charon">Charon · bilgilendirici, derin</option><option value="Algenib">Algenib · kalın, tok</option><option value="Alnilam">Alnilam · net, güçlü</option><option value="Algieba">Algieba · yumuşak, akıcı</option><option value="Fenrir">Fenrir · hareketli</option><option value="Rasalgethi">Rasalgethi · bilgili</option><option value="Sadaltager">Sadaltager · uzman tonu</option></select></label>
   <label class="fld">Telefon sesi seçimi<select id="sVoice"></select></label>
+  <label class="fld">Görünüm<select id="sMode"><option value="dark">Koyu</option><option value="light">Açık</option></select></label>
+  <label class="fld">Yazı boyutu<select id="sBig"><option value="0">Normal</option><option value="1">Büyük</option></select></label>
+  <div class="fld"><b>İşletme profili (isteğe bağlı)</b><br><span style="font-size:12px">CFO hesaplarında varsayılan olarak kullanılır. Rakamlar tahmini olabilir.</span>
+    <input id="fSek" maxlength="60" placeholder="Sektör, örn. market, tekstil" autocomplete="off">
+    <input id="fGel" inputmode="numeric" placeholder="Aylık gelir (TL)" autocomplete="off">
+    <input id="fGid" inputmode="numeric" placeholder="Aylık sabit gider (TL)" autocomplete="off">
+    <input id="fNak" inputmode="numeric" placeholder="Mevcut nakit (TL)" autocomplete="off">
+    <input id="fBor" inputmode="numeric" placeholder="Toplam borç (TL)" autocomplete="off">
+    <input id="fKdv" inputmode="numeric" placeholder="KDV oranı %, örn. 20" autocomplete="off"></div>
+  <p class="nt">İşletme profili cihazında saklanır; cevap üretmek için sohbetle birlikte sunucuya ve Google'a gönderilir.</p>
   <label class="fld">Konuşma hızı: <span id="sRateV">1x</span><input id="sRate" type="range" min="0.7" max="1.3" step="0.1" value="1"></label>
   <div class="fld">Tema<div id="sTheme"><button class="tbtn" data-t="altin" type="button">Altın</button><button class="tbtn" data-t="mavi" type="button">Mavi</button><button class="tbtn" data-t="mor" type="button">Mor</button><button class="tbtn" data-t="yesil" type="button">Yeşil</button></div></div>
   <p class="nt">Tercihlerin cihazında saklanır. Adın ve tonun, cevap üretmek için sunucuya ve Google'a gönderilir.</p>
@@ -223,7 +238,7 @@ textarea:focus{outline:none;border-color:var(--c)}
 <script>
 const $ = id => document.getElementById(id);
 const core = $("core"), status = $("status"), cap = $("cap"), log = $("log"), input = $("t"), sendBtn = $("send");
-const SUG = [["Hava durumu","Bugün hava nasıl olacak? Şehrimi söyleyeyim."],["Plan yap","Yarın için 3 maddelik bir günlük plan hazırla."],["Mesaj yaz","Bir arkadaşıma doğum günü mesajı yazar mısın?"],["Özetle","Sana yapıştıracağım metni 3 cümlede özetler misin?"],["Nakit akışı","12 aylık nakit akış tablosu çıkaralım. Sorularını sor."],["Maliyet hesabı","Bir ürünün birim maliyetini ve satış fiyatını hesaplayalım."]];
+const SUG = [["Hava durumu","Bugün hava nasıl olacak? Şehrimi söyleyeyim."],["Plan yap","Yarın için 3 maddelik bir günlük plan hazırla."],["Mesaj yaz","Bir arkadaşıma doğum günü mesajı yazar mısın?"],["Özetle","Sana yapıştıracağım metni 3 cümlede özetler misin?"],["Nakit akışı","12 aylık nakit akış tablosu çıkaralım. Sorularını sor."],["Maliyet hesabı","Bir ürünün birim maliyetini ve satış fiyatını hesaplayalım."],["Ya şöyle olsa?","Fiyat artırma ya da reklam harcaması gibi senaryoları karşılaştıralım. Bana ne sormalısın?"],["Vergi takvimi","Bu ay ve gelecek ay ödemem gereken vergi ve SGK tarihleri için hatırlatıcı kuralım. Önce işletme türümü sor."],["Güncel kur","Bugünkü dolar ve euro kuru kaç?"]];
 let chats = []; try { chats = JSON.parse(localStorage.getItem("chats") || "[]"); } catch {}
 if(!chats.length){ let old = []; try { old = JSON.parse(localStorage.getItem("chat") || "[]"); } catch {} chats = [{id:Date.now().toString(36), title:"", ts:Date.now(), msgs:old}]; }
 let curId = null; try { curId = localStorage.getItem("curChat"); } catch {}
@@ -231,8 +246,9 @@ let cur = chats.find(c => c.id === curId) || chats[0];
 let history = cur.msgs;
 let voiceOn = true, auto = false, busy = false, state = "idle", camOn = false, stream = null, facing = "environment";
 const save = () => { cur.ts = Date.now(); if(!cur.title){ const f = history.find(m => m.role==="user"); if(f) cur.title = f.content.slice(0,40); } try { localStorage.setItem("chats", JSON.stringify(chats)); localStorage.setItem("curChat", cur.id); } catch {} };
+const THEMES_LIGHT = {altin:["#b4600a","#c0431f"], mavi:["#0b7f9e","#5b3fd0"], mor:["#6d4fd6","#0b7f9e"], yesil:["#0b8a58","#0b7f9e"]};
 const THEMES = {altin:["#f0b94a","#d9733f"], mavi:["#3de1ff","#8b6cff"], mor:["#b79cff","#3de1ff"], yesil:["#4dffb0","#3de1ff"]};
-let settings = {name:"", tone:"samimi", voice:"", rate:1, theme:"altin", voiceKind:"dondi"};
+let settings = {name:"", tone:"samimi", voice:"", rate:1, theme:"altin", voiceKind:"dondi", ttsVoice:"Orus", mode:"dark", big:"0", fin:{}};
 try { Object.assign(settings, JSON.parse(localStorage.getItem("settings") || "{}")); } catch {}
 const saveSettings = () => { try { localStorage.setItem("settings", JSON.stringify(settings)); } catch {} };
 const cleanName = s => String(s || "").replace(/[^\p{L}\p{N} '’.-]/gu, "").trim().slice(0, 30);
@@ -327,7 +343,7 @@ function chunksOf(text){
   if(cur.trim()) out.push(cur.trim()); return out.slice(0, 3);
 }
 async function fetchTts(t){
-  const r = await fetch("/api/tts", {method:"POST", headers:{"Content-Type":"application/json"}, body: JSON.stringify({text:t})});
+  const r = await fetch("/api/tts", {method:"POST", headers:{"Content-Type":"application/json"}, body: JSON.stringify({text:t, voice: settings.ttsVoice || "Orus"})});
   const d = await r.json().catch(() => ({})); if(!r.ok || !d.audio) throw new Error("tts");
   const bin = atob(d.audio), arr = new Uint8Array(bin.length); for(let i = 0; i < bin.length; i++) arr[i] = bin.charCodeAt(i);
   return URL.createObjectURL(new Blob([arr], {type: d.mime || "audio/wav"}));
@@ -377,7 +393,7 @@ async function send(text, viaVoice, image){
   history.push({role:"user", content:text}); syncChips(); const userEl = addMsg("user", image ? "[Kamera] " + text : (attached ? "[Belge: " + attached.name + "] " + text : text));
   let wait = document.createElement("div"); wait.className = "msg bot"; wait.textContent = "…"; log.appendChild(wait);
   try{
-    const r = await fetch("/api/chat", {method:"POST", headers:{"Content-Type":"application/json"}, body: JSON.stringify({messages: history, image: image || undefined, profile: {name: settings.name, tone: settings.tone}, doc: attached && attached.text ? {name: attached.name, text: attached.text} : undefined, pdf: attached && attached.pdf ? attached.pdf : undefined, location: (()=>{ try { return JSON.parse(localStorage.getItem("loc")||"null"); } catch { return null; } })()})});
+    const r = await fetch("/api/chat", {method:"POST", headers:{"Content-Type":"application/json"}, body: JSON.stringify({messages: history, image: image || undefined, profile: {name: settings.name, tone: settings.tone, fin: settings.fin}, doc: attached && attached.text ? {name: attached.name, text: attached.text} : undefined, pdf: attached && attached.pdf ? attached.pdf : undefined, location: (()=>{ try { return JSON.parse(localStorage.getItem("loc")||"null"); } catch { return null; } })()})});
     let data = {}; try { data = await r.json(); } catch {}
     if(!r.ok || !data.reply) throw new Error(data.error || "Şu an cevap veremiyorum. Biraz sonra tekrar dene.");
     history.push({role:"assistant", content:data.reply}); save();
@@ -462,6 +478,7 @@ const COST_LBL = {adet:"Adet",degisken_birim_maliyet:"Değişken birim maliyet",
 function sheetOf(r){
   const d = r.data;
   if(r.kind === "cash_flow_table"){ const rows = d.aylar.map(x => [x.ay, x.gelir, x.gider, x.net, x.kapanis_bakiye]); rows.push(["TOPLAM", d.toplam_gelir, d.toplam_gider, d.toplam_net, ""]); return {name:"Nakit Akışı", head:["Ay","Gelir","Gider","Net","Kapanış bakiyesi"], rows, note:"Açılış bakiyesi: " + d.acilis_bakiye + " | En düşük bakiye: " + d.en_dusuk_bakiye + " (" + d.en_dusuk_bakiye_ayi + ")"}; }
+  if(r.kind === "scenario_compare"){ return {name:"Senaryo Karşılaştırma", head:["Senaryo","Aylık gelir","Aylık kâr","Kâr marjı %","Kapanış nakit","En düşük nakit","Başabaş ciro"], rows: d.senaryolar.map(x => [x.senaryo, x.aylik_gelir, x.aylik_kar, x.kar_marji_pct, x.kapanis_nakit, x.en_dusuk_nakit, x.basabas_aylik_ciro == null ? "-" : x.basabas_aylik_ciro]), note:"Süre: " + d.ay + " ay | Açılış nakit: " + d.acilis_nakit + " | En iyi: " + d.en_iyi_senaryo}; }
   return {name:"Maliyet Hesabı", head:["Kalem","Değer"], rows: Object.entries(d).filter(([k,v]) => COST_LBL[k] && v != null).map(([k,v]) => [COST_LBL[k], v])};
 }
 function exportCsv(sh){ const q = v => '"' + String(v).replace(/"/g,'""').replace(/^(\d+)\.(\d+)$/, "$1,$2") + '"'; const csv = "﻿" + [sh.head, ...sh.rows].map(r => r.map(q).join(";")).join("\r\n"); dl(sh.name.replace(/\s/g,"_") + ".csv", new Blob([csv], {type:"text/csv;charset=utf-8"})); }
@@ -472,14 +489,19 @@ function exportPdf(sh){
   w.document.write('<!doctype html><meta charset="utf-8"><title>' + esc2(sh.name) + '</title><style>body{font:14px sans-serif;padding:24px}table{border-collapse:collapse;width:100%}th,td{border:1px solid #999;padding:6px 10px;text-align:right}th:first-child,td:first-child{text-align:left}th{background:#eee}small{color:#555}</style><h2>' + esc2(sh.name) + '</h2><table><thead><tr>' + sh.head.map(h => "<th>" + esc2(h) + "</th>").join("") + "</tr></thead><tbody>" + sh.rows.map(r => "<tr>" + r.map(c => "<td>" + fm(c) + "</td>").join("") + "</tr>").join("") + "</tbody></table><p><small>" + esc2(sh.note || "") + "<br>Döndi tarafından oluşturuldu; yatırım/vergi tavsiyesi değildir. " + new Date().toLocaleDateString("tr-TR") + "</small></p><script>onload=()=>print()<\/script>");
   w.document.close();
 }
+function exportWord(sh){
+  const fm = v => typeof v === "number" ? v.toLocaleString("tr-TR", {maximumFractionDigits:2}) : esc2(v);
+  const html = '<html xmlns:o="urn:schemas-microsoft-com:office:office" xmlns:w="urn:schemas-microsoft-com:office:word"><head><meta charset="utf-8"><title>' + esc2(sh.name) + '</title><style>body{font-family:Calibri,Arial,sans-serif;font-size:11pt}table{border-collapse:collapse;width:100%}th,td{border:1px solid #999;padding:4px 8px;text-align:right}th:first-child,td:first-child{text-align:left}th{background:#eee}</style></head><body><h2>' + esc2(sh.name) + '</h2><p>' + new Date().toLocaleDateString("tr-TR") + '</p><table><thead><tr>' + sh.head.map(h => "<th>" + esc2(h) + "</th>").join("") + "</tr></thead><tbody>" + sh.rows.map(r => "<tr>" + r.map(c => "<td>" + fm(c) + "</td>").join("") + "</tr>").join("") + "</tbody></table><p>" + esc2(sh.note || "") + '</p><p style="color:#666;font-size:9pt">Döndi tarafından oluşturuldu. Yatırım, vergi veya muhasebe tavsiyesi değildir; önemli kararlarda mali müşavire danışın.</p></body></html>';
+  dl(sh.name.replace(/\s/g,"_") + ".doc", new Blob(["\ufeff", html], {type:"application/msword"}));
+}
 function mkBtn(label, fn){ const b = document.createElement("button"); b.type = "button"; b.textContent = label; b.onclick = fn; return b; }
 function handleResults(results, el){
   if(!Array.isArray(results) || !results.length) return;
   const box = document.createElement("div"); box.className = "acts";
   results.forEach(r => {
-    if(r.kind === "set_reminder"){ addRem(r.data); box.appendChild(mkBtn("⏰ " + r.data.in_minutes + " dk sonra kuruldu", () => {})); }
+    if(r.kind === "set_reminder"){ addRem(r.data); box.appendChild(mkBtn("⏰ " + (r.data.at ? r.data.at.replace("T"," ") : r.data.in_minutes + " dk sonra") + " · " + r.data.text.slice(0,24), () => {})); }
     else if(r.kind === "add_to_calendar"){ const ics = icsFor(r.data); if(ics) box.appendChild(mkBtn("📅 Takvime ekle (" + r.data.title + ")", () => dl("etkinlik.ics", new Blob([ics], {type:"text/calendar;charset=utf-8"})))); }
-    else if(r.kind === "cash_flow_table" || r.kind === "cost_calc"){ const sh = sheetOf(r); box.append(mkBtn("Excel", () => exportXlsx(sh)), mkBtn("CSV", () => exportCsv(sh)), mkBtn("PDF", () => exportPdf(sh))); }
+    else if(r.kind === "cash_flow_table" || r.kind === "cost_calc" || r.kind === "scenario_compare"){ const sh = sheetOf(r); box.append(mkBtn("Excel", () => exportXlsx(sh)), mkBtn("Word", () => exportWord(sh)), mkBtn("CSV", () => exportCsv(sh)), mkBtn("PDF", () => exportPdf(sh))); }
   });
   if(box.children.length && el) el.appendChild(box);
 }
@@ -504,7 +526,7 @@ $("voiceBtn").addEventListener("click", e => { voiceOn = !voiceOn; e.currentTarg
 $("autoBtn").addEventListener("click", () => { unlockTts(); setAuto(!auto); });
 function chip(parent, cls, label, text){ const b = document.createElement("button"); b.type = "button"; b.className = cls; b.textContent = label; b.addEventListener("click", () => { unlockTts(); send(text, true); }); parent.appendChild(b); }
 SUG.forEach(([l, t]) => chip($("chips"), "chip", l, t));
-const APP_VERSION = "1.5.0";
+const APP_VERSION = "1.7.0";
 // ---- Ayarlar (v1.1) ----
 function fillVoices(){
   if(!synth) return; const sel = $("sVoice"); sel.innerHTML = "";
@@ -513,12 +535,13 @@ function fillVoices(){
   sel.value = settings.voice;
 }
 function chosenVoice(){ if(synth && settings.voice){ const f = synth.getVoices().find(x => x.name === settings.voice); if(f) return f; } if(synth){ const m = synth.getVoices().find(x => /^tr/i.test(x.lang) && /tolga|cem|erkek|male/i.test(x.name)); if(m) return m; } return trVoice; }
-function applyTheme(){ const t = THEMES[settings.theme] || THEMES.altin; document.documentElement.style.setProperty("--c", t[0]); document.documentElement.style.setProperty("--v", t[1]); }
+function readFin(){ const n = id => { const v = String($(id).value).replace(/[^\d]/g,""); return v ? Number(v) : null; }; return {sektor: $("fSek").value.replace(/[^\p{L}\p{N} ,.&/-]/gu,"").trim().slice(0,60), gelir:n("fGel"), gider:n("fGid"), nakit:n("fNak"), borc:n("fBor"), kdv:n("fKdv")}; }
+function applyTheme(){ document.documentElement.dataset.mode = settings.mode || "dark"; document.documentElement.dataset.big = settings.big || "0"; document.querySelector('meta[name=theme-color]').content = settings.mode === "light" ? "#f6f1e8" : "#0b0907"; const t = (settings.mode === "light" ? THEMES_LIGHT : THEMES)[settings.theme] || THEMES.altin; document.documentElement.style.setProperty("--c", t[0]); document.documentElement.style.setProperty("--v", t[1]); }
 function themeBtns(){ document.querySelectorAll("#sTheme button").forEach(b => b.setAttribute("aria-pressed", String(b.dataset.t === settings.theme))); }
-$("setBtn").addEventListener("click", () => { $("sName").value = settings.name; $("sTone").value = settings.tone; $("sVoiceKind").value = settings.voiceKind || "dondi"; $("sRate").value = settings.rate; $("sRateV").textContent = settings.rate + "x"; fillVoices(); themeBtns(); $("set").hidden = false; });
+$("setBtn").addEventListener("click", () => { $("sName").value = settings.name; $("sTone").value = settings.tone; $("sVoiceKind").value = settings.voiceKind || "dondi"; $("sTtsVoice").value = settings.ttsVoice || "Orus"; $("sMode").value = settings.mode || "dark"; $("sBig").value = settings.big || "0"; const F = settings.fin || {}; $("fSek").value = F.sektor || ""; $("fGel").value = F.gelir || ""; $("fGid").value = F.gider || ""; $("fNak").value = F.nakit || ""; $("fBor").value = F.borc || ""; $("fKdv").value = F.kdv != null ? F.kdv : ""; $("sRate").value = settings.rate; $("sRateV").textContent = settings.rate + "x"; fillVoices(); themeBtns(); $("set").hidden = false; });
 $("sRate").addEventListener("input", e => { $("sRateV").textContent = e.target.value + "x"; });
-$("sTest").addEventListener("click", () => { settings.voice = $("sVoice").value; settings.rate = Number($("sRate").value); const n = cleanName($("sName").value); speak((n ? n + ", " : "") + "merhaba, ben Döndi. Sesimi böyle duyacaksın.", () => setState("idle")); });
-$("sClose").addEventListener("click", () => { settings.name = cleanName($("sName").value); settings.tone = $("sTone").value; settings.voice = $("sVoice").value; settings.voiceKind = $("sVoiceKind").value; settings.rate = Number($("sRate").value); saveSettings(); $("set").hidden = true; });
+$("sTest").addEventListener("click", () => { settings.voice = $("sVoice").value; settings.voiceKind = $("sVoiceKind").value; settings.ttsVoice = $("sTtsVoice").value; unlockTts(); settings.rate = Number($("sRate").value); const n = cleanName($("sName").value); speak((n ? n + ", " : "") + "merhaba, ben Döndi. Sesimi böyle duyacaksın.", () => setState("idle")); });
+$("sClose").addEventListener("click", () => { settings.name = cleanName($("sName").value); settings.tone = $("sTone").value; settings.voice = $("sVoice").value; settings.voiceKind = $("sVoiceKind").value; settings.ttsVoice = $("sTtsVoice").value; settings.mode = $("sMode").value; settings.big = $("sBig").value; settings.fin = readFin(); applyTheme(); settings.rate = Number($("sRate").value); saveSettings(); $("set").hidden = true; });
 document.querySelectorAll("#sTheme button").forEach(b => b.addEventListener("click", () => { settings.theme = b.dataset.t; applyTheme(); saveSettings(); themeBtns(); }));
 applyTheme();
 $("ver").textContent = APP_VERSION;
