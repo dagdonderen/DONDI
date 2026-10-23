@@ -1,5 +1,10 @@
 # Döndi sürüm notları
 
+## v1.2.0
+- Belge yükleme (📎): Excel, Word (.docx), PDF, CSV, TXT analizi; ilk kullanımda ayrı onay + kayıt
+- Nakit akışı ve maliyet sonuçları Excel / CSV / PDF olarak indirilebilir
+- Hatırlatıcı ve zamanlayıcı (uygulama açıkken bildirim + ses), takvime ekle (.ics)
+
 ## v1.2.0-cfo
 - CFO modülü: aylık nakit akış tablosu (gelir/gider kalemleri, büyüme, nakit açığı, dayanma süresi)
 - Maliyet hesabı: birim maliyet, KDV, kâr marjı, fiyat önerisi, başabaş adedi

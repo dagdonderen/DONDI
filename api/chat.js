@@ -1,6 +1,6 @@
 // Döndi – Gemini sürümü + canlı hava durumu (Open-Meteo) + kalıcı günlük limit (Upstash Redis)
 import { createHash } from "node:crypto";
-import { CFO_DECLS, CFO_TOOLS, CFO_RULES } from "../lib/cfo.js";
+import { CFO_DECLS, CFO_TOOLS, CFO_RULES, ACTION_DECLS, ACTION_TOOLS } from "../lib/cfo.js";
 
 const MODEL = process.env.GEMINI_MODEL || "gemini-flash-latest";
 const FALLBACK_MODEL = process.env.GEMINI_FALLBACK_MODEL || "gemini-3.5-flash-lite";
@@ -39,6 +39,7 @@ Cevapları kısa tut; telefonda okunacağını unutma. Gerekirse madde işareti 
 Selamlamayı yalnızca sohbetin ilk mesajında yap; sonraki cevaplarda doğrudan konuya gir.
 Hava durumu sorulursa get_weather aracını kullan. Şehir belirtilmemişse önce hangi şehir olduğunu sor.
 Tıbbi, hukuki ve finansal konularda genel bilgi ver, uzmana danışmayı öner.${CFO_RULES}
+Hatırlatıcı/zamanlayıcı için set_reminder, takvim için add_to_calendar aracını çağır. Hatırlatıcılar uygulama açıkken bildirim verir; kullanıcıya bunu kısaca belirt.${ctx.doc ? "\nKullanıcı bir belge yükledi (içerik mesajın başında). Analizi yalnızca belgedeki verilere dayandır, belgede olmayan rakamı uydurma; eksik ya da belirsiz yerleri belirt. Gerekirse nakit akışı ve maliyet araçlarını belgedeki rakamlarla kullan." : ""}
 Şu an (Türkiye saati): ${now}.${ctx.loc ? `
 Kullanıcının yaklaşık konumu biliniyor. Şehir belirtmeden hava durumu sorarsa get_weather aracını city alanını boş bırakarak çağır.` : ""}${ctx.hasImage ? IMAGE_RULES : ""}${profileText(ctx.profile)}`;
 }
@@ -113,7 +114,7 @@ async function getWeather(city, loc) {
 }
 
 const TOOLS = [{
-  functionDeclarations: [...CFO_DECLS, {
+  functionDeclarations: [...CFO_DECLS, ...ACTION_DECLS, {
     name: "get_weather",
     description: "Bir şehir için güncel hava durumunu ve 3 günlük tahmini getirir.",
     parameters: {
@@ -154,10 +155,11 @@ async function callGemini(model, apiKey, contents, allowTools, ctx) {
 // Bir modeli dener. { text } | { retry: true } | { fatal: true } döner.
 async function tryModel(model, apiKey, base, ctx) {
   let contents = base;
-  for (let step = 0; step < 2; step++) {
+  const collected = []; // istemciye giden tablolar ve eylemler
+  for (let step = 0; step < 5; step++) {
     let res;
     try {
-      res = await callGemini(model, apiKey, contents, step === 0, ctx);
+      res = await callGemini(model, apiKey, contents, step < 4, ctx);
     } catch (err) {
       console.error("İstek hatası:", model, err?.name, err?.message);
       return { retry: true };
@@ -169,26 +171,32 @@ async function tryModel(model, apiKey, base, ctx) {
     }
     const content = data.candidates?.[0]?.content;
     const parts = content?.parts || [];
-    const call = parts.find((p) => p.functionCall);
-    if (call && step === 0) {
-      let result;
-      const fname = call.functionCall.name;
-      try {
-        if (CFO_TOOLS[fname]) result = CFO_TOOLS[fname](call.functionCall.args || {});
-        else result = await getWeather(call.functionCall.args?.city, ctx.loc);
-      } catch (e) {
-        console.error("Araç hatası:", fname, e?.message);
-        result = { error: "Araç şu an çalışmadı." };
+    const calls = parts.filter((p) => p.functionCall);
+    if (calls.length && step < 4) {
+      const responses = [];
+      for (const { functionCall: fc } of calls) {
+        let result;
+        try {
+          if (CFO_TOOLS[fc.name]) {
+            result = CFO_TOOLS[fc.name](fc.args || {});
+            if (!result.error) collected.push({ kind: fc.name, data: result, input: fc.args || {} });
+          } else if (ACTION_TOOLS[fc.name]) {
+            result = ACTION_TOOLS[fc.name](fc.args || {});
+            if (!result.error) collected.push({ kind: fc.name, data: result });
+          } else {
+            result = await getWeather(fc.args?.city, ctx.loc);
+          }
+        } catch (e) {
+          console.error("Araç hatası:", fc.name, e?.message);
+          result = { error: "Araç şu an çalışmadı." };
+        }
+        responses.push({ functionResponse: { name: fc.name, response: { result } } });
       }
-      contents = [
-        ...contents,
-        content, // modelin cevabı olduğu gibi geri gönderilir (imza dahil)
-        { role: "user", parts: [{ functionResponse: { name: fname, response: { result } } }] },
-      ];
+      contents = [...contents, content, { role: "user", parts: responses }];
       continue;
     }
     const text = parts.map((p) => p.text || "").join("\n").trim();
-    if (text) return { text };
+    if (text) return { text, collected };
     console.error("Boş cevap:", model, JSON.stringify(data).slice(0, 500));
     return { retry: true };
   }
@@ -236,12 +244,14 @@ async function checkLimit(ip) {
 export default async function handler(req, res) {
   if (req.method !== "POST") return res.status(405).json({ error: "Yalnızca POST." });
 
-  const { messages, location, image, profile } = req.body ?? {};
+  const { messages, location, image, profile, doc, pdf } = req.body ?? {};
   const prof = {
     name: String(profile?.name || "").replace(/[^\p{L}\p{N} '’.-]/gu, "").trim().slice(0, 30),
     tone: Object.hasOwn(TONES, profile?.tone) ? profile.tone : "",
   };
   const img = typeof image === "string" && image.length < 1500000 && /^[A-Za-z0-9+/=]+$/.test(image) ? image : null;
+  const docText = doc && typeof doc.text === "string" ? { name: String(doc.name || "belge").replace(/[^\p{L}\p{N} ._-]/gu, "").slice(0, 80), text: doc.text.slice(0, 40000) } : null;
+  const pdfData = typeof pdf === "string" && pdf.length < 3200000 && /^[A-Za-z0-9+/=]+$/.test(pdf) ? pdf : null;
   const loc = location && Math.abs(location.lat) <= 90 && Math.abs(location.lon) <= 180
     ? { lat: Number(location.lat.toFixed?.(2) ?? location.lat), lon: Number(location.lon.toFixed?.(2) ?? location.lon) } : null;
   if (!Array.isArray(messages) || messages.length === 0) {
@@ -270,14 +280,17 @@ export default async function handler(req, res) {
     parts: [{ text: m.content }],
   }));
 
+  const lastParts = base[base.length - 1].parts;
+  if (docText) lastParts.unshift({ text: `[Yüklenen belge: ${docText.name}]\n${docText.text}\n[Belge sonu]\n\n` });
+  if (pdfData) lastParts.unshift({ inlineData: { mimeType: "application/pdf", data: pdfData } });
   if (img) base[base.length - 1].parts.unshift({ inlineData: { mimeType: "image/jpeg", data: img } });
 
   const models = [MODEL, FALLBACK_MODEL].filter((m, i, a) => m && a.indexOf(m) === i);
   const t0 = Date.now();
   for (const model of models) {
     if (Date.now() - t0 > 35000) break; // zaman sınırına yaklaşıldı
-    const out = await tryModel(model, apiKey, base, { loc, hasImage: !!img, profile: prof });
-    if (out.text) return res.status(200).json({ reply: out.text });
+    const out = await tryModel(model, apiKey, base, { loc, hasImage: !!img, doc: !!(docText || pdfData), profile: prof });
+    if (out.text) return res.status(200).json({ reply: out.text, results: out.collected || [] });
     if (out.fatal) break;
   }
   return res.status(500).json({ error: "Şu an cevap veremiyorum. Biraz sonra tekrar dene." });

@@ -3,7 +3,7 @@ import { createHash } from "node:crypto";
 
 const REDIS_URL = process.env.UPSTASH_REDIS_REST_URL || process.env.KV_REST_API_URL;
 const REDIS_TOKEN = process.env.UPSTASH_REDIS_REST_TOKEN || process.env.KV_REST_API_TOKEN;
-const TYPES = new Set(["age18", "camera", "camera_revoked", "location"]);
+const TYPES = new Set(["age18", "camera", "camera_revoked", "location", "document"]);
 
 export default async function handler(req, res) {
   if (req.method !== "POST") return res.status(405).json({ error: "Yalnızca POST." });

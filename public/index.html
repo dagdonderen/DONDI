@@ -73,6 +73,10 @@ main{position:relative;z-index:1;flex:1;display:grid;grid-template-columns:1fr m
 .ci small{display:block;color:var(--mut);font-size:11px;white-space:normal}
 .ci button{background:none;border:0;color:var(--mut);font-size:16px}
 .tw{overflow-x:auto;margin:.3em 0}.bot table{border-collapse:collapse;font-size:12.5px;white-space:nowrap}.bot th,.bot td{border:1px solid var(--line);padding:4px 8px;text-align:right}.bot th:first-child,.bot td:first-child{text-align:left}.bot th{color:var(--c)}
+.acts{display:flex;flex-wrap:wrap;gap:6px;margin-top:8px}.acts button{border:1px solid var(--c);background:transparent;color:var(--c);border-radius:8px;padding:5px 10px;font-size:12px}
+#att{display:flex;align-items:center;gap:8px;padding:6px 12px;border-top:1px solid var(--line);font-size:12px;color:var(--c)}#att[hidden]{display:none}#att span{flex:1;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}#att button{background:none;border:0;color:var(--mut);font-size:16px}
+#clip{border:1px solid var(--line);background:transparent;border-radius:10px;padding:0 10px;font-size:18px}
+#rbn{position:fixed;z-index:20;left:12px;right:12px;top:calc(12px + env(safe-area-inset-top));background:rgba(3,10,28,.95);border:1px solid var(--c);border-radius:12px;padding:12px 14px;color:var(--ink);display:none}#rbn.show{display:block}
 .err{align-self:center;color:#ff9d8a;font-size:14px;text-align:center}
 .empty{margin:auto;color:var(--mut);text-align:center;font-size:14px}
 .chat form{display:flex;gap:8px;padding:10px 12px calc(10px + env(safe-area-inset-bottom));border-top:1px solid var(--line)}
@@ -189,12 +193,14 @@ textarea{flex:1;resize:none;max-height:110px;border:1px solid var(--line);border
     <div class="camrow"><input id="camIn" placeholder="Kameraya bakarak sor…" aria-label="Soru"><button id="camMic" type="button">Konuş</button><button id="camSend" type="button">Sor</button></div>
   </div>
 </div>
+<div id="rbn" role="alert"></div>
 <div class="chat" id="chat">
   <header><span>MESAJLAŞMA</span><button id="chatClose" type="button" aria-label="Kapat">×</button></header>
   <div class="ctools"><button id="cNew" type="button">+ Yeni sohbet</button><button id="cHist" type="button">Geçmiş / Ara</button></div>
   <div id="cList"><input id="cQ" type="search" placeholder="Sohbetlerde ara…" aria-label="Ara"><div id="cItems"></div></div>
   <div id="log"></div>
-  <form id="f"><textarea id="t" rows="1" placeholder="Bir şey yaz…" aria-label="Mesaj"></textarea><button id="send" type="submit">Gönder</button></form>
+  <div id="att" hidden></div>
+  <form id="f"><button id="clip" type="button" aria-label="Belge ekle" title="Excel, Word veya PDF ekle">📎</button><input type="file" id="fileIn" hidden accept=".xlsx,.xls,.csv,.txt,.docx,.pdf"><textarea id="t" rows="1" placeholder="Bir şey yaz…" aria-label="Mesaj"></textarea><button id="send" type="submit">Gönder</button></form>
 </div>
 <div class="onb" id="onb" hidden><div class="card wide">
   <div class="st">BAŞLANGIÇ</div><h2>Döndi'yi ayarlayalım</h2>
@@ -317,14 +323,14 @@ async function send(text, viaVoice, image){
   busy = true; sendBtn.disabled = true; setState("thinking");
   cap.className = "me"; cap.textContent = text;
   if(!history.length) log.innerHTML = "";
-  history.push({role:"user", content:text}); const userEl = addMsg("user", image ? "[Kamera] " + text : text);
+  history.push({role:"user", content:text}); const userEl = addMsg("user", image ? "[Kamera] " + text : (attached ? "[Belge: " + attached.name + "] " + text : text));
   let wait = document.createElement("div"); wait.className = "msg bot"; wait.textContent = "…"; log.appendChild(wait);
   try{
-    const r = await fetch("/api/chat", {method:"POST", headers:{"Content-Type":"application/json"}, body: JSON.stringify({messages: history, image: image || undefined, profile: {name: settings.name, tone: settings.tone}, location: (()=>{ try { return JSON.parse(localStorage.getItem("loc")||"null"); } catch { return null; } })()})});
+    const r = await fetch("/api/chat", {method:"POST", headers:{"Content-Type":"application/json"}, body: JSON.stringify({messages: history, image: image || undefined, profile: {name: settings.name, tone: settings.tone}, doc: attached && attached.text ? {name: attached.name, text: attached.text} : undefined, pdf: attached && attached.pdf ? attached.pdf : undefined, location: (()=>{ try { return JSON.parse(localStorage.getItem("loc")||"null"); } catch { return null; } })()})});
     let data = {}; try { data = await r.json(); } catch {}
     wait.remove();
     if(!r.ok || !data.reply) throw new Error(data.error || "Şu an cevap veremiyorum. Biraz sonra tekrar dene.");
-    history.push({role:"assistant", content:data.reply}); save(); addMsg("assistant", data.reply);
+    history.push({role:"assistant", content:data.reply}); save(); const botEl = addMsg("assistant", data.reply); handleResults(data.results, botEl);
     cap.className = ""; cap.textContent = data.reply.replace(/\*\*/g,"");
     busy = false;
     if(viaVoice && voiceOn && synth) speak(data.reply, () => { setState("idle"); if(auto) setTimeout(listen, 400); });
@@ -337,6 +343,95 @@ async function send(text, viaVoice, image){
   sendBtn.disabled = false;
 }
 
+// ---- Belge yükleme, eylemler, dışa aktarım ----
+const esc2 = t => String(t).replace(/[&<>"]/g, c => ({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;"}[c]));
+function loadScript(src){ return new Promise((res, rej) => { const el = document.createElement("script"); el.src = src; el.onload = res; el.onerror = () => rej(new Error("Okuyucu yüklenemedi. İnternet bağlantını kontrol et.")); document.head.appendChild(el); }); }
+const XLSX_SRC = "https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js";
+const MAMMOTH_SRC = "https://cdnjs.cloudflare.com/ajax/libs/mammoth/1.6.0/mammoth.browser.min.js";
+let attached = null;
+function showAtt(){ const a = $("att"); if(!attached){ a.hidden = true; a.innerHTML = ""; return; } a.hidden = false; a.innerHTML = ""; const sp = document.createElement("span"); sp.textContent = "📎 " + attached.name; const x = document.createElement("button"); x.type = "button"; x.textContent = "×"; x.setAttribute("aria-label","Belgeyi kaldır"); x.onclick = () => { attached = null; showAtt(); }; a.append(sp, x); }
+function docConsent(){
+  try { if(localStorage.getItem("docConsent") === "1") return true; } catch {}
+  if(!confirm("Belge yükleme onayı\n\nSeçtiğin belgenin içeriği, analiz için yurt dışındaki sunuculara (Google Gemini ve Vercel) aktarılır. Belgede kişisel veya finansal bilgi varsa bunlar da işlenir. Bu aktarım standart sözleşmeler / açık rıza mekanizmalarına dayanır. Gizlilik metni: /gizlilik.html\n\nOnaylıyor musun?")) return false;
+  try { localStorage.setItem("docConsent", "1"); } catch {}
+  logConsent("document", {google:true, vercel:true}); return true;
+}
+function b64(file){ return new Promise((res, rej) => { const fr = new FileReader(); fr.onload = () => res(String(fr.result).split(",")[1]); fr.onerror = () => rej(new Error("Dosya okunamadı.")); fr.readAsDataURL(file); }); }
+async function readDoc(f){
+  const ext = (f.name.split(".").pop() || "").toLowerCase();
+  if(ext === "pdf"){ if(f.size > 2300000) throw new Error("PDF en fazla ~2,3 MB olabilir."); return {name:f.name, pdf: await b64(f)}; }
+  if(f.size > 5000000) throw new Error("Dosya çok büyük (en fazla 5 MB).");
+  if(ext === "csv" || ext === "txt") return {name:f.name, text: (await f.text()).slice(0, 40000)};
+  if(ext === "xlsx" || ext === "xls"){
+    if(!window.XLSX) await loadScript(XLSX_SRC);
+    const wb = XLSX.read(await f.arrayBuffer(), {type:"array"});
+    const out = wb.SheetNames.slice(0, 5).map(n => "## Sayfa: " + n + "\n" + XLSX.utils.sheet_to_csv(wb.Sheets[n], {FS:";"})).join("\n\n");
+    return {name:f.name, text: out.slice(0, 40000)};
+  }
+  if(ext === "docx"){
+    if(!window.mammoth) await loadScript(MAMMOTH_SRC);
+    const r = await mammoth.extractRawText({arrayBuffer: await f.arrayBuffer()});
+    return {name:f.name, text: r.value.slice(0, 40000)};
+  }
+  throw new Error("Desteklenen türler: Excel, Word (.docx), PDF, CSV, TXT.");
+}
+$("clip").addEventListener("click", () => { if(docConsent()) $("fileIn").click(); });
+$("fileIn").addEventListener("change", async e => {
+  const f = e.target.files[0]; e.target.value = ""; if(!f) return;
+  cap.className = ""; cap.textContent = "Belge okunuyor…";
+  try { attached = await readDoc(f); showAtt(); cap.textContent = "Belge eklendi. Ne yapmamı istersin? (örn. “Nakit akışını çıkar”)"; }
+  catch(err){ attached = null; showAtt(); cap.textContent = err.message; const el = document.createElement("div"); el.className = "err"; el.textContent = err.message; log.appendChild(el); }
+});
+
+// Hatırlatıcılar (uygulama açıkken çalışır)
+let rems = []; try { rems = JSON.parse(localStorage.getItem("rem") || "[]"); } catch {}
+const saveRem = () => { try { localStorage.setItem("rem", JSON.stringify(rems)); } catch {} };
+function beep(){ try { const a = new (window.AudioContext || window.webkitAudioContext)(), o = a.createOscillator(), g = a.createGain(); o.connect(g); g.connect(a.destination); o.frequency.value = 880; g.gain.value = .15; o.start(); setTimeout(() => { o.stop(); a.close(); }, 600); } catch {} }
+function fireRem(r, late){
+  const msg = (late ? "Kaçırılan hatırlatıcı: " : "Hatırlatıcı: ") + r.text;
+  try { if("Notification" in window && Notification.permission === "granted") new Notification("Döndi", {body: msg, icon: "/icon-192.png"}); } catch {}
+  const b = $("rbn"); b.textContent = "⏰ " + msg; b.classList.add("show"); b.onclick = () => b.classList.remove("show"); setTimeout(() => b.classList.remove("show"), 15000);
+  beep(); try { if(voiceOn && synth && !late) speak(msg); } catch {}
+}
+function checkRems(){ const now = Date.now(); const due = rems.filter(r => r.at <= now); if(!due.length) return; rems = rems.filter(r => r.at > now); saveRem(); due.forEach(r => fireRem(r, now - r.at > 60000)); }
+setInterval(checkRems, 5000); document.addEventListener("visibilitychange", checkRems); checkRems();
+function addRem(d){ rems.push({id: Date.now() + Math.random(), text: d.text, at: d.fire_at}); saveRem(); try { if("Notification" in window && Notification.permission === "default") Notification.requestPermission(); } catch {} }
+
+// Takvim (.ics) ve dışa aktarım
+function dl(name, blob){ const a = document.createElement("a"); a.href = URL.createObjectURL(blob); a.download = name; document.body.appendChild(a); a.click(); a.remove(); setTimeout(() => URL.revokeObjectURL(a.href), 4000); }
+function icsFor(d){
+  const m = /^(\d{4})-(\d{2})-(\d{2})T(\d{2}):(\d{2})/.exec(d.start); if(!m) return null;
+  const st = new Date(Date.UTC(+m[1], m[2]-1, +m[3], +m[4]-3, +m[5])), en = new Date(st.getTime() + d.duration_minutes*60000);
+  const f = x => x.toISOString().replace(/[-:]/g,"").slice(0,15) + "Z";
+  const t = x => String(x).replace(/[\;,]/g, "\\$&").replace(/\n/g, "\\n");
+  return ["BEGIN:VCALENDAR","VERSION:2.0","PRODID:-//Dondi//TR","BEGIN:VEVENT","UID:" + Date.now() + "@dondi","DTSTAMP:" + f(new Date()),"DTSTART:" + f(st),"DTEND:" + f(en),"SUMMARY:" + t(d.title),"DESCRIPTION:" + t(d.notes || ""),"END:VEVENT","END:VCALENDAR"].join("\r\n");
+}
+const COST_LBL = {adet:"Adet",degisken_birim_maliyet:"Değişken birim maliyet",sabit_gider_birim_payi:"Sabit gider birim payı",birim_maliyet:"Birim maliyet",toplam_maliyet:"Toplam maliyet",kdv_orani_pct:"KDV oranı (%)",satis_fiyati_kdv_haric:"Satış fiyatı (KDV hariç)",satis_fiyati_kdv_dahil:"Satış fiyatı (KDV dahil)",birim_kar:"Birim kâr",toplam_kar:"Toplam kâr",kar_marji_pct:"Kâr marjı (%)",maliyet_uzeri_ekleme_pct:"Maliyet üzeri ekleme (%)",basabas_adedi:"Başabaş adedi"};
+function sheetOf(r){
+  const d = r.data;
+  if(r.kind === "cash_flow_table"){ const rows = d.aylar.map(x => [x.ay, x.gelir, x.gider, x.net, x.kapanis_bakiye]); rows.push(["TOPLAM", d.toplam_gelir, d.toplam_gider, d.toplam_net, ""]); return {name:"Nakit Akışı", head:["Ay","Gelir","Gider","Net","Kapanış bakiyesi"], rows, note:"Açılış bakiyesi: " + d.acilis_bakiye + " | En düşük bakiye: " + d.en_dusuk_bakiye + " (" + d.en_dusuk_bakiye_ayi + ")"}; }
+  return {name:"Maliyet Hesabı", head:["Kalem","Değer"], rows: Object.entries(d).filter(([k,v]) => COST_LBL[k] && v != null).map(([k,v]) => [COST_LBL[k], v])};
+}
+function exportCsv(sh){ const q = v => '"' + String(v).replace(/"/g,'""').replace(/^(\d+)\.(\d+)$/, "$1,$2") + '"'; const csv = "﻿" + [sh.head, ...sh.rows].map(r => r.map(q).join(";")).join("\r\n"); dl(sh.name.replace(/\s/g,"_") + ".csv", new Blob([csv], {type:"text/csv;charset=utf-8"})); }
+async function exportXlsx(sh){ try { if(!window.XLSX) await loadScript(XLSX_SRC); const ws = XLSX.utils.aoa_to_sheet([sh.head, ...sh.rows]); ws["!cols"] = sh.head.map(() => ({wch:24})); const wb = XLSX.utils.book_new(); XLSX.utils.book_append_sheet(wb, ws, sh.name); XLSX.writeFile(wb, sh.name.replace(/\s/g,"_") + ".xlsx"); } catch(e){ alert(e.message); } }
+function exportPdf(sh){
+  const w = window.open("", "_blank"); if(!w){ alert("Açılır pencereye izin ver."); return; }
+  const fm = v => typeof v === "number" ? v.toLocaleString("tr-TR", {maximumFractionDigits:2}) : esc2(v);
+  w.document.write('<!doctype html><meta charset="utf-8"><title>' + esc2(sh.name) + '</title><style>body{font:14px sans-serif;padding:24px}table{border-collapse:collapse;width:100%}th,td{border:1px solid #999;padding:6px 10px;text-align:right}th:first-child,td:first-child{text-align:left}th{background:#eee}small{color:#555}</style><h2>' + esc2(sh.name) + '</h2><table><thead><tr>' + sh.head.map(h => "<th>" + esc2(h) + "</th>").join("") + "</tr></thead><tbody>" + sh.rows.map(r => "<tr>" + r.map(c => "<td>" + fm(c) + "</td>").join("") + "</tr>").join("") + "</tbody></table><p><small>" + esc2(sh.note || "") + "<br>Döndi tarafından oluşturuldu; yatırım/vergi tavsiyesi değildir. " + new Date().toLocaleDateString("tr-TR") + "</small></p><script>onload=()=>print()<\/script>");
+  w.document.close();
+}
+function mkBtn(label, fn){ const b = document.createElement("button"); b.type = "button"; b.textContent = label; b.onclick = fn; return b; }
+function handleResults(results, el){
+  if(!Array.isArray(results) || !results.length) return;
+  const box = document.createElement("div"); box.className = "acts";
+  results.forEach(r => {
+    if(r.kind === "set_reminder"){ addRem(r.data); box.appendChild(mkBtn("⏰ " + r.data.in_minutes + " dk sonra kuruldu", () => {})); }
+    else if(r.kind === "add_to_calendar"){ const ics = icsFor(r.data); if(ics) box.appendChild(mkBtn("📅 Takvime ekle (" + r.data.title + ")", () => dl("etkinlik.ics", new Blob([ics], {type:"text/calendar;charset=utf-8"})))); }
+    else if(r.kind === "cash_flow_table" || r.kind === "cost_calc"){ const sh = sheetOf(r); box.append(mkBtn("Excel", () => exportXlsx(sh)), mkBtn("CSV", () => exportCsv(sh)), mkBtn("PDF", () => exportPdf(sh))); }
+  });
+  if(box.children.length && el) el.appendChild(box);
+}
+
 // Arayüz bağlantıları
 $("f").addEventListener("submit", e => { e.preventDefault(); const v = input.value; input.value = ""; input.style.height = "auto"; send(v, false); });
 input.addEventListener("keydown", e => { if(e.key === "Enter" && !e.shiftKey && matchMedia("(pointer:fine)").matches){ e.preventDefault(); $("f").requestSubmit(); } });
@@ -347,7 +442,7 @@ $("voiceBtn").addEventListener("click", e => { voiceOn = !voiceOn; e.currentTarg
 $("autoBtn").addEventListener("click", e => { auto = !auto; e.currentTarget.setAttribute("aria-pressed", auto); });
 function chip(parent, cls, label, text){ const b = document.createElement("button"); b.type = "button"; b.className = cls; b.textContent = label; b.addEventListener("click", () => send(text, true)); parent.appendChild(b); }
 SUG.forEach(([l, t]) => { chip($("chips"), "chip", l, t); chip($("quick"), "q", l, t); });
-const APP_VERSION = "1.2.0-cfo";
+const APP_VERSION = "1.2.0";
 // ---- Ayarlar (v1.1) ----
 function fillVoices(){
   if(!synth) return; const sel = $("sVoice"); sel.innerHTML = "";
