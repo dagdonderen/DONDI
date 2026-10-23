@@ -1,5 +1,10 @@
 # Döndi sürüm notları
 
+## v1.2.0-cfo
+- CFO modülü: aylık nakit akış tablosu (gelir/gider kalemleri, büyüme, nakit açığı, dayanma süresi)
+- Maliyet hesabı: birim maliyet, KDV, kâr marjı, fiyat önerisi, başabaş adedi
+- Hesaplar sunucuda kodla yapılır (lib/cfo.js); sohbette tablo gösterimi
+
 ## v1.1.0
 - Birden fazla sohbet: yeni sohbet, geçmişten seçme, silme (eski tek sohbet otomatik taşınır)
 - Geçmişte arama (başlık ve mesaj içeriği)

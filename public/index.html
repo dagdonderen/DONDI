@@ -72,6 +72,7 @@ main{position:relative;z-index:1;flex:1;display:grid;grid-template-columns:1fr m
 .ci.cur{border-color:var(--c)}.ci span{flex:1;cursor:pointer;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
 .ci small{display:block;color:var(--mut);font-size:11px;white-space:normal}
 .ci button{background:none;border:0;color:var(--mut);font-size:16px}
+.tw{overflow-x:auto;margin:.3em 0}.bot table{border-collapse:collapse;font-size:12.5px;white-space:nowrap}.bot th,.bot td{border:1px solid var(--line);padding:4px 8px;text-align:right}.bot th:first-child,.bot td:first-child{text-align:left}.bot th{color:var(--c)}
 .err{align-self:center;color:#ff9d8a;font-size:14px;text-align:center}
 .empty{margin:auto;color:var(--mut);text-align:center;font-size:14px}
 .chat form{display:flex;gap:8px;padding:10px 12px calc(10px + env(safe-area-inset-bottom));border-top:1px solid var(--line)}
@@ -205,7 +206,7 @@ textarea{flex:1;resize:none;max-height:110px;border:1px solid var(--line);border
 <script>
 const $ = id => document.getElementById(id);
 const core = $("core"), status = $("status"), cap = $("cap"), log = $("log"), input = $("t"), sendBtn = $("send");
-const SUG = [["Hava durumu","Bugün hava nasıl olacak? Şehrimi söyleyeyim."],["Plan yap","Yarın için 3 maddelik bir günlük plan hazırla."],["Mesaj yaz","Bir arkadaşıma doğum günü mesajı yazar mısın?"],["Özetle","Sana yapıştıracağım metni 3 cümlede özetler misin?"]];
+const SUG = [["Hava durumu","Bugün hava nasıl olacak? Şehrimi söyleyeyim."],["Plan yap","Yarın için 3 maddelik bir günlük plan hazırla."],["Mesaj yaz","Bir arkadaşıma doğum günü mesajı yazar mısın?"],["Özetle","Sana yapıştıracağım metni 3 cümlede özetler misin?"],["Nakit akışı","12 aylık nakit akış tablosu çıkaralım. Sorularını sor."],["Maliyet hesabı","Bir ürünün birim maliyetini ve satış fiyatını hesaplayalım."]];
 let chats = []; try { chats = JSON.parse(localStorage.getItem("chats") || "[]"); } catch {}
 if(!chats.length){ let old = []; try { old = JSON.parse(localStorage.getItem("chat") || "[]"); } catch {} chats = [{id:Date.now().toString(36), title:"", ts:Date.now(), msgs:old}]; }
 let curId = null; try { curId = localStorage.getItem("curChat"); } catch {}
@@ -228,9 +229,17 @@ tick(); setInterval(tick, 15000);
 // Biçimlendirme
 const esc = s => s.replace(/[&<>"']/g, c => ({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c]));
 function fmt(t){
-  let h = "", list = null; const close = () => { if(list){ h += "</"+list+">"; list = null; } };
+  let h = "", list = null, tbl = null; const close = () => { if(list){ h += "</"+list+">"; list = null; } if(tbl){ h += "</tbody></table></div>"; tbl = null; } };
   for(const raw of esc(t).split("\n")){
     const l = raw.replace(/\*\*(.+?)\*\*/g,"<strong>$1</strong>"); let m;
+    if(/^\s*\|.*\|\s*$/.test(l)){
+      if(/^\s*\|[\s:|-]+\|\s*$/.test(l)) continue;
+      const cells = l.trim().slice(1,-1).split("|").map(c => c.trim());
+      if(!tbl){ close(); h += '<div class="tw"><table><thead><tr>' + cells.map(c => "<th>"+c+"</th>").join("") + "</tr></thead><tbody>"; tbl = 1; }
+      else h += "<tr>" + cells.map(c => "<td>"+c+"</td>").join("") + "</tr>";
+      continue;
+    }
+    if(tbl) close();
     if((m = l.match(/^\s*[-*•]\s+(.*)/))){ if(list!=="ul"){ close(); h+="<ul>"; list="ul"; } h+="<li>"+m[1]+"</li>"; }
     else if((m = l.match(/^\s*\d+[.)]\s+(.*)/))){ if(list!=="ol"){ close(); h+="<ol>"; list="ol"; } h+="<li>"+m[1]+"</li>"; }
     else { close(); if(l.trim()) h += "<p>"+l+"</p>"; }
@@ -338,7 +347,7 @@ $("voiceBtn").addEventListener("click", e => { voiceOn = !voiceOn; e.currentTarg
 $("autoBtn").addEventListener("click", e => { auto = !auto; e.currentTarget.setAttribute("aria-pressed", auto); });
 function chip(parent, cls, label, text){ const b = document.createElement("button"); b.type = "button"; b.className = cls; b.textContent = label; b.addEventListener("click", () => send(text, true)); parent.appendChild(b); }
 SUG.forEach(([l, t]) => { chip($("chips"), "chip", l, t); chip($("quick"), "q", l, t); });
-const APP_VERSION = "1.1.0";
+const APP_VERSION = "1.2.0-cfo";
 // ---- Ayarlar (v1.1) ----
 function fillVoices(){
   if(!synth) return; const sel = $("sVoice"); sel.innerHTML = "";

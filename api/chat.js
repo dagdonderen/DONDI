@@ -1,5 +1,6 @@
 // Döndi – Gemini sürümü + canlı hava durumu (Open-Meteo) + kalıcı günlük limit (Upstash Redis)
 import { createHash } from "node:crypto";
+import { CFO_DECLS, CFO_TOOLS, CFO_RULES } from "../lib/cfo.js";
 
 const MODEL = process.env.GEMINI_MODEL || "gemini-flash-latest";
 const FALLBACK_MODEL = process.env.GEMINI_FALLBACK_MODEL || "gemini-3.5-flash-lite";
@@ -37,7 +38,7 @@ Kullanıcı hangi dilde yazarsa o dilde cevap ver (varsayılan Türkçe).
 Cevapları kısa tut; telefonda okunacağını unutma. Gerekirse madde işareti kullan.
 Selamlamayı yalnızca sohbetin ilk mesajında yap; sonraki cevaplarda doğrudan konuya gir.
 Hava durumu sorulursa get_weather aracını kullan. Şehir belirtilmemişse önce hangi şehir olduğunu sor.
-Tıbbi, hukuki ve finansal konularda genel bilgi ver, uzmana danışmayı öner.
+Tıbbi, hukuki ve finansal konularda genel bilgi ver, uzmana danışmayı öner.${CFO_RULES}
 Şu an (Türkiye saati): ${now}.${ctx.loc ? `
 Kullanıcının yaklaşık konumu biliniyor. Şehir belirtmeden hava durumu sorarsa get_weather aracını city alanını boş bırakarak çağır.` : ""}${ctx.hasImage ? IMAGE_RULES : ""}${profileText(ctx.profile)}`;
 }
@@ -112,7 +113,7 @@ async function getWeather(city, loc) {
 }
 
 const TOOLS = [{
-  functionDeclarations: [{
+  functionDeclarations: [...CFO_DECLS, {
     name: "get_weather",
     description: "Bir şehir için güncel hava durumunu ve 3 günlük tahmini getirir.",
     parameters: {
@@ -171,16 +172,18 @@ async function tryModel(model, apiKey, base, ctx) {
     const call = parts.find((p) => p.functionCall);
     if (call && step === 0) {
       let result;
+      const fname = call.functionCall.name;
       try {
-        result = await getWeather(call.functionCall.args?.city, ctx.loc);
+        if (CFO_TOOLS[fname]) result = CFO_TOOLS[fname](call.functionCall.args || {});
+        else result = await getWeather(call.functionCall.args?.city, ctx.loc);
       } catch (e) {
-        console.error("Hava servisi hatası:", e?.message);
-        result = { error: "Hava durumu servisine şu an ulaşılamadı." };
+        console.error("Araç hatası:", fname, e?.message);
+        result = { error: "Araç şu an çalışmadı." };
       }
       contents = [
         ...contents,
         content, // modelin cevabı olduğu gibi geri gönderilir (imza dahil)
-        { role: "user", parts: [{ functionResponse: { name: "get_weather", response: { result } } }] },
+        { role: "user", parts: [{ functionResponse: { name: fname, response: { result } } }] },
       ];
       continue;
     }
