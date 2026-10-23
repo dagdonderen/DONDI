@@ -308,19 +308,24 @@ function speak(text, done){
 function stopSpeak(){ if(synth) synth.cancel(); }
 
 // Ses girişi
-const SR = window.SpeechRecognition || window.webkitSpeechRecognition; let rec = null, heard = "";
+const SR = window.SpeechRecognition || window.webkitSpeechRecognition; let rec = null, heard = "", silT = 0;
 $("sMic").textContent = "Mikrofon: " + (SR ? "hazır" : "bu tarayıcıda desteklenmiyor");
 function listen(){
   if(!SR){ cap.textContent = "Bu tarayıcı sesli komutu desteklemiyor. Chrome ya da Edge dene, ya da Mesajlaş'ı kullan."; cap.className = ""; return; }
   if(busy) return;
   stopSpeak(); heard = ""; rec = new SR(); rec.lang = "tr-TR"; rec.interimResults = true; rec.continuous = false;
   rec.onstart = () => { setState("listening"); cap.className = "me"; cap.textContent = "…"; };
-  rec.onresult = e => { let t = ""; for(const r of e.results) t += r[0].transcript; heard = t; cap.textContent = t; };
-  rec.onerror = e => { if(e.error === "not-allowed" || e.error === "service-not-allowed"){ cap.className = ""; cap.textContent = "Mikrofon izni verilmedi. Adres çubuğundaki kilit simgesinden izin ver."; $("sMic").textContent = "Mikrofon: izin yok"; auto = false; $("autoBtn").setAttribute("aria-pressed","false"); } };
-  rec.onend = () => { if(state !== "listening") return; if(heard.trim()) send(heard, true, camOn ? capture() : null); else { setState("idle"); cap.className = ""; cap.textContent = "Seni duyamadım. Tekrar dokun."; } };
+  rec.onresult = e => { let t = "", fin = false; for(const r of e.results){ t += r[0].transcript; if(r.isFinal) fin = true; } heard = t; cap.textContent = t; clearTimeout(silT); silT = setTimeout(() => { try { rec.stop(); } catch {} }, fin ? 150 : 1100); };
+  rec.onspeechend = () => { clearTimeout(silT); silT = setTimeout(() => { try { rec.stop(); } catch {} }, 350); };
+  rec.onerror = e => { if(e.error === "not-allowed" || e.error === "service-not-allowed"){ cap.className = ""; cap.textContent = (navigator.standalone ? "iPhone'da ana ekrandan açılan uygulamada ses tanıma çalışmıyor (Apple kısıtı). Döndi'yi Safari'de aç ya da yazarak kullan." : "Mikrofon izni verilmedi. Adres çubuğundaki kilit simgesinden izin ver. iPhone'da Ayarlar > Genel > Klavye > Dikte'yi Aç'ın da açık olması gerekir."); $("sMic").textContent = "Mikrofon: izin yok"; auto = false; $("autoBtn").setAttribute("aria-pressed","false"); } };
+  rec.onend = () => { clearTimeout(silT); if(state !== "listening") return; if(heard.trim()) send(heard, true, camOn ? capture() : null); else { setState("idle"); cap.className = ""; cap.textContent = "Seni duyamadım. Tekrar dokun."; } };
   try { rec.start(); } catch {}
 }
+// iOS/Safari: konuşma çıkışı ancak kullanıcı dokunuşuyla açılır; ilk dokunuşta sessiz bir cümleyle kilidi aç
+let ttsUnlocked = false;
+function unlockTts(){ if(ttsUnlocked || !synth) return; ttsUnlocked = true; try { const u = new SpeechSynthesisUtterance(" "); u.volume = 0; u.lang = "tr-TR"; synth.speak(u); } catch {} }
 $("orb").addEventListener("click", () => {
+  unlockTts();
   if(state === "speaking"){ stopSpeak(); setState("idle"); return; }
   if(state === "listening"){ try { rec.stop(); } catch {} return; }
   if(state === "idle") listen();
@@ -459,9 +464,9 @@ function showHint(){
 function syncChips(){ $("chips").style.display = history.length ? "none" : "flex"; }
 $("voiceBtn").addEventListener("click", e => { voiceOn = !voiceOn; e.currentTarget.setAttribute("aria-pressed", voiceOn); if(!voiceOn) stopSpeak(); });
 $("autoBtn").addEventListener("click", e => { auto = !auto; e.currentTarget.setAttribute("aria-pressed", auto); });
-function chip(parent, cls, label, text){ const b = document.createElement("button"); b.type = "button"; b.className = cls; b.textContent = label; b.addEventListener("click", () => send(text, true)); parent.appendChild(b); }
+function chip(parent, cls, label, text){ const b = document.createElement("button"); b.type = "button"; b.className = cls; b.textContent = label; b.addEventListener("click", () => { unlockTts(); send(text, true); }); parent.appendChild(b); }
 SUG.forEach(([l, t]) => chip($("chips"), "chip", l, t));
-const APP_VERSION = "1.3.1";
+const APP_VERSION = "1.3.2";
 // ---- Ayarlar (v1.1) ----
 function fillVoices(){
   if(!synth) return; const sel = $("sVoice"); sel.innerHTML = "";
@@ -530,8 +535,8 @@ function askCam(text){ text = (text || "").trim(); if(!text) return; const img =
 $("camBtn").addEventListener("click", openCam);
 $("camClose").addEventListener("click", closeCam);
 $("camFlip").addEventListener("click", async () => { facing = facing === "environment" ? "user" : "environment"; try { await startStream(); } catch { cap.textContent = "Kamera çevrilemedi."; } });
-$("camMic").addEventListener("click", () => { if(state === "listening"){ try { rec.stop(); } catch {} } else if(state === "speaking"){ stopSpeak(); setState("idle"); } else listen(); });
-$("camSend").addEventListener("click", () => askCam($("camIn").value));
+$("camMic").addEventListener("click", () => { unlockTts(); if(state === "listening"){ try { rec.stop(); } catch {} } else if(state === "speaking"){ stopSpeak(); setState("idle"); } else listen(); });
+$("camSend").addEventListener("click", () => { unlockTts(); askCam($("camIn").value); });
 $("camIn").addEventListener("keydown", e => { if(e.key === "Enter"){ e.preventDefault(); askCam($("camIn").value); } });
 CAM_Q.forEach(([l, t]) => { const b = document.createElement("button"); b.type = "button"; b.className = "chip"; b.textContent = l; b.addEventListener("click", () => askCam(t)); $("camChips").appendChild(b); });
 

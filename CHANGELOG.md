@@ -1,5 +1,10 @@
 # Döndi sürüm notları
 
+## v1.3.2
+- Konuşma tanıma hızlandı: sustuğunda ~1 sn içinde gönderilir (önceden tarayıcının uzun sessizlik beklemesine bağlıydı)
+- iPhone/Safari'de sesli cevap için ses çıkışı ilk dokunuşta açılıyor
+- iPhone ana ekran uygulamasında ses tanıma kısıtı için açıklayıcı uyarı
+
 ## v1.3.1
 - Marka paleti: sıcak siyah, bakır ve altın (varsayılan "Altın" teması; Mavi/Mor/Yeşil seçenekleri durur)
 - Yeni uygulama ikonu (D ve yörüngedeki ürün simgeleri), manifest renkleri güncellendi
