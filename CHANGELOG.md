@@ -1,5 +1,9 @@
 # Döndi sürüm notları
 
+## v1.5.0
+- Sohbet modu: küreye bir kez dokununca Döndi sürekli dinler ve cevap verir; tekrar dokununca durur
+- Seni duymazsa kendini yeniden başlatır; art arda 6 kez duymazsa durup uyarır
+
 ## v1.4.1
 - Yazı ve ses eşleşti: sesli cevapta metin, ses başladığı anda ekrana gelir
 - İlk ses parçası kısa tutuldu, konuşma daha erken başlar

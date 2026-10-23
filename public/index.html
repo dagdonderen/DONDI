@@ -97,6 +97,7 @@ main{position:relative;z-index:1;width:100%;max-width:760px;margin:0 auto;flex:1
 #orb{position:absolute;inset:22%;border-radius:50%;border:0;background:linear-gradient(145deg,var(--c),var(--v));display:grid;place-items:center;box-shadow:0 10px 40px color-mix(in srgb,var(--v) 55%,transparent),inset 0 2px 8px rgba(255,255,255,.35);transition:transform .15s}
 #orb:active{transform:scale(.94)}
 #orb svg{width:44%;height:44%;stroke:#fff;fill:none;stroke-width:1.9;stroke-linecap:round}
+.core[data-auto="1"]::after{content:"";position:absolute;inset:4%;border-radius:50%;border:2px solid var(--c);opacity:.55;pointer-events:none}
 .core[data-s=listening] .r1,.core[data-s=listening] .r2{animation-duration:1.4s}
 .core[data-s=listening] .r2{animation-delay:.7s}
 .core[data-s=thinking] .r3{animation-duration:1.2s;opacity:.9}
@@ -147,7 +148,7 @@ textarea:focus{outline:none;border-color:var(--c)}
   <button class="ibtn" id="menuBtn" type="button" aria-label="Menü" aria-expanded="false" aria-controls="menu"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M4 7h16M4 12h16M4 17h16"/></svg></button>
   <div class="menu" id="menu" hidden>
     <button class="mi" id="voiceBtn" type="button" aria-pressed="true">Sesli cevap</button>
-    <button class="mi" id="autoBtn" type="button" aria-pressed="false">Sürekli dinleme</button>
+    <button class="mi" id="autoBtn" type="button" aria-pressed="false">Sohbet modu (sürekli dinle)</button>
     <button class="mi" id="setBtn" type="button">Ayarlar</button>
     <button class="mi" id="permBtn" type="button">İzinler</button>
     <hr>
@@ -160,11 +161,11 @@ textarea:focus{outline:none;border-color:var(--c)}
   <section class="stage">
     <div class="core" id="core" data-s="idle">
       <i class="r4"></i><i class="r3"></i><i class="r1"></i><i class="r2"></i><i class="glow"></i>
-      <button id="orb" type="button" aria-label="Konuşmak için dokun">
+      <button id="orb" type="button" aria-label="Sohbeti başlat veya durdur">
         <svg viewBox="0 0 24 24"><rect x="9" y="3" width="6" height="11" rx="3"/><path d="M5 11a7 7 0 0 0 14 0M12 18v3"/></svg>
       </button>
     </div>
-    <div id="capSlot"><div id="status" aria-live="polite">HAZIR</div><div id="cap">Dokun ve konuş.</div></div>
+    <div id="capSlot"><div id="status" aria-live="polite">HAZIR</div><div id="cap">Küreye dokun, sohbet başlasın.</div></div>
     <div class="chips" id="chips"></div>
     <button class="camcta" id="camBtn" type="button"><svg viewBox="0 0 24 24"><path d="M4 8a2 2 0 0 1 2-2h2l1.5-2h5L16 6h2a2 2 0 0 1 2 2v9a2 2 0 0 1-2 2H6a2 2 0 0 1-2-2z"/><circle cx="12" cy="12.5" r="3.5"/></svg>Kamerayı aç</button>
   </section>
@@ -177,7 +178,7 @@ textarea:focus{outline:none;border-color:var(--c)}
   </section>
 </main>
 <footer class="foot">Döndi hata yapabilir. Tıbbi, hukuki veya finansal tavsiye değildir.</footer>
-<div class="hint" id="hint" hidden role="status"><button class="hx" id="hintX" type="button" aria-label="Kapat">×</button><b>BAŞLARKEN</b><p>Ortadaki küreye dokun ve konuş. Konuşurken tekrar dokunursan durur.</p><p>Aşağıdaki kutudan yazabilir, kamerayla da gösterebilirsin.</p><p class="sys"><span id="sMic">Mikrofon: bekleniyor</span> · <span id="sTts">Ses çıkışı: bekleniyor</span></p><i class="bar"></i></div>
+<div class="hint" id="hint" hidden role="status"><button class="hx" id="hintX" type="button" aria-label="Kapat">×</button><b>BAŞLARKEN</b><p>Küreye <b>bir kere dokun</b>: Döndi seni sürekli dinler ve cevap verir. <b>Tekrar dokunursan</b> durur.</p><p>Aşağıdaki kutudan yazabilir, kamerayla da gösterebilirsin.</p><p class="sys"><span id="sMic">Mikrofon: bekleniyor</span> · <span id="sTts">Ses çıkışı: bekleniyor</span></p><i class="bar"></i></div>
 <div class="onb" id="consent" hidden><div class="card">
   <div class="st">AÇIK RIZA METNİ · KAMERA</div>
   <h2>Kamerayı kullanmadan önce</h2>
@@ -236,7 +237,13 @@ try { Object.assign(settings, JSON.parse(localStorage.getItem("settings") || "{}
 const saveSettings = () => { try { localStorage.setItem("settings", JSON.stringify(settings)); } catch {} };
 const cleanName = s => String(s || "").replace(/[^\p{L}\p{N} '’.-]/gu, "").trim().slice(0, 30);
 const LABEL = {idle:"HAZIR", listening:"DİNLİYORUM", thinking:"DÜŞÜNÜYORUM", speaking:"KONUŞUYORUM"};
-function setState(s){ state = s; core.dataset.s = s; status.textContent = LABEL[s]; }
+function setState(s){ state = s; core.dataset.s = s; core.dataset.auto = auto ? "1" : "0"; status.textContent = (s === "idle" && auto) ? "SOHBET AÇIK" : LABEL[s]; }
+let autoFails = 0;
+function setAuto(on){
+  auto = on; $("autoBtn").setAttribute("aria-pressed", String(on)); autoFails = 0;
+  if(on){ if(state === "idle") listen(); else setState(state); }
+  else { stopSpeak(); clearTimeout(silT); try { if(rec) rec.abort(); } catch {} setState("idle"); cap.className = ""; cap.textContent = "Sohbet durdu. Başlatmak için küreye dokun."; }
+}
 
 // Saat
 function tick(){ const d = new Date(); $("time").textContent = d.toLocaleTimeString("tr-TR",{hour:"2-digit",minute:"2-digit"}); $("date").textContent = d.toLocaleDateString("tr-TR",{weekday:"long",day:"numeric",month:"long"}); }
@@ -350,24 +357,21 @@ function listen(){
   rec.onstart = () => { setState("listening"); cap.className = "me"; cap.textContent = "…"; };
   rec.onresult = e => { let t = "", fin = false; for(const r of e.results){ t += r[0].transcript; if(r.isFinal) fin = true; } heard = t; cap.textContent = t; clearTimeout(silT); silT = setTimeout(() => { try { rec.stop(); } catch {} }, fin ? 150 : 1100); };
   rec.onspeechend = () => { clearTimeout(silT); silT = setTimeout(() => { try { rec.stop(); } catch {} }, 350); };
-  rec.onerror = e => { if(e.error === "not-allowed" || e.error === "service-not-allowed"){ cap.className = ""; cap.textContent = (navigator.standalone ? "iPhone'da ana ekrandan açılan uygulamada ses tanıma çalışmıyor (Apple kısıtı). Döndi'yi Safari'de aç ya da yazarak kullan." : "Mikrofon izni verilmedi. Adres çubuğundaki kilit simgesinden izin ver. iPhone'da Ayarlar > Genel > Klavye > Dikte'yi Aç'ın da açık olması gerekir."); $("sMic").textContent = "Mikrofon: izin yok"; auto = false; $("autoBtn").setAttribute("aria-pressed","false"); } };
-  rec.onend = () => { clearTimeout(silT); if(state !== "listening") return; if(heard.trim()) send(heard, true, camOn ? capture() : null); else { setState("idle"); cap.className = ""; cap.textContent = "Seni duyamadım. Tekrar dokun."; } };
+  rec.onerror = e => { if(e.error === "not-allowed" || e.error === "service-not-allowed"){ cap.className = ""; cap.textContent = (navigator.standalone ? "iPhone'da ana ekrandan açılan uygulamada ses tanıma çalışmıyor (Apple kısıtı). Döndi'yi Safari'de aç ya da yazarak kullan." : "Mikrofon izni verilmedi. Adres çubuğundaki kilit simgesinden izin ver. iPhone'da Ayarlar > Genel > Klavye > Dikte'yi Aç'ın da açık olması gerekir."); $("sMic").textContent = "Mikrofon: izin yok"; setAuto(false); } };
+  rec.onend = () => { clearTimeout(silT); if(state !== "listening") return; if(heard.trim()){ autoFails = 0; send(heard, true, camOn ? capture() : null); }
+    else if(auto){ autoFails++; if(autoFails > 6){ setAuto(false); cap.textContent = "Seni duyamadım, sohbeti durdurdum. Devam için küreye dokun."; } else { setState("idle"); setTimeout(() => { if(auto && state === "idle" && !busy) listen(); }, 300); } }
+    else { setState("idle"); cap.className = ""; cap.textContent = "Seni duyamadım. Tekrar dokun."; } };
   try { rec.start(); } catch {}
 }
 // iOS/Safari: konuşma çıkışı ancak kullanıcı dokunuşuyla açılır; ilk dokunuşta sessiz bir cümleyle kilidi aç
 let ttsUnlocked = false;
 function unlockTts(){ if(ttsUnlocked) return; ttsUnlocked = true; try { ttsAudio = new Audio(); ttsAudio.src = "data:audio/wav;base64,UklGRiQAAABXQVZFZm10IBAAAAABAAEAQB8AAEAfAAABAAgAZGF0YQAAAAA="; ttsAudio.play().catch(() => {}); } catch {} if(!synth) return; try { const u = new SpeechSynthesisUtterance(" "); u.volume = 0; u.lang = "tr-TR"; synth.speak(u); } catch {} }
-$("orb").addEventListener("click", () => {
-  unlockTts();
-  if(state === "speaking"){ stopSpeak(); setState("idle"); return; }
-  if(state === "listening"){ try { rec.stop(); } catch {} return; }
-  if(state === "idle") listen();
-});
+$("orb").addEventListener("click", () => { unlockTts(); setAuto(!auto); });
 
 // Gönderme
 async function send(text, viaVoice, image){
   text = (text || "").trim(); if(!text || busy) return;
-  busy = true; sendBtn.disabled = true; setState("thinking");
+  const wasAuto = auto; busy = true; sendBtn.disabled = true; setState("thinking");
   cap.className = "me"; cap.textContent = text;
   if(!history.length) log.innerHTML = "";
   history.push({role:"user", content:text}); syncChips(); const userEl = addMsg("user", image ? "[Kamera] " + text : (attached ? "[Belge: " + attached.name + "] " + text : text));
@@ -381,8 +385,8 @@ async function send(text, viaVoice, image){
     const reveal = () => { if(shown) return; shown = true; clearTimeout(revT); wait.remove(); const botEl = addMsg("assistant", data.reply); handleResults(data.results, botEl); cap.className = ""; cap.textContent = data.reply.replace(/\*\*/g,""); };
     const revT = setTimeout(reveal, 14000);
     busy = false;
-    if(viaVoice && voiceOn && (synth || ttsAudio)) speak(data.reply, () => { reveal(); setState("idle"); if(auto) setTimeout(listen, 400); }, reveal);
-    else { reveal(); setState("idle"); }
+    if(viaVoice && voiceOn && (synth || ttsAudio) && (!wasAuto || auto)) speak(data.reply, () => { reveal(); setState("idle"); if(auto) setTimeout(listen, 400); }, reveal);
+    else { reveal(); setState("idle"); if(auto) setTimeout(() => { if(auto && state === "idle" && !busy) listen(); }, 400); }
   }catch(err){
     wait.remove(); history.pop(); userEl.remove(); syncChips(); busy = false; setState("idle");
     cap.className = ""; cap.textContent = err.message;
@@ -497,10 +501,10 @@ function showHint(){
 }
 function syncChips(){ $("chips").style.display = history.length ? "none" : "flex"; }
 $("voiceBtn").addEventListener("click", e => { voiceOn = !voiceOn; e.currentTarget.setAttribute("aria-pressed", voiceOn); if(!voiceOn) stopSpeak(); });
-$("autoBtn").addEventListener("click", e => { auto = !auto; e.currentTarget.setAttribute("aria-pressed", auto); });
+$("autoBtn").addEventListener("click", () => { unlockTts(); setAuto(!auto); });
 function chip(parent, cls, label, text){ const b = document.createElement("button"); b.type = "button"; b.className = cls; b.textContent = label; b.addEventListener("click", () => { unlockTts(); send(text, true); }); parent.appendChild(b); }
 SUG.forEach(([l, t]) => chip($("chips"), "chip", l, t));
-const APP_VERSION = "1.4.1";
+const APP_VERSION = "1.5.0";
 // ---- Ayarlar (v1.1) ----
 function fillVoices(){
   if(!synth) return; const sel = $("sVoice"); sel.innerHTML = "";
