@@ -223,7 +223,6 @@ textarea:focus{outline:none;border-color:var(--c)}
   <div class="frame"></div>
   <div class="camtop"><button class="tbtn" id="camFlip" type="button">Kamerayı çevir</button><button class="tbtn" id="camRevoke" type="button">Rızamı geri al</button><button class="tbtn" id="camClose" type="button">Kapat</button></div>
   <div class="cambot" id="camBox">
-    <div class="chips" id="camChips"></div>
     <div class="camrow"><input id="camIn" placeholder="Kameraya bakarak sor…" aria-label="Soru"><button id="camMic" type="button">Konuş</button><button id="camSend" type="button">Sor</button></div>
   </div>
 </div>
@@ -253,7 +252,7 @@ try { Object.assign(settings, JSON.parse(localStorage.getItem("settings") || "{}
 const saveSettings = () => { try { localStorage.setItem("settings", JSON.stringify(settings)); } catch {} };
 const cleanName = s => String(s || "").replace(/[^\p{L}\p{N} '’.-]/gu, "").trim().slice(0, 30);
 const LABEL = {idle:"HAZIR", listening:"DİNLİYORUM", thinking:"DÜŞÜNÜYORUM", speaking:"KONUŞUYORUM"};
-function setState(s){ state = s; core.dataset.s = s; core.dataset.auto = auto ? "1" : "0"; status.textContent = (s === "idle" && auto) ? "SOHBET AÇIK" : LABEL[s]; }
+function setState(s){ const cm = $("camMic"); if(cm) cm.textContent = auto ? "Durdur" : "Konuş"; state = s; core.dataset.s = s; core.dataset.auto = auto ? "1" : "0"; status.textContent = (s === "idle" && auto) ? "SOHBET AÇIK" : LABEL[s]; }
 let autoFails = 0;
 function setAuto(on){
   auto = on; $("autoBtn").setAttribute("aria-pressed", String(on)); autoFails = 0;
@@ -526,7 +525,7 @@ $("voiceBtn").addEventListener("click", e => { voiceOn = !voiceOn; e.currentTarg
 $("autoBtn").addEventListener("click", () => { unlockTts(); setAuto(!auto); });
 function chip(parent, cls, label, text){ const b = document.createElement("button"); b.type = "button"; b.className = cls; b.textContent = label; b.addEventListener("click", () => { unlockTts(); send(text, true); }); parent.appendChild(b); }
 SUG.forEach(([l, t]) => chip($("chips"), "chip", l, t));
-const APP_VERSION = "1.7.0";
+const APP_VERSION = "1.7.1";
 // ---- Ayarlar (v1.1) ----
 function fillVoices(){
   if(!synth) return; const sel = $("sVoice"); sel.innerHTML = "";
@@ -553,7 +552,6 @@ $("wipe").addEventListener("click", () => {
 renderLog();
 
 // ---- Kamera: soru sorulduğu anda tek kare çekilir ----
-const CAM_Q = [["Elimde ne var?","Elimde ne var? Tanıyıp kısaca anlat."],["Etrafımda ne var?","Etrafımda neler var? Kısaca anlat."],["Cildime bak","Cildime bakar mısın? Görünen özellikleri ve genel bakım önerilerini söyle."],["Yazıyı oku","Görünen yazıyı oku, gerekirse Türkçeye çevir."]];
 function capture(){
   const v = $("vid"); if(!v.videoWidth) return null;
   const k = Math.min(1, 896 / Math.max(v.videoWidth, v.videoHeight));
@@ -586,20 +584,19 @@ async function beginCam(){
   if(!navigator.mediaDevices || !navigator.mediaDevices.getUserMedia){ cap.textContent = "Bu tarayıcı kamerayı desteklemiyor."; return; }
   try { await startStream(); } catch { cap.textContent = "Kamera açılamadı. Tarayıcıdan kamera iznini kontrol et."; return; }
   camOn = true; $("cam").hidden = false; $("camBox").prepend(cap); $("camBox").prepend(status);
-  cap.className = ""; cap.textContent = "Kameraya göster ve sor.";
+  cap.className = ""; cap.textContent = "Kameraya göster, konuş. Seni dinliyorum."; setAuto(true);
 }
 function closeCam(){
-  camOn = false; stopSpeak(); if(stream) stream.getTracks().forEach(t => t.stop()); stream = null;
+  camOn = false; if(auto) setAuto(false); stopSpeak(); if(stream) stream.getTracks().forEach(t => t.stop()); stream = null;
   $("cam").hidden = true; $("capSlot").append(status, cap); setState("idle");
 }
 function askCam(text){ text = (text || "").trim(); if(!text) return; const img = capture(); if(!img){ cap.textContent = "Kamera henüz hazır değil, bir saniye bekle."; return; } $("camIn").value = ""; send(text, true, img); }
-$("camBtn").addEventListener("click", openCam);
+$("camBtn").addEventListener("click", () => { unlockTts(); openCam(); });
 $("camClose").addEventListener("click", closeCam);
 $("camFlip").addEventListener("click", async () => { facing = facing === "environment" ? "user" : "environment"; try { await startStream(); } catch { cap.textContent = "Kamera çevrilemedi."; } });
-$("camMic").addEventListener("click", () => { unlockTts(); if(state === "listening"){ try { rec.stop(); } catch {} } else if(state === "speaking"){ stopSpeak(); setState("idle"); } else listen(); });
+$("camMic").addEventListener("click", () => { unlockTts(); setAuto(!auto); });
 $("camSend").addEventListener("click", () => { unlockTts(); askCam($("camIn").value); });
 $("camIn").addEventListener("keydown", e => { if(e.key === "Enter"){ e.preventDefault(); askCam($("camIn").value); } });
-CAM_Q.forEach(([l, t]) => { const b = document.createElement("button"); b.type = "button"; b.className = "chip"; b.textContent = l; b.addEventListener("click", () => askCam(t)); $("camChips").appendChild(b); });
 
 // ---- İlk açılış paneli: izinler tek kutuda, satır satır ----
 const media = k => async () => { const s = await navigator.mediaDevices.getUserMedia(k); s.getTracks().forEach(t => t.stop()); };

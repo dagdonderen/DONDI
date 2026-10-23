@@ -1,5 +1,9 @@
 # Döndi sürüm notları
 
+## v1.7.1
+- Kamera açılınca Döndi otomatik dinler (sohbet modu), "Durdur" düğmesiyle kapanır; her cümlede kameradan kare alınır
+- Kamera ekranındaki hazır komut düğmeleri kaldırıldı
+
 ## v1.7.0
 - Senaryo karşılaştırma aracı (fiyat, adet, maliyet, sabit gider, tek seferlik harcama)
 - Tarihli ödeme/vade hatırlatıcıları ("her ayın 26'sı KDV")
