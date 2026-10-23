@@ -3,7 +3,7 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
-<meta name="theme-color" content="#030a1c">
+<meta name="theme-color" content="#0b0907">
 <link rel="manifest" href="/manifest.json">
 <link rel="icon" href="/icon.svg">
 <link rel="apple-touch-icon" href="/icon-180.png">
@@ -17,7 +17,7 @@ button:focus-visible{outline:2px solid var(--c);outline-offset:2px}
 .bot p{margin:0 0 .5em}.bot p:last-child{margin:0}.bot ul,.bot ol{margin:.2em 0 .5em;padding-left:1.3em}
 #cList{display:none;flex-direction:column;gap:6px;padding:8px 12px;border-bottom:1px solid var(--line);max-height:42%;overflow-y:auto}
 #cList.show{display:flex}
-#cList input{border:1px solid var(--line);border-radius:8px;padding:8px 10px;font:inherit;background:rgba(3,10,28,.8);color:var(--ink)}
+#cList input{border:1px solid var(--line);border-radius:8px;padding:8px 10px;font:inherit;background:rgba(10,8,6,.8);color:var(--ink)}
 .ci{display:flex;align-items:center;gap:6px;border:1px solid var(--line);border-radius:8px;padding:6px 8px;font-size:13px}
 .ci.cur{border-color:var(--c)}.ci span{flex:1;cursor:pointer;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
 .ci small{display:block;color:var(--mut);font-size:11px;white-space:normal}
@@ -25,10 +25,10 @@ button:focus-visible{outline:2px solid var(--c);outline-offset:2px}
 .tw{overflow-x:auto;margin:.3em 0}.bot table{border-collapse:collapse;font-size:12.5px;white-space:nowrap}.bot th,.bot td{border:1px solid var(--line);padding:4px 8px;text-align:right}.bot th:first-child,.bot td:first-child{text-align:left}.bot th{color:var(--c)}
 .acts{display:flex;flex-wrap:wrap;gap:6px;margin-top:8px}.acts button{border:1px solid var(--c);background:transparent;color:var(--c);border-radius:8px;padding:5px 10px;font-size:12px}
 #att{display:flex;align-items:center;gap:8px;padding:6px 12px;border-top:1px solid var(--line);font-size:12px;color:var(--c)}#att[hidden]{display:none}#att span{flex:1;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}#att button{background:none;border:0;color:var(--mut);font-size:16px}
-#rbn{position:fixed;z-index:20;left:12px;right:12px;top:calc(12px + env(safe-area-inset-top));background:rgba(3,10,28,.95);border:1px solid var(--c);border-radius:12px;padding:12px 14px;color:var(--ink);display:none}#rbn.show{display:block}
+#rbn{position:fixed;z-index:20;left:12px;right:12px;top:calc(12px + env(safe-area-inset-top));background:rgba(10,8,6,.95);border:1px solid var(--c);border-radius:12px;padding:12px 14px;color:var(--ink);display:none}#rbn.show{display:block}
 .err{align-self:center;color:#ff9d8a;font-size:14px;text-align:center}
 .empty{margin:auto;color:var(--mut);text-align:center;font-size:14px}
-.onb{position:fixed;inset:0;z-index:9;background:rgba(3,10,28,.94);display:grid;place-items:center;padding:20px}
+.onb{position:fixed;inset:0;z-index:9;background:rgba(10,8,6,.94);display:grid;place-items:center;padding:20px}
 .onb[hidden]{display:none}
 .onb .card{max-width:420px;width:100%;border:1px solid var(--line);background:var(--panel);padding:22px;clip-path:polygon(0 0,calc(100% - 18px) 0,100% 18px,100% 100%,18px 100%,0 calc(100% - 18px))}
 .onb .st{font-size:11px;letter-spacing:.25em;color:var(--c)}
@@ -44,13 +44,13 @@ button:focus-visible{outline:2px solid var(--c);outline-offset:2px}
  linear-gradient(var(--c),var(--c)) 0 100%/28px 2px,linear-gradient(var(--c),var(--c)) 0 100%/2px 28px,
  linear-gradient(var(--c),var(--c)) 100% 100%/28px 2px,linear-gradient(var(--c),var(--c)) 100% 100%/2px 28px;background-repeat:no-repeat}
 .camtop{position:relative;display:flex;justify-content:space-between;padding:calc(12px + env(safe-area-inset-top)) 14px}
-.camtop .tbtn{background:rgba(3,10,28,.7)}
-.cambot{position:relative;margin-top:auto;padding:12px 14px calc(14px + env(safe-area-inset-bottom));background:linear-gradient(transparent,rgba(3,10,28,.92) 28%);display:flex;flex-direction:column;align-items:center;gap:8px}
-.cam #cap{background:rgba(3,10,28,.75);border:1px solid var(--line);border-radius:8px;padding:8px 12px;min-height:0;width:100%;max-width:520px;-webkit-line-clamp:5}
+.camtop .tbtn{background:rgba(10,8,6,.7)}
+.cambot{position:relative;margin-top:auto;padding:12px 14px calc(14px + env(safe-area-inset-bottom));background:linear-gradient(transparent,rgba(10,8,6,.92) 28%);display:flex;flex-direction:column;align-items:center;gap:8px}
+.cam #cap{background:rgba(10,8,6,.75);border:1px solid var(--line);border-radius:8px;padding:8px 12px;min-height:0;width:100%;max-width:520px;-webkit-line-clamp:5}
 .camrow{display:flex;gap:8px;width:100%;max-width:520px}
-.camrow input{flex:1;border:1px solid var(--line);border-radius:10px;padding:9px 12px;font:inherit;background:rgba(3,10,28,.85);color:var(--ink)}
-.camrow button{border:1px solid var(--c);background:rgba(3,10,28,.85);color:var(--c);border-radius:10px;padding:0 14px;font-weight:600}
-.cam .chip{background:rgba(3,10,28,.6)}
+.camrow input{flex:1;border:1px solid var(--line);border-radius:10px;padding:9px 12px;font:inherit;background:rgba(10,8,6,.85);color:var(--ink)}
+.camrow button{border:1px solid var(--c);background:rgba(10,8,6,.85);color:var(--c);border-radius:10px;padding:0 14px;font-weight:600}
+.cam .chip{background:rgba(10,8,6,.6)}
 .onb .card{max-height:92dvh;overflow:auto}
 .ck{display:flex;gap:10px;align-items:flex-start;margin:12px 0 4px;font-size:14px;line-height:1.45}
 .ck input{margin-top:3px;width:18px;height:18px;accent-color:#3de1ff;flex:none}
@@ -58,7 +58,7 @@ button:focus-visible{outline:2px solid var(--c);outline-offset:2px}
 .onb details summary{cursor:pointer;color:var(--c)}
 .onb .card.wide{max-width:520px}
 .fld{display:block;margin:12px 0 0;font-size:13px;color:var(--mut)}
-.fld input,.fld select{display:block;width:100%;margin-top:4px;padding:9px 10px;background:rgba(3,10,28,.85);color:var(--ink);border:1px solid var(--line);border-radius:8px;font:inherit}
+.fld input,.fld select{display:block;width:100%;margin-top:4px;padding:9px 10px;background:rgba(10,8,6,.85);color:var(--ink);border:1px solid var(--line);border-radius:8px;font:inherit}
 .fld input[type=range]{padding:0}#sTheme{display:flex;gap:8px;margin-top:6px}
 .plist{margin:12px 0;border:1px solid var(--line)}
 .prow{display:flex;align-items:center;gap:12px;padding:10px 12px;border-bottom:1px solid var(--line)}
@@ -67,7 +67,7 @@ button:focus-visible{outline:2px solid var(--c);outline-offset:2px}
 .pst{font-size:12px;letter-spacing:.08em;text-transform:uppercase;color:var(--mut);white-space:nowrap}.pst.ok{color:var(--c)}
 .onb .tbtn:disabled{opacity:.4;cursor:not-allowed}
 
-:root{--bg:#070a14;--c:#3de1ff;--v:#8b6cff;--ink:#e8eefc;--mut:#8a97b8;--line:rgba(255,255,255,.12);--panel:rgba(20,26,48,.72)}
+:root{--bg:#0b0907;--c:#3de1ff;--v:#8b6cff;--ink:#e8eefc;--mut:#8a97b8;--line:rgba(255,255,255,.12);--panel:rgba(30,24,17,.72)}
 *{-webkit-tap-highlight-color:transparent}
 body{background:var(--bg);color:var(--ink);font:16px/1.5 system-ui,-apple-system,"Segoe UI",Roboto,sans-serif;height:100dvh;overflow:hidden;display:flex;flex-direction:column;position:relative}
 body::before{content:"";position:fixed;inset:0;pointer-events:none;background:radial-gradient(60% 45% at 15% 0%,color-mix(in srgb,var(--v) 38%,transparent),transparent 70%),radial-gradient(55% 45% at 100% 100%,color-mix(in srgb,var(--c) 26%,transparent),transparent 70%)}
@@ -76,7 +76,7 @@ body::before{content:"";position:fixed;inset:0;pointer-events:none;background:ra
 .clock{margin-left:auto;text-align:right;font-variant-numeric:tabular-nums;line-height:1.1}
 .clock b{font-size:17px;font-weight:600}.clock span{display:none;font-size:11px;color:var(--mut);text-transform:capitalize;margin-left:8px}
 .ibtn{width:42px;height:42px;display:grid;place-items:center;border:1px solid var(--line);background:var(--panel);border-radius:14px;color:var(--ink)}
-.menu{position:absolute;right:16px;top:calc(56px + env(safe-area-inset-top));min-width:230px;background:rgba(14,19,38,.97);border:1px solid var(--line);border-radius:16px;padding:6px;box-shadow:0 18px 50px rgba(0,0,0,.55)}
+.menu{position:absolute;right:16px;top:calc(56px + env(safe-area-inset-top));min-width:230px;background:rgba(22,18,13,.97);border:1px solid var(--line);border-radius:16px;padding:6px;box-shadow:0 18px 50px rgba(0,0,0,.55)}
 .menu[hidden]{display:none}
 .mi{display:flex;align-items:center;justify-content:space-between;width:100%;text-align:left;border:0;background:none;color:var(--ink);padding:12px 12px;border-radius:10px;font-size:15px;text-decoration:none}
 .mi:hover{background:rgba(255,255,255,.07)}
@@ -127,7 +127,7 @@ textarea:focus{outline:none;border-color:var(--c)}
 #send{border:0;background:linear-gradient(135deg,var(--c),var(--v));color:#06101e;border-radius:18px;padding:0 18px;height:44px;font-weight:700}
 #send:disabled{opacity:.4}
 #clip{border:1px solid var(--line);background:transparent;border-radius:50%;width:44px;height:44px;font-size:18px;flex:none}
-.hint{position:fixed;z-index:15;left:16px;right:16px;bottom:calc(86px + env(safe-area-inset-bottom));max-width:420px;margin:0 auto;background:rgba(14,19,38,.97);border:1px solid var(--c);border-radius:18px;padding:14px 16px 18px;box-shadow:0 18px 50px rgba(0,0,0,.55);animation:rise .35s ease}
+.hint{position:fixed;z-index:15;left:16px;right:16px;bottom:calc(86px + env(safe-area-inset-bottom));max-width:420px;margin:0 auto;background:rgba(22,18,13,.97);border:1px solid var(--c);border-radius:18px;padding:14px 16px 18px;box-shadow:0 18px 50px rgba(0,0,0,.55);animation:rise .35s ease}
 .hint[hidden]{display:none}.hint b{font-size:14px;letter-spacing:.06em;color:var(--c)}.hint p{margin:6px 0 0;font-size:14px}.hint .sys{color:var(--mut);font-size:12px}
 .hint .hx{position:absolute;right:8px;top:6px;background:none;border:0;color:var(--mut);font-size:22px;width:36px;height:36px}
 .hint .bar{position:absolute;left:16px;right:16px;bottom:8px;height:3px;border-radius:3px;background:linear-gradient(90deg,var(--c),var(--v));transform-origin:left;animation:drain 15s linear forwards}
@@ -197,7 +197,7 @@ textarea:focus{outline:none;border-color:var(--c)}
   <label class="fld">Konuşma tonu<select id="sTone"><option value="samimi">Samimi</option><option value="resmi">Resmi</option><option value="enerjik">Enerjik</option><option value="kisa">Kısa ve net</option></select></label>
   <label class="fld">Ses<select id="sVoice"></select></label>
   <label class="fld">Konuşma hızı: <span id="sRateV">1x</span><input id="sRate" type="range" min="0.7" max="1.3" step="0.1" value="1"></label>
-  <div class="fld">Tema<div id="sTheme"><button class="tbtn" data-t="mavi" type="button">Mavi</button><button class="tbtn" data-t="mor" type="button">Mor</button><button class="tbtn" data-t="yesil" type="button">Yeşil</button></div></div>
+  <div class="fld">Tema<div id="sTheme"><button class="tbtn" data-t="altin" type="button">Altın</button><button class="tbtn" data-t="mavi" type="button">Mavi</button><button class="tbtn" data-t="mor" type="button">Mor</button><button class="tbtn" data-t="yesil" type="button">Yeşil</button></div></div>
   <p class="nt">Tercihlerin cihazında saklanır. Adın ve tonun, cevap üretmek için sunucuya ve Google'a gönderilir.</p>
   <div class="row"><button class="tbtn" id="sTest" type="button">Sesi dene</button><button class="tbtn" id="sClose" type="button" aria-pressed="true">Tamam</button></div>
 </div></div>
@@ -229,8 +229,8 @@ let cur = chats.find(c => c.id === curId) || chats[0];
 let history = cur.msgs;
 let voiceOn = true, auto = false, busy = false, state = "idle", camOn = false, stream = null, facing = "environment";
 const save = () => { cur.ts = Date.now(); if(!cur.title){ const f = history.find(m => m.role==="user"); if(f) cur.title = f.content.slice(0,40); } try { localStorage.setItem("chats", JSON.stringify(chats)); localStorage.setItem("curChat", cur.id); } catch {} };
-const THEMES = {mavi:["#3de1ff","#8b6cff"], mor:["#b79cff","#3de1ff"], yesil:["#4dffb0","#3de1ff"]};
-let settings = {name:"", tone:"samimi", voice:"", rate:1, theme:"mavi"};
+const THEMES = {altin:["#f0b94a","#d9733f"], mavi:["#3de1ff","#8b6cff"], mor:["#b79cff","#3de1ff"], yesil:["#4dffb0","#3de1ff"]};
+let settings = {name:"", tone:"samimi", voice:"", rate:1, theme:"altin"};
 try { Object.assign(settings, JSON.parse(localStorage.getItem("settings") || "{}")); } catch {}
 const saveSettings = () => { try { localStorage.setItem("settings", JSON.stringify(settings)); } catch {} };
 const cleanName = s => String(s || "").replace(/[^\p{L}\p{N} '’.-]/gu, "").trim().slice(0, 30);
@@ -461,7 +461,7 @@ $("voiceBtn").addEventListener("click", e => { voiceOn = !voiceOn; e.currentTarg
 $("autoBtn").addEventListener("click", e => { auto = !auto; e.currentTarget.setAttribute("aria-pressed", auto); });
 function chip(parent, cls, label, text){ const b = document.createElement("button"); b.type = "button"; b.className = cls; b.textContent = label; b.addEventListener("click", () => send(text, true)); parent.appendChild(b); }
 SUG.forEach(([l, t]) => chip($("chips"), "chip", l, t));
-const APP_VERSION = "1.3.0";
+const APP_VERSION = "1.3.1";
 // ---- Ayarlar (v1.1) ----
 function fillVoices(){
   if(!synth) return; const sel = $("sVoice"); sel.innerHTML = "";
@@ -470,7 +470,7 @@ function fillVoices(){
   sel.value = settings.voice;
 }
 function chosenVoice(){ if(synth && settings.voice){ const f = synth.getVoices().find(x => x.name === settings.voice); if(f) return f; } return trVoice; }
-function applyTheme(){ const t = THEMES[settings.theme] || THEMES.mavi; document.documentElement.style.setProperty("--c", t[0]); document.documentElement.style.setProperty("--v", t[1]); }
+function applyTheme(){ const t = THEMES[settings.theme] || THEMES.altin; document.documentElement.style.setProperty("--c", t[0]); document.documentElement.style.setProperty("--v", t[1]); }
 function themeBtns(){ document.querySelectorAll("#sTheme button").forEach(b => b.setAttribute("aria-pressed", String(b.dataset.t === settings.theme))); }
 $("setBtn").addEventListener("click", () => { $("sName").value = settings.name; $("sTone").value = settings.tone; $("sRate").value = settings.rate; $("sRateV").textContent = settings.rate + "x"; fillVoices(); themeBtns(); $("set").hidden = false; });
 $("sRate").addEventListener("input", e => { $("sRateV").textContent = e.target.value + "x"; });

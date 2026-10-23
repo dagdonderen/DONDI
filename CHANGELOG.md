@@ -1,5 +1,9 @@
 # Döndi sürüm notları
 
+## v1.3.1
+- Marka paleti: sıcak siyah, bakır ve altın (varsayılan "Altın" teması; Mavi/Mor/Yeşil seçenekleri durur)
+- Yeni uygulama ikonu (D ve yörüngedeki ürün simgeleri), manifest renkleri güncellendi
+
 ## v1.3.0 (arayüz yenilemesi)
 - Yeni tasarım: cam efektli, mobil öncelikli, tek sütun; HUD halkaları yerine nefes alan küre
 - Sağdaki hızlı komutlar paneli kaldırıldı
