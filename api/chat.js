@@ -6,6 +6,20 @@ const FALLBACK_MODEL = process.env.GEMINI_FALLBACK_MODEL || "gemini-3.5-flash-li
 const DAILY_LIMIT = 30;
 const MAX_HISTORY = 20;
 
+const TONES = {
+  samimi: "Samimi, sıcak ve arkadaşça bir dille konuş.",
+  resmi: "Resmi ve saygılı bir dille konuş.",
+  enerjik: "Enerjik, motive edici ve neşeli bir dille konuş.",
+  kisa: "Çok kısa ve net cevap ver, gereksiz süsleme yapma.",
+};
+function profileText(p) {
+  if (!p) return "";
+  let t = "";
+  if (p.name) t += `\nKullanıcının adı: ${p.name}. Ona zaman zaman adıyla hitap et.`;
+  if (p.tone) t += `\n${TONES[p.tone]}`;
+  return t;
+}
+
 const IMAGE_RULES = `
 Bu mesajla birlikte kullanıcının kamerasından tek bir kare geldi. Görüntüye bakarak kısa ve net cevap ver.
 - Elindeki nesne sorulursa: nesneyi tanı, ne olduğunu ve gerekirse ne işe yaradığını kısaca söyle. Emin değilsen bunu belirt.
@@ -25,7 +39,7 @@ Selamlamayı yalnızca sohbetin ilk mesajında yap; sonraki cevaplarda doğrudan
 Hava durumu sorulursa get_weather aracını kullan. Şehir belirtilmemişse önce hangi şehir olduğunu sor.
 Tıbbi, hukuki ve finansal konularda genel bilgi ver, uzmana danışmayı öner.
 Şu an (Türkiye saati): ${now}.${ctx.loc ? `
-Kullanıcının yaklaşık konumu biliniyor. Şehir belirtmeden hava durumu sorarsa get_weather aracını city alanını boş bırakarak çağır.` : ""}${ctx.hasImage ? IMAGE_RULES : ""}`;
+Kullanıcının yaklaşık konumu biliniyor. Şehir belirtmeden hava durumu sorarsa get_weather aracını city alanını boş bırakarak çağır.` : ""}${ctx.hasImage ? IMAGE_RULES : ""}${profileText(ctx.profile)}`;
 }
 
 // ---- Hava durumu aracı ----
@@ -219,7 +233,11 @@ async function checkLimit(ip) {
 export default async function handler(req, res) {
   if (req.method !== "POST") return res.status(405).json({ error: "Yalnızca POST." });
 
-  const { messages, location, image } = req.body ?? {};
+  const { messages, location, image, profile } = req.body ?? {};
+  const prof = {
+    name: String(profile?.name || "").replace(/[^\p{L}\p{N} '’.-]/gu, "").trim().slice(0, 30),
+    tone: Object.hasOwn(TONES, profile?.tone) ? profile.tone : "",
+  };
   const img = typeof image === "string" && image.length < 1500000 && /^[A-Za-z0-9+/=]+$/.test(image) ? image : null;
   const loc = location && Math.abs(location.lat) <= 90 && Math.abs(location.lon) <= 180
     ? { lat: Number(location.lat.toFixed?.(2) ?? location.lat), lon: Number(location.lon.toFixed?.(2) ?? location.lon) } : null;
@@ -255,7 +273,7 @@ export default async function handler(req, res) {
   const t0 = Date.now();
   for (const model of models) {
     if (Date.now() - t0 > 35000) break; // zaman sınırına yaklaşıldı
-    const out = await tryModel(model, apiKey, base, { loc, hasImage: !!img });
+    const out = await tryModel(model, apiKey, base, { loc, hasImage: !!img, profile: prof });
     if (out.text) return res.status(200).json({ reply: out.text });
     if (out.fatal) break;
   }
