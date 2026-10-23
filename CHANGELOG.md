@@ -1,9 +1,12 @@
 # Döndi sürüm notları
 
-## v1.1.0-beta (devam ediyor)
+## v1.1.0
+- Birden fazla sohbet: yeni sohbet, geçmişten seçme, silme (eski tek sohbet otomatik taşınır)
+- Geçmişte arama (başlık ve mesaj içeriği)
+
+## v1.1.0-beta
 - Ayarlar paneli: ad, konuşma tonu (samimi/resmi/enerjik/kısa), ses seçimi, konuşma hızı, tema rengi
 - Ad ve ton cevaplara yansıyor
-- Sırada: birden fazla sohbet ve geçmişte arama
 
 ## v1.0.2
 - İzinler tek kutuda satır satır (yaş onayı + mikrofon + konum + bilgi satırları)

@@ -63,6 +63,15 @@ main{position:relative;z-index:1;flex:1;display:grid;grid-template-columns:1fr m
 .me{align-self:flex-end;background:rgba(139,108,255,.3);border:1px solid rgba(139,108,255,.6);white-space:pre-wrap}
 .bot{align-self:flex-start;background:rgba(61,225,255,.08);border:1px solid var(--line)}
 .bot p{margin:0 0 .5em}.bot p:last-child{margin:0}.bot ul,.bot ol{margin:.2em 0 .5em;padding-left:1.3em}
+.ctools{display:flex;gap:6px;padding:8px 12px;border-bottom:1px solid var(--line)}
+.ctools button{flex:1;border:1px solid var(--line);background:transparent;color:var(--c);border-radius:8px;padding:6px;font-size:12px}
+#cList{display:none;flex-direction:column;gap:6px;padding:8px 12px;border-bottom:1px solid var(--line);max-height:42%;overflow-y:auto}
+#cList.show{display:flex}
+#cList input{border:1px solid var(--line);border-radius:8px;padding:8px 10px;font:inherit;background:rgba(3,10,28,.8);color:var(--ink)}
+.ci{display:flex;align-items:center;gap:6px;border:1px solid var(--line);border-radius:8px;padding:6px 8px;font-size:13px}
+.ci.cur{border-color:var(--c)}.ci span{flex:1;cursor:pointer;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.ci small{display:block;color:var(--mut);font-size:11px;white-space:normal}
+.ci button{background:none;border:0;color:var(--mut);font-size:16px}
 .err{align-self:center;color:#ff9d8a;font-size:14px;text-align:center}
 .empty{margin:auto;color:var(--mut);text-align:center;font-size:14px}
 .chat form{display:flex;gap:8px;padding:10px 12px calc(10px + env(safe-area-inset-bottom));border-top:1px solid var(--line)}
@@ -181,6 +190,8 @@ textarea{flex:1;resize:none;max-height:110px;border:1px solid var(--line);border
 </div>
 <div class="chat" id="chat">
   <header><span>MESAJLAŞMA</span><button id="chatClose" type="button" aria-label="Kapat">×</button></header>
+  <div class="ctools"><button id="cNew" type="button">+ Yeni sohbet</button><button id="cHist" type="button">Geçmiş / Ara</button></div>
+  <div id="cList"><input id="cQ" type="search" placeholder="Sohbetlerde ara…" aria-label="Ara"><div id="cItems"></div></div>
   <div id="log"></div>
   <form id="f"><textarea id="t" rows="1" placeholder="Bir şey yaz…" aria-label="Mesaj"></textarea><button id="send" type="submit">Gönder</button></form>
 </div>
@@ -195,9 +206,13 @@ textarea{flex:1;resize:none;max-height:110px;border:1px solid var(--line);border
 const $ = id => document.getElementById(id);
 const core = $("core"), status = $("status"), cap = $("cap"), log = $("log"), input = $("t"), sendBtn = $("send");
 const SUG = [["Hava durumu","Bugün hava nasıl olacak? Şehrimi söyleyeyim."],["Plan yap","Yarın için 3 maddelik bir günlük plan hazırla."],["Mesaj yaz","Bir arkadaşıma doğum günü mesajı yazar mısın?"],["Özetle","Sana yapıştıracağım metni 3 cümlede özetler misin?"]];
-let history = []; try { history = JSON.parse(localStorage.getItem("chat") || "[]"); } catch {}
+let chats = []; try { chats = JSON.parse(localStorage.getItem("chats") || "[]"); } catch {}
+if(!chats.length){ let old = []; try { old = JSON.parse(localStorage.getItem("chat") || "[]"); } catch {} chats = [{id:Date.now().toString(36), title:"", ts:Date.now(), msgs:old}]; }
+let curId = null; try { curId = localStorage.getItem("curChat"); } catch {}
+let cur = chats.find(c => c.id === curId) || chats[0];
+let history = cur.msgs;
 let voiceOn = true, auto = false, busy = false, state = "idle", camOn = false, stream = null, facing = "environment";
-const save = () => { try { localStorage.setItem("chat", JSON.stringify(history)); } catch {} };
+const save = () => { cur.ts = Date.now(); if(!cur.title){ const f = history.find(m => m.role==="user"); if(f) cur.title = f.content.slice(0,40); } try { localStorage.setItem("chats", JSON.stringify(chats)); localStorage.setItem("curChat", cur.id); } catch {} };
 const THEMES = {mavi:["#3de1ff","#8b6cff"], mor:["#b79cff","#3de1ff"], yesil:["#4dffb0","#3de1ff"]};
 let settings = {name:"", tone:"samimi", voice:"", rate:1, theme:"mavi"};
 try { Object.assign(settings, JSON.parse(localStorage.getItem("settings") || "{}")); } catch {}
@@ -227,6 +242,27 @@ function addMsg(role, text){
   log.appendChild(d); log.scrollTop = log.scrollHeight; return d;
 }
 function renderLog(){ log.innerHTML = ""; if(!history.length){ log.innerHTML = '<div class="empty">Henüz mesaj yok.<br>Yazabilir ya da halkaya dokunup konuşabilirsin.</div>'; return; } history.forEach(m => addMsg(m.role, m.content)); }
+
+// Çoklu sohbet
+function switchChat(id){ const c = chats.find(x => x.id === id); if(!c || busy) return; cur = c; history = c.msgs; save(); renderLog(); $("cList").classList.remove("show"); }
+function newChat(){ if(busy) return; if(!history.length){ $("cList").classList.remove("show"); return; } cur = {id:Date.now().toString(36), title:"", ts:Date.now(), msgs:[]}; chats.unshift(cur); history = cur.msgs; save(); renderLog(); $("cList").classList.remove("show"); }
+function delChat(id){ if(busy) return; chats = chats.filter(x => x.id !== id); if(!chats.length) chats = [{id:Date.now().toString(36), title:"", ts:Date.now(), msgs:[]}]; if(cur.id === id){ cur = chats[0]; history = cur.msgs; renderLog(); } save(); renderList(); }
+function renderList(){
+  const q = $("cQ").value.trim().toLocaleLowerCase("tr"), box = $("cItems"); box.innerHTML = "";
+  const rows = chats.filter(c => c.msgs.length).filter(c => !q || (c.title||"").toLocaleLowerCase("tr").includes(q) || c.msgs.some(m => m.content.toLocaleLowerCase("tr").includes(q))).sort((a,b) => b.ts - a.ts);
+  if(!rows.length){ box.innerHTML = '<div class="empty">'+(q?"Sonuç yok.":"Kayıtlı sohbet yok.")+'</div>'; return; }
+  rows.forEach(c => {
+    const hit = q ? c.msgs.find(m => m.content.toLocaleLowerCase("tr").includes(q)) : null;
+    const d = document.createElement("div"); d.className = "ci" + (c.id===cur.id ? " cur" : "");
+    const sp = document.createElement("span"); sp.textContent = c.title || "Yeni sohbet"; sp.onclick = () => switchChat(c.id);
+    if(hit){ const sm = document.createElement("small"); const i = hit.content.toLocaleLowerCase("tr").indexOf(q); sm.textContent = "…" + hit.content.slice(Math.max(0,i-20), i+50) + "…"; sp.appendChild(sm); }
+    const x = document.createElement("button"); x.type = "button"; x.textContent = "🗑"; x.setAttribute("aria-label","Sohbeti sil"); x.onclick = () => { if(confirm("Bu sohbet silinsin mi?")) delChat(c.id); };
+    d.append(sp, x); box.appendChild(d);
+  });
+}
+$("cNew").addEventListener("click", newChat);
+$("cHist").addEventListener("click", () => { $("cList").classList.toggle("show"); renderList(); });
+$("cQ").addEventListener("input", renderList);
 
 // Ses çıkışı
 const synth = window.speechSynthesis; let trVoice = null;
@@ -302,7 +338,7 @@ $("voiceBtn").addEventListener("click", e => { voiceOn = !voiceOn; e.currentTarg
 $("autoBtn").addEventListener("click", e => { auto = !auto; e.currentTarget.setAttribute("aria-pressed", auto); });
 function chip(parent, cls, label, text){ const b = document.createElement("button"); b.type = "button"; b.className = cls; b.textContent = label; b.addEventListener("click", () => send(text, true)); parent.appendChild(b); }
 SUG.forEach(([l, t]) => { chip($("chips"), "chip", l, t); chip($("quick"), "q", l, t); });
-const APP_VERSION = "1.1.0-beta";
+const APP_VERSION = "1.1.0";
 // ---- Ayarlar (v1.1) ----
 function fillVoices(){
   if(!synth) return; const sel = $("sVoice"); sel.innerHTML = "";
