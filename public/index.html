@@ -143,6 +143,38 @@ textarea:focus{outline:none;border-color:var(--c)}
 @media(min-width:900px){.clock span{display:inline}.core{width:clamp(140px,28vh,260px)}}
 @media(max-height:620px){.chips{display:none!important}.core{width:clamp(96px,20vh,140px)}}
 @media(prefers-reduced-motion:reduce){.core i,.hint,.hint .bar{animation:none!important}}
+
+/* v1.8 akış tasarımı: pencere yok, yazı akar */
+.stage{padding:0 0 4px}
+.core{width:clamp(150px,30vh,300px)}
+#capSlot #cap{font-size:13px;color:var(--mut);-webkit-line-clamp:1;min-height:0}
+#capSlot #cap:empty{display:none}
+.chat{background:none;border:0;border-radius:0;backdrop-filter:none;-webkit-backdrop-filter:none;overflow:visible;margin:0;min-height:120px;position:relative}
+#log{padding:8px 4px 6px;gap:12px;-webkit-mask-image:linear-gradient(transparent 0,#000 38%);mask-image:linear-gradient(transparent 0,#000 38%);scrollbar-width:none;justify-content:flex-end}
+#log::-webkit-scrollbar{display:none}
+#log>*{flex:none}
+.msg{max-width:96%;border:0;border-radius:0;background:none;text-align:center;align-self:center;padding:0 6px}
+.me{background:none;border:0;color:var(--mut);font-size:15px;white-space:pre-wrap}
+.bot{background:none;border:0;font-size:19px;line-height:1.4}
+.bot p{margin:0 0 .4em}.bot ul,.bot ol{text-align:left;display:inline-block}
+.acts{justify-content:center}
+.empty{margin:auto}
+#cList{position:fixed;z-index:12;left:12px;right:12px;top:calc(60px + env(safe-area-inset-top));max-width:520px;margin:0 auto;background:var(--pop);border:1px solid var(--line);border-radius:18px;padding:10px;max-height:60vh;box-shadow:0 18px 50px rgba(0,0,0,.5)}
+.chat form{padding:6px 0 4px;gap:8px;align-items:center}
+.pill{flex:1;display:flex;align-items:center;gap:4px;min-width:0;border:1px solid var(--line);border-radius:999px;background:var(--inp);padding:4px 6px 4px 8px}
+.pill:focus-within{border-color:var(--c)}
+.pill textarea{border:0;background:none;padding:8px 6px;border-radius:0;min-width:0;text-transform:none}
+#clip{border:0;background:none;width:38px;height:38px;color:var(--c);display:grid;place-items:center;flex:none;padding:0}
+#clip svg{width:24px;height:24px}
+.rbtn{flex:none;width:52px;height:52px;border-radius:50%;border:1px solid var(--line);background:var(--panel);color:var(--ink);display:grid;place-items:center;padding:0}
+.rbtn svg{width:25px;height:25px}
+.rbtn.mic{border:0;background:linear-gradient(135deg,var(--c),var(--v));color:#07101c;box-shadow:0 6px 24px color-mix(in srgb,var(--c) 40%,transparent)}
+#send{display:none;padding:0;height:52px;width:52px;border-radius:50%}
+.typing #send{display:grid}.typing #micBtn{display:none}
+#micBtn .i-stop{display:none}body[data-auto="1"] #micBtn .i-stop{display:block}body[data-auto="1"] #micBtn .i-mic{display:none}
+body[data-auto="1"] #micBtn{animation:pulse 1.6s ease-in-out infinite}
+@keyframes pulse{50%{box-shadow:0 0 0 10px color-mix(in srgb,var(--c) 0%,transparent),0 6px 24px color-mix(in srgb,var(--c) 55%,transparent)}}
+.foot{padding-top:0}
 </style>
 </head>
 <body>
@@ -153,6 +185,9 @@ textarea:focus{outline:none;border-color:var(--c)}
   <div class="menu" id="menu" hidden>
     <button class="mi" id="voiceBtn" type="button" aria-pressed="true">Sesli cevap</button>
     <button class="mi" id="autoBtn" type="button" aria-pressed="false">Sohbet modu (sürekli dinle)</button>
+    <button class="mi" id="mNew" type="button">Yeni sohbet</button>
+    <button class="mi" id="mHist" type="button">Geçmiş / Ara</button>
+    <hr>
     <button class="mi" id="setBtn" type="button">Ayarlar</button>
     <button class="mi" id="permBtn" type="button">İzinler</button>
     <hr>
@@ -171,14 +206,15 @@ textarea:focus{outline:none;border-color:var(--c)}
     </div>
     <div id="capSlot"><div id="status" aria-live="polite">HAZIR</div><div id="cap">Küreye dokun, sohbet başlasın.</div></div>
     <div class="chips" id="chips"></div>
-    <button class="camcta" id="camBtn" type="button"><svg viewBox="0 0 24 24"><path d="M4 8a2 2 0 0 1 2-2h2l1.5-2h5L16 6h2a2 2 0 0 1 2 2v9a2 2 0 0 1-2 2H6a2 2 0 0 1-2-2z"/><circle cx="12" cy="12.5" r="3.5"/></svg>Kamerayı aç</button>
   </section>
   <section class="chat" id="chat" aria-label="Mesajlaşma">
-    <div class="ctools"><button id="cNew" type="button">+ Yeni sohbet</button><button id="cHist" type="button">Geçmiş / Ara</button></div>
     <div id="cList"><input id="cQ" type="search" placeholder="Sohbetlerde ara…" aria-label="Ara"><div id="cItems"></div></div>
     <div id="log"></div>
     <div id="att" hidden></div>
-    <form id="f"><button id="clip" type="button" aria-label="Belge ekle" title="Excel, Word veya PDF ekle">📎</button><input type="file" id="fileIn" hidden accept=".xlsx,.xls,.csv,.txt,.docx,.pdf"><textarea id="t" rows="1" placeholder="Bir şey yaz…" aria-label="Mesaj"></textarea><button id="send" type="submit">Gönder</button></form>
+    <form id="f"><div class="pill"><button id="clip" type="button" aria-label="Belge ekle" title="Excel, Word veya PDF ekle"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="5" width="18" height="14" rx="3"/><circle cx="9" cy="10.5" r="1.8"/><path d="M4 17l5-4.5 3.5 3L16 12l4 4"/></svg></button><input type="file" id="fileIn" hidden accept=".xlsx,.xls,.csv,.txt,.docx,.pdf"><textarea id="t" rows="1" placeholder="Yaz…" aria-label="Mesaj"></textarea></div>
+    <button class="rbtn" id="camBtn" type="button" aria-label="Kamerayı aç"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M4 8a2 2 0 0 1 2-2h2l1.5-2h5L16 6h2a2 2 0 0 1 2 2v9a2 2 0 0 1-2 2H6a2 2 0 0 1-2-2z"/><circle cx="12" cy="12.5" r="3.5"/></svg></button>
+    <button class="rbtn mic" id="micBtn" type="button" aria-label="Sohbeti başlat veya durdur"><svg class="i-mic" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><rect x="9" y="3" width="6" height="11" rx="3"/><path d="M5 11a7 7 0 0 0 14 0M12 18v3"/></svg><svg class="i-stop" viewBox="0 0 24 24" fill="currentColor"><rect x="7" y="7" width="10" height="10" rx="2"/></svg></button>
+    <button class="rbtn mic" id="send" type="submit" aria-label="Gönder"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12h14M13 6l6 6-6 6"/></svg></button></form>
   </section>
 </main>
 <footer class="foot">Döndi hata yapabilir. Tıbbi, hukuki veya finansal tavsiye değildir.</footer>
@@ -252,7 +288,7 @@ try { Object.assign(settings, JSON.parse(localStorage.getItem("settings") || "{}
 const saveSettings = () => { try { localStorage.setItem("settings", JSON.stringify(settings)); } catch {} };
 const cleanName = s => String(s || "").replace(/[^\p{L}\p{N} '’.-]/gu, "").trim().slice(0, 30);
 const LABEL = {idle:"HAZIR", listening:"DİNLİYORUM", thinking:"DÜŞÜNÜYORUM", speaking:"KONUŞUYORUM"};
-function setState(s){ const cm = $("camMic"); if(cm) cm.textContent = auto ? "Durdur" : "Konuş"; state = s; core.dataset.s = s; core.dataset.auto = auto ? "1" : "0"; status.textContent = (s === "idle" && auto) ? "SOHBET AÇIK" : LABEL[s]; }
+function setState(s){ document.body.dataset.auto = auto ? "1" : "0"; const cm = $("camMic"); if(cm) cm.textContent = auto ? "Durdur" : "Konuş"; state = s; core.dataset.s = s; core.dataset.auto = auto ? "1" : "0"; status.textContent = (s === "idle" && auto) ? "SOHBET AÇIK" : LABEL[s]; }
 let autoFails = 0;
 function setAuto(on){
   auto = on; $("autoBtn").setAttribute("aria-pressed", String(on)); autoFails = 0;
@@ -307,8 +343,8 @@ function renderList(){
     d.append(sp, x); box.appendChild(d);
   });
 }
-$("cNew").addEventListener("click", newChat);
-$("cHist").addEventListener("click", () => { $("cList").classList.toggle("show"); renderList(); });
+$("mNew").addEventListener("click", () => { menuClose(); newChat(); });
+$("mHist").addEventListener("click", () => { menuClose(); $("cList").classList.toggle("show"); renderList(); });
 $("cQ").addEventListener("input", renderList);
 
 // Ses çıkışı
@@ -382,6 +418,7 @@ function listen(){
 let ttsUnlocked = false;
 function unlockTts(){ if(ttsUnlocked) return; ttsUnlocked = true; try { ttsAudio = new Audio(); ttsAudio.src = "data:audio/wav;base64,UklGRiQAAABXQVZFZm10IBAAAAABAAEAQB8AAEAfAAABAAgAZGF0YQAAAAA="; ttsAudio.play().catch(() => {}); } catch {} if(!synth) return; try { const u = new SpeechSynthesisUtterance(" "); u.volume = 0; u.lang = "tr-TR"; synth.speak(u); } catch {} }
 $("orb").addEventListener("click", () => { unlockTts(); setAuto(!auto); });
+$("micBtn").addEventListener("click", () => { unlockTts(); setAuto(!auto); });
 
 // Gönderme
 async function send(text, viaVoice, image){
@@ -397,7 +434,7 @@ async function send(text, viaVoice, image){
     if(!r.ok || !data.reply) throw new Error(data.error || "Şu an cevap veremiyorum. Biraz sonra tekrar dene.");
     history.push({role:"assistant", content:data.reply}); save();
     let shown = false;
-    const reveal = () => { if(shown) return; shown = true; clearTimeout(revT); wait.remove(); const botEl = addMsg("assistant", data.reply); handleResults(data.results, botEl); cap.className = ""; cap.textContent = data.reply.replace(/\*\*/g,""); };
+    const reveal = () => { if(shown) return; shown = true; clearTimeout(revT); wait.remove(); const botEl = addMsg("assistant", data.reply); handleResults(data.results, botEl); cap.className = ""; cap.textContent = ""; };
     const revT = setTimeout(reveal, 14000);
     busy = false;
     if(viaVoice && voiceOn && (synth || ttsAudio) && (!wasAuto || auto)) speak(data.reply, () => { reveal(); setState("idle"); if(auto) setTimeout(listen, 400); }, reveal);
@@ -506,15 +543,16 @@ function handleResults(results, el){
 }
 
 // Arayüz bağlantıları
-$("f").addEventListener("submit", e => { e.preventDefault(); const v = input.value; input.value = ""; input.style.height = "auto"; send(v, false); });
+$("f").addEventListener("submit", e => { e.preventDefault(); const v = input.value; input.value = ""; syncTyping(); input.style.height = "auto"; send(v, false); });
 input.addEventListener("keydown", e => { if(e.key === "Enter" && !e.shiftKey && matchMedia("(pointer:fine)").matches){ e.preventDefault(); $("f").requestSubmit(); } });
-input.addEventListener("input", () => { input.style.height = "auto"; input.style.height = Math.min(input.scrollHeight, 110) + "px"; });
+const syncTyping = () => $("f").classList.toggle("typing", input.value.trim().length > 0);
+input.addEventListener("input", () => { syncTyping(); input.style.height = "auto"; input.style.height = Math.min(input.scrollHeight, 110) + "px"; });
 // Menü
 function menuClose(){ $("menu").hidden = true; $("menuBtn").setAttribute("aria-expanded","false"); }
 $("menuBtn").addEventListener("click", e => { e.stopPropagation(); const h = $("menu").hidden; $("menu").hidden = !h; $("menuBtn").setAttribute("aria-expanded", String(h)); });
 document.addEventListener("click", e => { if(!$("menu").hidden && !$("menu").contains(e.target)) menuClose(); });
 document.addEventListener("keydown", e => { if(e.key === "Escape") menuClose(); });
-["setBtn","permBtn","wipe"].forEach(id => $(id).addEventListener("click", menuClose));
+["setBtn","permBtn","wipe","mNew","mHist"].forEach(id => $(id).addEventListener("click", menuClose));
 // İlk kullanım ipucu: ~15 sn görünür, sonra kaybolur
 function showHint(){
   try { if(localStorage.getItem("hint1")) return; localStorage.setItem("hint1", "1"); } catch {}
@@ -525,7 +563,7 @@ $("voiceBtn").addEventListener("click", e => { voiceOn = !voiceOn; e.currentTarg
 $("autoBtn").addEventListener("click", () => { unlockTts(); setAuto(!auto); });
 function chip(parent, cls, label, text){ const b = document.createElement("button"); b.type = "button"; b.className = cls; b.textContent = label; b.addEventListener("click", () => { unlockTts(); send(text, true); }); parent.appendChild(b); }
 SUG.forEach(([l, t]) => chip($("chips"), "chip", l, t));
-const APP_VERSION = "1.7.1";
+const APP_VERSION = "1.8.0";
 // ---- Ayarlar (v1.1) ----
 function fillVoices(){
   if(!synth) return; const sel = $("sVoice"); sel.innerHTML = "";

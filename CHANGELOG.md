@@ -1,5 +1,11 @@
 # Döndi sürüm notları
 
+## v1.8.0
+- Konuşma paneli pencere olmaktan çıktı: ortalanmış, akan yazı; eski satırlar yukarıda silikleşir.
+- Daha büyük küre; cevap metni artık küre altında tekrarlanmıyor.
+- Alt çubuk: görsel/belge simgeli yazı hapı, kamera düğmesi, büyük yuvarlak mikrofon (sohbet modu aç/kapat). Yazı yazınca gönder oku çıkar.
+- 'Yeni sohbet' ve 'Geçmiş / Ara' ☰ menüsüne taşındı.
+
 ## v1.7.1
 - Kamera açılınca Döndi otomatik dinler (sohbet modu), "Durdur" düğmesiyle kapanır; her cümlede kameradan kare alınır
 - Kamera ekranındaki hazır komut düğmeleri kaldırıldı
