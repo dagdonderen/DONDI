@@ -1,5 +1,15 @@
 # Döndi sürüm notları
 
+## v1.1.0-beta (devam ediyor)
+- Ayarlar paneli: ad, konuşma tonu (samimi/resmi/enerjik/kısa), ses seçimi, konuşma hızı, tema rengi
+- Ad ve ton cevaplara yansıyor
+- Sırada: birden fazla sohbet ve geçmişte arama
+
+## v1.0.2
+- İzinler tek kutuda satır satır (yaş onayı + mikrofon + konum + bilgi satırları)
+- Rıza kayıtları sunucuda tutuluyor (api/consent.js, Upstash Redis gerekir): yaş, konum, kamera rızası/geri alma
+- Gizlilik metnine rıza kaydı bölümü
+
 ## v1.0.1
 - Kamera öncesi ayrı Açık Rıza Metni: özel nitelikli veri, Google aktarımı ve Vercel aktarımı için üç ayrı onay kutusu (katmanlı ayrıntılarla)
 - Rızayı geri alma butonu
