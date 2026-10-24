@@ -51,3 +51,16 @@ Sorun olursa ekran görüntüsü ve Vercel → Logs çıktısı yeterli.
 
 ## Redis bağlantısı (not)
 Kod hem Upstash REST (`UPSTASH_REDIS_REST_URL/TOKEN`, `KV_REST_API_URL/TOKEN`) hem de standart `REDIS_URL` (redis:// veya rediss://) ile çalışır. Vercel'de bağlanınca değişken adı fark etmez. `HASH_SALT` değişkenini ayrıca eklemeyi unutma.
+
+## Planlar ve kısıtlar (v1.0)
+| Değişken | Anlamı |
+|---|---|
+| `PLAN_SECRET` | Hak belgelerini (etkinleştirme kodu) imzalamak için uzun rastgele bir yazı. Gizli tut. |
+| `BETA_OPEN` | `1` (varsayılan): kodsuz herkes "Beta" planında (geniş özellik, sınırlı kota). `0`: kodsuz herkes Ücretsiz plan. |
+
+Kod üretme (ödeme sistemi gelene kadar elle satış / pilot için):
+`PLAN_SECRET=... node scripts/issue_token.mjs sirket_pro 31 musteri-kodu` → çıkan `v1....` kodunu kullanıcıya ver; Menü → Planlar → kodu yapıştırır.
+Planlar: ucretsiz, bireysel_plus, bireysel_pro, sirket_plus, sirket_pro, sirket_promax. Tanımlar ve limitler: `lib/plans.js`.
+
+Yasal sayfalar: `legal/sirket.json` dosyasını doldur, sonra `node scripts/build_legal.mjs --strict` çalıştır (eksik alan varsa hata verir). Avukat onayından sonra `"hazir": true` yap.
+Maliyet ölçümü: Redis'te `dondi:use:<tarih>` (plan başına token toplamları).

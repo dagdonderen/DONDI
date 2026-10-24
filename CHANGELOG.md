@@ -1,6 +1,9 @@
 # Değişiklik geçmişi
 
 ## v1.0.0 (ilk genel sürüm, açık beta)
+- Planlar: Ücretsiz, Bireysel Plus/Pro, Şirket Plus/Pro/Pro Max. İmzalı etkinleştirme kodu, sunucuda kısıtlar (araç, aylık mesaj, belge, web arama, sesli cevap), plan başına model, Planlar ekranı, beta bayrağı.
+- Yasal belge şablonları: abonelik şartları, ön bilgilendirme, mesafeli satış, iptal/iade, şirket hizmet sözleşmesi (legal/ + scripts/build_legal.mjs). Şirket bilgisi girilene kadar TASLAK bandıyla yayınlanır.
+- Gerçek maliyet ölçümü (token kullanımı, plan bazlı).
 - Döviz kurları: TCMB bülteninden doğrudan okuyan get_exchange_rates aracı (web aramasına bağımlı değil).
 - Redis: REDIS_URL (standart Redis) desteği, dış paket gerektirmez.
 - Kişisel (mor, ücretsiz) ve Finans modları; Finans içinde Bireysel (mavi) / İşletme (zeytin yeşili) ayrımı.

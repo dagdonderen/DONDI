@@ -1,0 +1,19 @@
+{
+  "hazir": false,
+  "marka": "DÖNDİ",
+  "unvan": "",
+  "isletme_turu": "",
+  "vergi_dairesi": "",
+  "vergi_no": "",
+  "mersis_no": "",
+  "adres": "",
+  "telefon": "",
+  "eposta": "info@dagdonderen.com.tr",
+  "kep": "",
+  "web": "https://dondi-rust.vercel.app",
+  "odeme_saglayici": "",
+  "fiyat_degisikligi_bildirim_gun": "30",
+  "yenileme_bildirim_gun": "7",
+  "yetkili_mahkeme_sehir": "",
+  "son_guncelleme": "24 Ekim 2026"
+}

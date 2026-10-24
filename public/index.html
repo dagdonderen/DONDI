@@ -205,6 +205,12 @@ html[data-app=kisisel] #clip{display:none}
 
 html[data-embed] .top,html[data-embed] .modes,html[data-embed] .foot{display:none}
 #pipNote{padding:40px 20px;text-align:center;color:var(--mut)}
+
+.pl{border:1px solid var(--line);padding:12px;margin:8px 0;border-radius:12px}
+.pl.me{border-color:var(--c)}
+.pl h4{margin:0 0 2px;font-size:15px}.pl .pr{color:var(--c);font-weight:700}.pl .os{font-size:13px;color:var(--mut);margin-top:4px}
+.pl .tag{font-size:11px;border:1px solid var(--line);border-radius:999px;padding:2px 8px;margin-left:6px;color:var(--mut)}
+.plg{font-size:12px;letter-spacing:.12em;color:var(--mut);margin:14px 0 2px}
 </style>
 </head>
 <body>
@@ -220,6 +226,7 @@ html[data-embed] .top,html[data-embed] .modes,html[data-embed] .foot{display:non
     <button class="mi" id="mNew" type="button">Yeni sohbet</button>
     <button class="mi" id="mHist" type="button">Geçmiş / Ara</button>
     <hr>
+    <button class="mi" id="planBtn" type="button">Planlar</button>
     <button class="mi" id="setBtn" type="button">Ayarlar</button>
     <button class="mi" id="permBtn" type="button">İzinler</button>
     <hr>
@@ -227,6 +234,7 @@ html[data-embed] .top,html[data-embed] .modes,html[data-embed] .foot{display:non
     <button class="mi" id="statBtn" type="button" aria-pressed="true">Anonim istatistik: açık</button>
     <a class="mi sm" href="/gizlilik.html">Gizlilik ve KVKK</a>
     <a class="mi sm" href="/kullanim-sartlari.html">Kullanım şartları</a>
+    <a class="mi sm" href="/yasal.html">Tüm yasal belgeler</a>
     <button class="mi sm" id="expBtn" type="button">Verilerimi indir</button>
     <button class="mi sm" id="wipe" type="button">Verilerimi sil</button>
     <div class="mi sm">Sürüm <span>v<span id="ver"></span></span></div>
@@ -302,6 +310,14 @@ html[data-embed] .top,html[data-embed] .modes,html[data-embed] .foot{display:non
   </div>
 </div>
 <div id="rbn" role="alert"></div>
+<div class="onb" id="plans" hidden><div class="card wide">
+  <div class="st">PLANLAR</div><h2>Döndi planları</h2>
+  <p class="nt" id="plCur"></p>
+  <div id="plList"></div>
+  <div class="fld"><b>Aktivasyon kodun var mı?</b><br><span style="font-size:12px">Satın aldığında ya da deneme için sana verilen kodu buraya yapıştır.</span><input id="plCode" autocomplete="off" placeholder="v1.…" style="width:100%;margin-top:6px"></div>
+  <p class="nt" id="plNote">Ücretler KDV dahildir. Abonelik şartları ve iptal/iade koşulları: <a href="/abonelik-sartlari.html" target="_blank" rel="noopener" style="color:var(--c)">Abonelik Şartları</a>.</p>
+  <div class="row"><button class="tbtn" id="plApply" type="button">Kodu uygula</button><button class="tbtn" id="plClose" type="button" aria-pressed="true">Kapat</button></div>
+</div></div>
 <div id="net" role="status" hidden>İnternet yok. Bağlantı gelince Döndi tekrar cevap verebilir.</div>
 <div id="toast" role="status" hidden></div>
 <div id="splash" aria-hidden="true"><div class="sp"></div><b>DÖNDİ</b></div>
@@ -444,7 +460,7 @@ function chunksOf(text){
   if(cur.trim()) out.push(cur.trim()); return out.slice(0, 3);
 }
 async function fetchTts(t){
-  const r = await fetch("/api/tts", {method:"POST", headers:{"Content-Type":"application/json"}, body: JSON.stringify({text:t, voice: settings.ttsVoice || "Orus"})});
+  const r = await fetch("/api/tts", {method:"POST", headers:{"Content-Type":"application/json"}, body: JSON.stringify({text:t, voice: settings.ttsVoice || "Orus", ent: getEnt() || undefined, app: settings.app, fsub: settings.fsub})});
   const d = await r.json().catch(() => ({})); if(!r.ok || !d.audio) throw new Error("tts");
   const bin = atob(d.audio), arr = new Uint8Array(bin.length); for(let i = 0; i < bin.length; i++) arr[i] = bin.charCodeAt(i);
   return URL.createObjectURL(new Blob([arr], {type: d.mime || "audio/wav"}));
@@ -517,8 +533,9 @@ async function send(text, viaVoice, image){
   history.push({role:"user", content:text}); syncChips(); const userEl = addMsg("user", image ? "[Kamera] " + text : (attached ? "[Belge: " + attached.name + "] " + text : text));
   let wait = document.createElement("div"); wait.className = "msg bot"; wait.textContent = "…"; log.appendChild(wait);
   try{
-    const r = await fetch("/api/chat", {method:"POST", headers:{"Content-Type":"application/json"}, body: JSON.stringify({messages: history, image: image || undefined, app: settings.app, fsub: settings.fsub, profile: {name: settings.name, tone: settings.tone, fin: settings.fin}, doc: attached && attached.text ? {name: attached.name, text: attached.text} : undefined, pdf: attached && attached.pdf ? attached.pdf : undefined, location: (()=>{ try { return JSON.parse(localStorage.getItem("loc")||"null"); } catch { return null; } })()})});
+    const r = await fetch("/api/chat", {method:"POST", headers:{"Content-Type":"application/json"}, body: JSON.stringify({messages: history, image: image || undefined, ent: getEnt() || undefined, app: settings.app, fsub: settings.fsub, profile: {name: settings.name, tone: settings.tone, fin: settings.fin}, doc: attached && attached.text ? {name: attached.name, text: attached.text} : undefined, pdf: attached && attached.pdf ? attached.pdf : undefined, location: (()=>{ try { return JSON.parse(localStorage.getItem("loc")||"null"); } catch { return null; } })()})});
     let data = {}; try { data = await r.json(); } catch {}
+    if(data.upgrade){ setTimeout(() => openPlans(data.error), 400); }
     if(!r.ok || !data.reply) throw new Error(data.error || "Şu an cevap veremiyorum. Biraz sonra tekrar dene.");
     history.push({role:"assistant", content:data.reply}); save();
     let shown = false;
@@ -625,7 +642,8 @@ function handleResults(results, el){
   results.forEach(r => {
     if(r.kind === "set_reminder"){ addRem(r.data); box.appendChild(mkBtn("⏰ " + (r.data.at ? r.data.at.replace("T"," ") : r.data.in_minutes + " dk sonra") + " · " + r.data.text.slice(0,24), () => {})); }
     else if(r.kind === "add_to_calendar"){ const ics = icsFor(r.data); if(ics) box.appendChild(mkBtn("📅 Takvime ekle (" + r.data.title + ")", () => dl("etkinlik.ics", new Blob([ics], {type:"text/calendar;charset=utf-8"})))); }
-    else if(r.kind === "cash_flow_table" || r.kind === "cost_calc" || r.kind === "scenario_compare"){ finCount(); const sh = sheetOf(r); box.append(mkBtn("Excel", () => exportXlsx(sh)), mkBtn("Word", () => exportWord(sh)), mkBtn("CSV", () => exportCsv(sh)), mkBtn("PDF", () => exportPdf(sh))); }
+    else if(r.kind === "upgrade"){ box.appendChild(mkBtn("⭐ Planları gör", () => openPlans("Bu özellik için üst bir plan gerekiyor."))); }
+    else if(r.kind === "cash_flow_table" || r.kind === "cost_calc" || r.kind === "scenario_compare"){ finCount(); const sh = sheetOf(r); box.append(mkBtn("Excel", gx(() => exportXlsx(sh))), mkBtn("Word", gx(() => exportWord(sh))), mkBtn("CSV", gx(() => exportCsv(sh))), mkBtn("PDF", gx(() => exportPdf(sh)))); }
   });
   if(box.children.length && el) el.appendChild(box);
 }
@@ -640,7 +658,7 @@ function menuClose(){ $("menu").hidden = true; $("menuBtn").setAttribute("aria-e
 $("menuBtn").addEventListener("click", e => { e.stopPropagation(); const h = $("menu").hidden; $("menu").hidden = !h; $("menuBtn").setAttribute("aria-expanded", String(h)); });
 document.addEventListener("click", e => { if(!$("menu").hidden && !$("menu").contains(e.target)) menuClose(); });
 document.addEventListener("keydown", e => { if(e.key === "Escape") menuClose(); });
-["setBtn","permBtn","wipe","mNew","mHist","wakeBtn"].forEach(id => $(id).addEventListener("click", menuClose));
+["setBtn","permBtn","wipe","mNew","mHist","wakeBtn","planBtn"].forEach(id => $(id).addEventListener("click", menuClose));
 // İlk kullanım ipucu: ~15 sn görünür, sonra kaybolur
 function showHint(){
   try { if(localStorage.getItem("hint1")) return; localStorage.setItem("hint1", "1"); } catch {}
@@ -724,10 +742,10 @@ function switchApp(app){
   if(busy || app === settings.app) return; settings.app = app; saveSettings();
   let c = chats.filter(x => chatApp(x) === app).sort((a, b) => b.ts - a.ts)[0];
   if(!c){ c = {id:Date.now().toString(36), title:"", ts:Date.now(), msgs:[], m:app}; chats.unshift(c); }
-  cur = c; history = c.msgs; save(); renderLog(); applyApp(); track(app === "finans" ? "mode_finans" : "mode_kisisel"); $("cList").classList.remove("show");
+  cur = c; history = c.msgs; save(); renderLog(); applyApp(); track(app === "finans" ? "mode_finans" : "mode_kisisel"); if(typeof loadPlan === "function") loadPlan(); $("cList").classList.remove("show");
 }
 document.querySelectorAll("#modes button").forEach(b => b.addEventListener("click", () => { stopSpeak(); switchApp(b.dataset.app); }));
-document.querySelectorAll("#fsub button").forEach(b => b.addEventListener("click", () => { settings.fsub = b.dataset.f; saveSettings(); applyApp(); }));
+document.querySelectorAll("#fsub button").forEach(b => b.addEventListener("click", () => { settings.fsub = b.dataset.f; saveSettings(); applyApp(); if(typeof loadPlan === "function") loadPlan(); }));
 if(chatApp(cur) !== settings.app){ const c = chats.filter(x => chatApp(x) === settings.app).sort((a, b) => b.ts - a.ts)[0]; if(c){ cur = c; } else { cur = {id:Date.now().toString(36), title:"", ts:Date.now(), msgs:[], m:settings.app}; chats.unshift(cur); } history = cur.msgs; save(); renderLog(); }
 applyApp();
 
@@ -756,6 +774,43 @@ async function togglePip(){
 }
 if("documentPictureInPicture" in window) $("pipBtn").hidden = false;
 $("pipBtn").addEventListener("click", togglePip);
+
+// ---- v1.0: Planlar ----
+const getEnt = () => { try { return localStorage.getItem("ent") || ""; } catch { return ""; } };
+let planInfo = null;
+const TL = n => n ? n.toLocaleString("tr-TR") + " TL" : "Ücretsiz";
+async function loadPlan(){
+  try { const r = await fetch("/api/plans", {method:"POST", headers:{"Content-Type":"application/json"}, body: JSON.stringify({ent:getEnt(), app:settings.app, fsub:settings.fsub})}); if(r.ok) planInfo = await r.json(); } catch {}
+  return planInfo;
+}
+function renderPlans(note){
+  const pi = planInfo; const box = $("plList"); box.innerHTML = "";
+  if(!pi){ box.textContent = "Plan bilgisi şu an alınamadı. İnternet bağlantını kontrol et."; return; }
+  const me = pi.plan, cur = (pi.plans.find(p => p.id === me) || {ad: me === "beta" ? "Beta" : me}).ad;
+  $("plCur").textContent = (note ? note + " " : "") + "Şu anki planın: " + cur + (pi.beta && me === "beta" ? " (beta döneminde tüm özellikler geçici olarak açık)." : ".") + (pi.exp ? " Bitiş: " + new Date(pi.exp * 1000).toLocaleDateString("tr-TR") + "." : "");
+  const groups = [["KİŞİSEL", p => p.segment === null], ["FİNANS · BİREYSEL", p => p.segment === "bireysel"], ["FİNANS · ŞİRKET", p => p.segment === "sirket"]];
+  groups.forEach(([t, f]) => {
+    const g = document.createElement("div"); g.className = "plg"; g.textContent = t; box.appendChild(g);
+    pi.plans.filter(f).forEach(p => {
+      const d = document.createElement("div"); d.className = "pl" + (p.id === me ? " me" : "");
+      const h = document.createElement("h4"); h.textContent = p.ad; if(p.id === me){ const tg = document.createElement("span"); tg.className = "tag"; tg.textContent = "senin planın"; h.appendChild(tg); }
+      const pr = document.createElement("div"); pr.className = "pr"; pr.textContent = p.fiyat.aylik ? TL(p.fiyat.aylik) + " / ay · yıllık " + TL(p.fiyat.yillik) : "Ücretsiz";
+      const os = document.createElement("div"); os.className = "os"; os.textContent = p.ozet + " Ayda " + p.limits.mesaj_aylik + " mesaj" + (p.limits.belge_aylik ? ", " + p.limits.belge_aylik + " belge analizi" : "") + (p.limits.model === "flash" ? ", gelişmiş model" : "") + ".";
+      d.append(h, pr, os); box.appendChild(d);
+    });
+  });
+  const soon = document.createElement("p"); soon.className = "nt"; soon.textContent = "Satın alma yakında açılacak. Şimdilik beta kullanıcılarına tüm özellikler açık; satın almak için info@dagdonderen.com.tr adresine yazabilirsin."; box.appendChild(soon);
+}
+async function openPlans(note){ $("plans").hidden = false; $("plList").textContent = "Yükleniyor…"; await loadPlan(); renderPlans(note); track("plans"); }
+$("planBtn").addEventListener("click", () => openPlans());
+$("plClose").addEventListener("click", () => $("plans").hidden = true);
+$("plApply").addEventListener("click", async () => {
+  const code = $("plCode").value.trim(); if(!code) return;
+  try { const r = await fetch("/api/plans", {method:"POST", headers:{"Content-Type":"application/json"}, body: JSON.stringify({ent:code, app:"kisisel"})}); const d = await r.json(); if(!d.exp){ toast("Kod geçersiz ya da süresi dolmuş."); return; } localStorage.setItem("ent", code); $("plCode").value = ""; toast("Plan etkinleştirildi."); await loadPlan(); renderPlans(); }
+  catch { toast("Kod doğrulanamadı. Bağlantını kontrol et."); }
+});
+const gx = fn => () => { if(planInfo && planInfo.features && planInfo.features.disari_aktar === false){ openPlans("Excel/PDF çıktısı Plus ve üstü planlarda."); return; } fn(); };
+loadPlan();
 setTimeout(() => $("splash").classList.add("off"), 350); setTimeout(() => $("splash").remove(), 900);
 
 // ---- Kamera: soru sorulduğu anda tek kare çekilir ----

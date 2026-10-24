@@ -2,6 +2,7 @@
 import { createHash } from "node:crypto";
 import { redis, hasRedis } from "../lib/redis.js";
 import { RATES_DECL, getExchangeRates } from "../lib/rates.js";
+import { resolvePlan, gateTool, bump, monthKey } from "../lib/plans.js";
 import { CFO_DECLS, CFO_TOOLS, CFO_RULES, ACTION_DECLS, ACTION_TOOLS } from "../lib/cfo.js";
 
 const MODEL = process.env.GEMINI_MODEL || "gemini-flash-latest";
@@ -196,6 +197,14 @@ async function callGemini(model, apiKey, contents, allowTools, ctx) {
 }
 
 // Bir modeli dener. { text } | { retry: true } | { fatal: true } döner.
+// Gerçek maliyeti ölçmek için: günlük, plan bazlı token toplamları (kişisel veri yok)
+function logUsage(data, ctx) {
+  try {
+    const u = data?.usageMetadata; if (!u || !hasRedis()) return;
+    const k = `dondi:use:${new Date().toISOString().slice(0, 10)}`, id = ctx?.eff?.id || "?";
+    redis([["HINCRBY", k, `${id}|in`, Number(u.promptTokenCount) || 0], ["HINCRBY", k, `${id}|out`, (Number(u.candidatesTokenCount) || 0) + (Number(u.thoughtsTokenCount) || 0)], ["HINCRBY", k, `${id}|calls`, 1], ["EXPIRE", k, 60 * 60 * 24 * 120]]).catch(() => {});
+  } catch {}
+}
 async function tryModel(model, apiKey, base, ctx) {
   let contents = base;
   const collected = []; // istemciye giden tablolar ve eylemler
@@ -212,6 +221,7 @@ async function tryModel(model, apiKey, base, ctx) {
       console.error("Gemini hata:", model, r.status, JSON.stringify(data).slice(0, 600));
       return [404, 429, 500, 503].includes(r.status) ? { retry: true } : { fatal: true };
     }
+    logUsage(data, ctx);
     const content = data.candidates?.[0]?.content;
     const parts = content?.parts || [];
     const calls = parts.filter((p) => p.functionCall);
@@ -220,7 +230,11 @@ async function tryModel(model, apiKey, base, ctx) {
       for (const { functionCall: fc } of calls) {
         let result;
         try {
-          if (CFO_TOOLS[fc.name]) {
+          const blocked = await gateTool(fc.name, ctx.eff, ctx.sid);
+          if (blocked) {
+            result = blocked;
+            if (blocked.upgrade) collected.push({ kind: "upgrade", data: { neden: blocked.upgrade } });
+          } else if (CFO_TOOLS[fc.name]) {
             result = CFO_TOOLS[fc.name](fc.args || {});
             if (!result.error) collected.push({ kind: fc.name, data: result, input: fc.args || {} });
           } else if (fc.name === "get_exchange_rates") {
@@ -254,29 +268,29 @@ async function tryModel(model, apiKey, base, ctx) {
 // Upstash Redis tanımlıysa kalıcı sayaç kullanılır, değilse bellek içi (en iyi çaba) sayaç.
 
 const usage = new Map();
-function checkLimitMemory(id) {
+function checkLimitMemory(id, limit = DAILY_LIMIT) {
   const day = new Date().toISOString().slice(0, 10);
   const rec = usage.get(id);
   if (!rec || rec.day !== day) { usage.set(id, { day, count: 1 }); return true; }
-  if (rec.count >= DAILY_LIMIT) return false;
+  if (rec.count >= limit) return false;
   rec.count++;
   return true;
 }
 
-async function checkLimit(ip) {
+async function checkLimit(ip, limit = DAILY_LIMIT) {
   // IP adresi düz metin olarak saklanmaz, özetlenir (gizlilik)
   const id = createHash("sha256").update(ip).digest("hex").slice(0, 24);
-  if (!hasRedis()) return checkLimitMemory(id);
+  if (!hasRedis()) return checkLimitMemory(id, limit);
   try {
     const day = new Date().toISOString().slice(0, 10);
     const key = `dondi:rl:${day}:${id}`;
     const out = await redis([["INCR", key], ["EXPIRE", key, 90000]]);
     const count = Number(out?.[0]?.result);
     if (!Number.isFinite(count)) throw new Error("Redis beklenmeyen cevap");
-    return count <= DAILY_LIMIT;
+    return count <= limit;
   } catch (e) {
     console.error("Limit sayacı hatası, bellek içi sayaca geçildi:", e?.message);
-    return checkLimitMemory(id);
+    return checkLimitMemory(id, limit);
   }
 }
 
@@ -292,7 +306,7 @@ function cleanFin(f) {
 export default async function handler(req, res) {
   if (req.method !== "POST") return res.status(405).json({ error: "Yalnızca POST." });
 
-  const { messages, location, image, profile, doc, pdf, app: appIn, fsub: fsubIn } = req.body ?? {};
+  const { messages, location, image, profile, doc, pdf, app: appIn, fsub: fsubIn, ent } = req.body ?? {};
   const app = appIn === "finans" ? "finans" : "kisisel";
   const fsub = fsubIn === "isletme" ? "isletme" : "bireysel";
   const prof = {
@@ -309,8 +323,19 @@ export default async function handler(req, res) {
     return res.status(400).json({ error: "Mesaj bulunamadı." });
   }
   const ip = (req.headers["x-forwarded-for"] || "").split(",")[0].trim() || "bilinmiyor";
-  if (!(await checkLimit(ip))) {
-    return res.status(429).json({ error: "Günlük mesaj limitine ulaştın. Yarın tekrar dene." });
+  const eff = resolvePlan(ent, { app, fsub });
+  const sid = eff.sub || createHash("sha256").update(ip).digest("hex").slice(0, 24);
+  const mAy = await bump(`mm:${monthKey()}:${sid}`, 40 * 86400);
+  if (mAy > eff.limits.mesaj_aylik) {
+    return res.status(429).json({ error: "Bu ayki mesaj hakkın doldu." + (eff.beta ? "" : " Planlar bölümünden planını yükseltebilirsin."), upgrade: "mesaj" });
+  }
+  if (!(await checkLimit(eff.sub || ip, eff.limits.gunluk_mesaj))) {
+    return res.status(429).json({ error: "Günlük mesaj limitine ulaştın. Yarın tekrar dene" + (eff.beta ? "." : " ya da Planlar bölümünden planını yükselt."), upgrade: eff.beta ? undefined : "limit" });
+  }
+  if (docText || pdfData) {
+    if (!eff.features.belge) return res.status(402).json({ error: "Belge analizi Pro planlarda. Menüdeki Planlar bölümüne bak.", upgrade: "belge" });
+    const n = await bump(`doc:${monthKey()}:${sid}`, 40 * 86400);
+    if (n > eff.limits.belge_aylik) return res.status(402).json({ error: "Bu ayki belge analizi hakkın doldu.", upgrade: "belge" });
   }
 
   const clean = messages
@@ -336,11 +361,11 @@ export default async function handler(req, res) {
   if (pdfData) lastParts.unshift({ inlineData: { mimeType: "application/pdf", data: pdfData } });
   if (img) base[base.length - 1].parts.unshift({ inlineData: { mimeType: "image/jpeg", data: img } });
 
-  const models = [MODEL, FALLBACK_MODEL].filter((m, i, a) => m && a.indexOf(m) === i);
+  const models = (eff.limits.model === "lite" ? [FALLBACK_MODEL, MODEL] : [MODEL, FALLBACK_MODEL]).filter((m, i, a) => m && a.indexOf(m) === i);
   const t0 = Date.now();
   for (const model of models) {
     if (Date.now() - t0 > 35000) break; // zaman sınırına yaklaşıldı
-    const out = await tryModel(model, apiKey, base, { app, fsub, loc, hasImage: !!img, doc: !!(docText || pdfData), profile: prof });
+    const out = await tryModel(model, apiKey, base, { eff, sid, app, fsub, loc, hasImage: !!img, doc: !!(docText || pdfData), profile: prof });
     if (out.text) return res.status(200).json({ reply: out.text, results: out.collected || [] });
     if (out.fatal) break;
   }

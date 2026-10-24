@@ -5,6 +5,8 @@ const VOICE = process.env.GEMINI_TTS_VOICE || "Orus"; // erkek, kararlı ton
 const STYLE = process.env.GEMINI_TTS_STYLE ||
   "kendinden emin, özgüvenli, sıcak ve çekici bir erkek sesiyle; sakin, akıcı ve doğal bir tempoda";
 const VOICES = new Set(["Orus","Charon","Algenib","Alnilam","Algieba","Fenrir","Rasalgethi","Sadaltager"]);
+import { createHash } from "node:crypto";
+import { resolvePlan, bump, dayKey } from "../lib/plans.js";
 const DAILY = 120;
 const used = new Map();
 
@@ -52,6 +54,9 @@ export default async function handler(req, res) {
   const voice = VOICES.has(req.body?.voice) ? req.body.voice : VOICE;
   const ip = (req.headers["x-forwarded-for"] || "").split(",")[0].trim() || "bilinmiyor";
   if (!allow(ip)) return res.status(429).json({ error: "Sesli cevap limiti doldu." });
+  const eff = resolvePlan(req.body?.ent, { app: req.body?.app === "finans" ? "finans" : "kisisel", fsub: req.body?.fsub === "isletme" ? "isletme" : "bireysel" });
+  const sid = eff.sub || createHash("sha256").update(ip).digest("hex").slice(0, 24);
+  if ((await bump(`tts:${dayKey()}:${sid}`, 90000)) > eff.limits.tts_gunluk) return res.status(429).json({ error: "Günlük sesli cevap hakkın doldu; yazılı cevaplar devam eder." });
   for (const m of [TTS_MODEL, TTS_FALLBACK].filter((x, i, a) => x && a.indexOf(x) === i)) {
     const audio = await synth(m, key, text, voice);
     if (audio) return res.status(200).json({ audio, mime: "audio/wav" });
