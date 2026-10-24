@@ -18,7 +18,8 @@ const planTable = (seg) => {
   return `<table><thead><tr><th>Plan</th><th>Ücret (KDV dahil)</th><th>Kapsam</th><th>Limitler</th></tr></thead><tbody>${rows.map((p) =>
     `<tr><td><b>${esc(p.ad)}</b></td><td>${p.fiyat.aylik ? `${TL(p.fiyat.aylik)} / ay<br>${TL(p.fiyat.yillik)} / yıl` : "Ücretsiz"}</td><td>${esc(p.ozet)}</td><td>Ayda ${p.limits.mesaj_aylik} mesaj${p.limits.belge_aylik ? `, ayda ${p.limits.belge_aylik} belge analizi` : ""}, ayda ${p.limits.arama_aylik} web arama, günde ${p.limits.tts_gunluk} sesli cevap parçası</td></tr>`).join("")}</tbody></table>`;
 };
-const satici = () => `<div class="box"><b>${val("unvan")}</b> (${val("isletme_turu")})<br>Vergi dairesi / no: ${val("vergi_dairesi")} / ${val("vergi_no")}<br>MERSİS: ${val("mersis_no")}<br>Adres: ${val("adres")}<br>Telefon: ${val("telefon")} · E-posta: ${val("eposta")}</div>`;
+const opt = (k, etiket) => (firma[k] ? `${etiket}: ${esc(firma[k])}<br>` : "");
+const satici = () => `<div class="box"><b>${val("unvan")}</b> (${val("isletme_turu")})<br>${firma.vergi_dairesi || firma.vergi_no ? `Vergi dairesi / no: ${esc(firma.vergi_dairesi || "-")} / ${esc(firma.vergi_no || "-")}<br>` : ""}${opt("mersis_no","MERSİS")}Adres: ${val("adres")}<br>Telefon: ${val("telefon")} · E-posta: ${val("eposta")}</div>`;
 
 const docs = {
   "abonelik-sartlari": ["Abonelik Şartları", "hepsi"],
