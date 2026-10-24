@@ -44,7 +44,7 @@ function systemPrompt(ctx) {
   const fin = ctx.app === "finans";
   const modeText = fin
     ? `\nŞu an FİNANS modundasın: rakam odaklı, net ve sakin bir finans asistanısın.` + (ctx.fsub === "isletme"
-        ? ` Kullanıcı bir İŞLETME sahibi: nakit akışı, maliyet, marj, KDV, tahsilat/ödeme vadeleri ve vergi/SGK takvimi gibi CFO konularına odaklan.`
+        ? ` Kullanıcı bir ŞİRKET yetkilisi: nakit akışı, maliyet, marj, KDV, tahsilat/ödeme vadeleri ve vergi/SGK takvimi gibi CFO konularına odaklan.`
         : ` Kullanıcı BİREYSEL finans soruyor: bütçe, gelir-gider, borç ve kredi hesabı, birikim hedefi ve harcama alışkanlıklarına odaklan; işletme jargonundan kaçın.`) + ` Yatırım, hisse, kripto için al/sat/tut önerisi VERME; yalnızca hesap, karşılaştırma ve genel bilgi sun.`
     : `\nŞu an KİŞİSEL modundasın: günlük yaşam, planlama, yazma, öğrenme ve sohbet. Finansal hesap tabloları bu modun işi değil; kullanıcı ayrıntılı nakit akışı, maliyet veya senaryo hesabı isterse Finans moduna geçmesini kısaca öner.`;
   return `Sen Döndi'sin: sıcak, net ve yardımsever bir kişisel asistan. Dağdönderen tarafından geliştirildin.${modeText}

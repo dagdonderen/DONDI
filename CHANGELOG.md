@@ -6,6 +6,9 @@
 - Kişisel (mor, ücretsiz) ve Finans modları; Finans içinde Bireysel (mavi) / İşletme (zeytin yeşili) ayrımı.
 - Her mod kendi talimat, araç, öneri ve sohbet listesine sahip.
 - Finans için aylık ücretsiz hak sayacı (beta'da sınırsız), fiyat anketi sorusu.
+- "Döndi" uyanma kelimesi (menüden kapatılabilir), 15 sn takip penceresi, sesli komutlar (dur, kapat/görüşürüz), sohbet modunda ekran uyanık kalır.
+- Yüzen pencere (Chrome/Edge bilgisayar) ve gömülü mod (?embed=1, FIRDÖNDÜ içine yerleştirmek için; yalnızca *.firdondu.com çerçeveleyebilir).
+- Alt mod adı "İşletme" yerine "Şirket".
 - Çevrimdışı bandı, açılış ekranı, hata bildirimi, geri bildirim, veri indir/sil, anonim istatistik.
 - Kullanım şartları, gizlilik metni güncellendi.
 

@@ -202,6 +202,9 @@ html[data-app=kisisel] #clip{display:none}
 .quota{font-size:12px;color:var(--mut);text-align:center;margin:2px 0}
 @media(max-height:620px){.modes{margin-bottom:2px}}
 :root[data-mode=light] .rbtn.mic,:root[data-mode=light] .modes button[aria-selected=true]{color:#fff}
+
+html[data-embed] .top,html[data-embed] .modes,html[data-embed] .foot{display:none}
+#pipNote{padding:40px 20px;text-align:center;color:var(--mut)}
 </style>
 </head>
 <body>
@@ -212,6 +215,8 @@ html[data-app=kisisel] #clip{display:none}
   <div class="menu" id="menu" hidden>
     <button class="mi" id="voiceBtn" type="button" aria-pressed="true">Sesli cevap</button>
     <button class="mi" id="autoBtn" type="button" aria-pressed="false">Sohbet modu (sürekli dinle)</button>
+    <button class="mi" id="wakeBtn" type="button" aria-pressed="true">Uyanma kelimesi “Döndi”: açık</button>
+    <button class="mi" id="pipBtn" type="button" hidden>Yüzen pencere</button>
     <button class="mi" id="mNew" type="button">Yeni sohbet</button>
     <button class="mi" id="mHist" type="button">Geçmiş / Ara</button>
     <hr>
@@ -229,7 +234,7 @@ html[data-app=kisisel] #clip{display:none}
 </div>
 <main>
   <div class="modes" id="modes" role="tablist" aria-label="Mod"><button type="button" role="tab" data-app="kisisel">Kişisel</button><button type="button" role="tab" data-app="finans">Finans</button></div>
-  <div class="fsub" id="fsub" hidden><button type="button" data-f="bireysel">Bireysel</button><button type="button" data-f="isletme">İşletme</button></div>
+  <div class="fsub" id="fsub" hidden><button type="button" data-f="bireysel">Bireysel</button><button type="button" data-f="isletme">Şirket</button></div>
   <section class="stage">
     <div class="core" id="core" data-s="idle">
       <i class="r4"></i><i class="r3"></i><i class="r1"></i><i class="r2"></i><i class="glow"></i>
@@ -275,14 +280,14 @@ html[data-app=kisisel] #clip{display:none}
   <label class="fld">Telefon sesi seçimi<select id="sVoice"></select></label>
   <label class="fld">Görünüm<select id="sMode"><option value="dark">Koyu</option><option value="light">Açık</option></select></label>
   <label class="fld">Yazı boyutu<select id="sBig"><option value="0">Normal</option><option value="1">Büyük</option></select></label>
-  <div class="fld"><b>İşletme profili (isteğe bağlı)</b><br><span style="font-size:12px">CFO hesaplarında varsayılan olarak kullanılır. Rakamlar tahmini olabilir.</span>
+  <div class="fld"><b>Şirket profili (isteğe bağlı)</b><br><span style="font-size:12px">CFO hesaplarında varsayılan olarak kullanılır. Rakamlar tahmini olabilir.</span>
     <input id="fSek" maxlength="60" placeholder="Sektör, örn. market, tekstil" autocomplete="off">
     <input id="fGel" inputmode="numeric" placeholder="Aylık gelir (TL)" autocomplete="off">
     <input id="fGid" inputmode="numeric" placeholder="Aylık sabit gider (TL)" autocomplete="off">
     <input id="fNak" inputmode="numeric" placeholder="Mevcut nakit (TL)" autocomplete="off">
     <input id="fBor" inputmode="numeric" placeholder="Toplam borç (TL)" autocomplete="off">
     <input id="fKdv" inputmode="numeric" placeholder="KDV oranı %, örn. 20" autocomplete="off"></div>
-  <p class="nt">İşletme profili cihazında saklanır; cevap üretmek için sohbetle birlikte sunucuya ve Google'a gönderilir.</p>
+  <p class="nt">Şirket profili cihazında saklanır; cevap üretmek için sohbetle birlikte sunucuya ve Google'a gönderilir.</p>
   <label class="fld">Konuşma hızı: <span id="sRateV">1x</span><input id="sRate" type="range" min="0.7" max="1.3" step="0.1" value="1"></label>
   <div class="fld" hidden>Tema<div id="sTheme"><button class="tbtn" data-t="altin" type="button">Altın</button><button class="tbtn" data-t="mavi" type="button">Mavi</button><button class="tbtn" data-t="mor" type="button">Mor</button><button class="tbtn" data-t="yesil" type="button">Yeşil</button></div></div>
   <p class="nt">Tercihlerin cihazında saklanır. Adın ve tonun, cevap üretmek için sunucuya ve Google'a gönderilir.</p>
@@ -309,14 +314,16 @@ html[data-app=kisisel] #clip{display:none}
   <div class="row"><button class="tbtn" id="fbCancel" type="button">Vazgeç</button><button class="tbtn" id="fbSend" type="button" aria-pressed="true">Gönder</button></div></div></div>
 <div class="onb" id="onb" hidden><div class="card wide">
   <div class="st">BAŞLANGIÇ</div><h2>Döndi'yi ayarlayalım</h2>
-  <p class="nt"><b style="color:#b79cff">Kişisel</b> mod günlük işlerin için (ücretsiz). <b style="color:#4aa8ff">Finans</b> mod bütçe (mavi, bireysel) ve nakit akışı/maliyet (<b style="color:#aab85a">zeytin yeşili</b>, işletme) hesapları için; üstteki anahtarla geçiş yaparsın.</p>
+  <p class="nt"><b style="color:#b79cff">Kişisel</b> mod günlük işlerin için (ücretsiz). <b style="color:#4aa8ff">Finans</b> mod bütçe (mavi, bireysel) ve nakit akışı/maliyet (<b style="color:#aab85a">zeytin yeşili</b>, şirket) hesapları için; üstteki anahtarla geçiş yaparsın.</p>
   <label class="ck"><input type="checkbox" id="ageCk"><span><b>18 yaşından büyüğüm.</b> Döndi yalnızca 18 yaşını doldurmuş kullanıcılar içindir.</span></label>
   <div class="plist" id="pList"></div>
   <p class="nt">İzinleri sonradan <b>İzinler</b> butonundan değiştirebilirsin. <a href="/gizlilik.html" target="_blank" rel="noopener" style="color:var(--c)">Gizlilik ve KVKK metni</a></p>
   <div class="row"><button class="tbtn" id="oAll" type="button">Mikrofon ve konumu iste</button><button class="tbtn" id="oOk" type="button" aria-pressed="true" disabled>Başla</button></div>
 </div></div>
 <script>
-const $ = id => document.getElementById(id);
+let pip = null;
+const EMBED = new URLSearchParams(location.search).has("embed");
+const $ = id => document.getElementById(id) || (pip && !pip.closed ? pip.document.getElementById(id) : null);
 const core = $("core"), status = $("status"), cap = $("cap"), log = $("log"), input = $("t"), sendBtn = $("send");
 const SUGS = {
   kisisel:[["Hava durumu","Bugün hava nasıl olacak? Şehrimi söyleyeyim."],["Plan yap","Yarın için 3 maddelik bir günlük plan hazırla."],["Mesaj yaz","Bir arkadaşıma doğum günü mesajı yazar mısın?"],["Özetle","Sana yapıştıracağım metni 3 cümlede özetler misin?"],["Hatırlat","Bana 30 dakika sonra su içmemi hatırlat."]],
@@ -337,15 +344,20 @@ const APPC = {kisisel:["#b79cff","#7c5cff"], finans:["#4aa8ff","#2f6bff"], islet
 const APPC_LIGHT = {kisisel:["#6d4fd6","#4a2fb0"], finans:["#0b62c9","#1f4fb0"], isletme:["#5c6a1c","#3d4a10"]};
 const colorKey = () => settings.app === "finans" && settings.fsub === "isletme" ? "isletme" : settings.app;
 const THEMES = {altin:["#f0b94a","#d9733f"], mavi:["#3de1ff","#8b6cff"], mor:["#b79cff","#3de1ff"], yesil:["#4dffb0","#3de1ff"]};
-let settings = {name:"", tone:"samimi", voice:"", rate:1, theme:"altin", voiceKind:"dondi", ttsVoice:"Orus", mode:"dark", big:"0", fin:{}, app:"kisisel", fsub:"bireysel"};
+let origApp = null;
+let settings = {name:"", tone:"samimi", voice:"", rate:1, theme:"altin", voiceKind:"dondi", ttsVoice:"Orus", mode:"dark", big:"0", fin:{}, app:"kisisel", fsub:"bireysel", wake:true};
 try { Object.assign(settings, JSON.parse(localStorage.getItem("settings") || "{}")); } catch {}
-const saveSettings = () => { try { localStorage.setItem("settings", JSON.stringify(settings)); } catch {} };
+if(EMBED){ origApp = settings.app; settings.app = "finans"; document.documentElement.dataset.embed = "1"; }
+const saveSettings = () => { try { localStorage.setItem("settings", JSON.stringify(EMBED && origApp ? {...settings, app:origApp} : settings)); } catch {} };
 const cleanName = s => String(s || "").replace(/[^\p{L}\p{N} '’.-]/gu, "").trim().slice(0, 30);
 const LABEL = {idle:"HAZIR", listening:"DİNLİYORUM", thinking:"DÜŞÜNÜYORUM", speaking:"KONUŞUYORUM"};
-function setState(s){ document.body.dataset.auto = auto ? "1" : "0"; const cm = $("camMic"); if(cm) cm.textContent = auto ? "Durdur" : "Konuş"; state = s; core.dataset.s = s; core.dataset.auto = auto ? "1" : "0"; status.textContent = (s === "idle" && auto) ? "SOHBET AÇIK" : LABEL[s]; }
-let autoFails = 0;
+function setState(s){ document.body.dataset.auto = auto ? "1" : "0"; const cm = $("camMic"); if(cm) cm.textContent = auto ? "Durdur" : "Konuş"; state = s; core.dataset.s = s; core.dataset.auto = auto ? "1" : "0"; status.textContent = (s === "idle" && auto) ? (wakeOn() ? "“DÖNDİ” DİYE SESLEN" : "SOHBET AÇIK") : LABEL[s]; }
+let autoFails = 0, awakeUntil = 0, wl = null;
+const wakeOn = () => settings.wake !== false;
+async function holdScreen(on){ try { if(on && navigator.wakeLock && !wl){ wl = await navigator.wakeLock.request("screen"); wl.addEventListener("release", () => { wl = null; }); } else if(!on && wl){ await wl.release(); wl = null; } } catch {} }
+document.addEventListener("visibilitychange", () => { if(auto && document.visibilityState === "visible") holdScreen(true); });
 function setAuto(on){
-  auto = on; $("autoBtn").setAttribute("aria-pressed", String(on)); autoFails = 0;
+  auto = on; $("autoBtn").setAttribute("aria-pressed", String(on)); autoFails = 0; holdScreen(on); if(on) awakeUntil = Date.now() + 15000;
   if(on){ if(state === "idle") listen(); else setState(state); }
   else { stopSpeak(); clearTimeout(silT); try { if(rec) rec.abort(); } catch {} setState("idle"); cap.className = ""; cap.textContent = "Sohbet durdu. Başlatmak için küreye dokun."; }
 }
@@ -455,6 +467,21 @@ async function speakServer(text, done, onStart){
 // Ses girişi
 const SR = window.SpeechRecognition || window.webkitSpeechRecognition; let rec = null, heard = "", silT = 0;
 $("sMic").textContent = "Mikrofon: " + (SR ? "hazır" : "bu tarayıcıda desteklenmiyor");
+
+// ---- Uyanma kelimesi ve sesli komutlar ----
+const WAKE_RE = /(^|[\s,.!?])(döndi|dondi|dönti|döndü|dondu|dönde|dönci|tönti|döni)(?=$|[\s,.!?:;-])/u;
+function wakeGate(text){
+  if(!wakeOn() || camOn || !auto) return {text};
+  const m = text.toLocaleLowerCase("tr").match(WAKE_RE);
+  if(!m && Date.now() > awakeUntil) return {ignore:true};
+  return {text: m ? text.slice(m.index + m[0].length).replace(/^[\s,.!?:;-]+/, "") : text, woke: !!m};
+}
+function voiceCmd(t){
+  const n = t.toLocaleLowerCase("tr").replace(/[.,!?]/g, "").trim();
+  if(/^(dur|sus|yeter|kes|sessiz ol)$/.test(n)){ stopSpeak(); setState("idle"); cap.className = ""; cap.textContent = "Tamam."; if(auto) setTimeout(listen, 300); return true; }
+  if(/^(kapat|görüşürüz|görüşmek üzere|hoşça kal|hoşçakal|güle güle|sohbeti kapat|sohbeti bitir|uyu)$/.test(n)){ setAuto(false); cap.textContent = "Görüşürüz."; return true; }
+  return false;
+}
 function listen(){
   if(!SR){ cap.textContent = "Bu tarayıcı sesli komutu desteklemiyor. Chrome ya da Edge dene, ya da Mesajlaş'ı kullan."; cap.className = ""; return; }
   if(busy) return;
@@ -463,7 +490,12 @@ function listen(){
   rec.onresult = e => { let t = "", fin = false; for(const r of e.results){ t += r[0].transcript; if(r.isFinal) fin = true; } heard = t; cap.textContent = t; clearTimeout(silT); silT = setTimeout(() => { try { rec.stop(); } catch {} }, fin ? 150 : 1100); };
   rec.onspeechend = () => { clearTimeout(silT); silT = setTimeout(() => { try { rec.stop(); } catch {} }, 350); };
   rec.onerror = e => { if(e.error === "not-allowed" || e.error === "service-not-allowed"){ cap.className = ""; cap.textContent = (navigator.standalone ? "iPhone'da ana ekrandan açılan uygulamada ses tanıma çalışmıyor (Apple kısıtı). Döndi'yi Safari'de aç ya da yazarak kullan." : "Mikrofon izni verilmedi. Adres çubuğundaki kilit simgesinden izin ver. iPhone'da Ayarlar > Genel > Klavye > Dikte'yi Aç'ın da açık olması gerekir."); $("sMic").textContent = "Mikrofon: izin yok"; setAuto(false); } };
-  rec.onend = () => { clearTimeout(silT); if(state !== "listening") return; if(heard.trim()){ autoFails = 0; send(heard, true, camOn ? capture() : null); }
+  rec.onend = () => { clearTimeout(silT); if(state !== "listening") return; if(heard.trim()){ autoFails = 0; const g = wakeGate(heard);
+      if(g.ignore){ setState("idle"); cap.className = ""; cap.textContent = "“Döndi” diye seslen, dinleyeyim."; setTimeout(() => { if(auto && state === "idle" && !busy) listen(); }, 250); return; }
+      const t = (g.text || "").trim();
+      if(!t){ awakeUntil = Date.now() + 15000; setState("idle"); cap.className = ""; cap.textContent = "Dinliyorum…"; setTimeout(() => { if(auto && state === "idle" && !busy) listen(); }, 200); return; }
+      if(auto && voiceCmd(t)) return;
+      send(t, true, camOn ? capture() : null); }
     else if(auto){ autoFails++; if(autoFails > 6){ setAuto(false); cap.textContent = "Seni duyamadım, sohbeti durdurdum. Devam için küreye dokun."; } else { setState("idle"); setTimeout(() => { if(auto && state === "idle" && !busy) listen(); }, 300); } }
     else { setState("idle"); cap.className = ""; cap.textContent = "Seni duyamadım. Tekrar dokun."; } };
   try { rec.start(); } catch {}
@@ -493,7 +525,7 @@ async function send(text, viaVoice, image){
     const reveal = () => { if(shown) return; shown = true; clearTimeout(revT); wait.remove(); const botEl = addMsg("assistant", data.reply); handleResults(data.results, botEl); cap.className = ""; cap.textContent = ""; };
     const revT = setTimeout(reveal, 14000);
     busy = false;
-    if(viaVoice && voiceOn && (synth || ttsAudio) && (!wasAuto || auto)) speak(data.reply, () => { reveal(); setState("idle"); if(auto) setTimeout(listen, 400); }, reveal);
+    if(viaVoice && voiceOn && (synth || ttsAudio) && (!wasAuto || auto)) speak(data.reply, () => { reveal(); awakeUntil = Date.now() + 15000; setState("idle"); if(auto) setTimeout(listen, 400); }, reveal);
     else { reveal(); setState("idle"); if(auto) setTimeout(() => { if(auto && state === "idle" && !busy) listen(); }, 400); }
   }catch(err){
     wait.remove(); history.pop(); userEl.remove(); syncChips(); busy = false; setState("idle");
@@ -608,7 +640,7 @@ function menuClose(){ $("menu").hidden = true; $("menuBtn").setAttribute("aria-e
 $("menuBtn").addEventListener("click", e => { e.stopPropagation(); const h = $("menu").hidden; $("menu").hidden = !h; $("menuBtn").setAttribute("aria-expanded", String(h)); });
 document.addEventListener("click", e => { if(!$("menu").hidden && !$("menu").contains(e.target)) menuClose(); });
 document.addEventListener("keydown", e => { if(e.key === "Escape") menuClose(); });
-["setBtn","permBtn","wipe","mNew","mHist"].forEach(id => $(id).addEventListener("click", menuClose));
+["setBtn","permBtn","wipe","mNew","mHist","wakeBtn"].forEach(id => $(id).addEventListener("click", menuClose));
 // İlk kullanım ipucu: ~15 sn görünür, sonra kaybolur
 function showHint(){
   try { if(localStorage.getItem("hint1")) return; localStorage.setItem("hint1", "1"); } catch {}
@@ -698,6 +730,32 @@ document.querySelectorAll("#modes button").forEach(b => b.addEventListener("clic
 document.querySelectorAll("#fsub button").forEach(b => b.addEventListener("click", () => { settings.fsub = b.dataset.f; saveSettings(); applyApp(); }));
 if(chatApp(cur) !== settings.app){ const c = chats.filter(x => chatApp(x) === settings.app).sort((a, b) => b.ts - a.ts)[0]; if(c){ cur = c; } else { cur = {id:Date.now().toString(36), title:"", ts:Date.now(), msgs:[], m:settings.app}; chats.unshift(cur); } history = cur.msgs; save(); renderLog(); }
 applyApp();
+
+// ---- v1.0: uyanma kelimesi düğmesi, yüzen pencere ----
+const wakeUi = () => { const b = $("wakeBtn"); b.textContent = "Uyanma kelimesi “Döndi”: " + (wakeOn() ? "açık" : "kapalı"); b.setAttribute("aria-pressed", String(wakeOn())); if(auto) setState(state); };
+$("wakeBtn").addEventListener("click", () => { settings.wake = !wakeOn(); saveSettings(); wakeUi(); toast(wakeOn() ? "Artık “Döndi” diyerek seslenebilirsin." : "Uyanma kelimesi kapalı: sohbet modunda her konuşmana cevap verir."); });
+wakeUi();
+let pipHome = null, pipObs = null;
+function mirrorPip(){ if(!pip || pip.closed) return; try { const r = pip.document.documentElement; for(const k of Object.keys(document.documentElement.dataset)) r.dataset[k] = document.documentElement.dataset[k]; r.style.cssText = document.documentElement.style.cssText; for(const k of Object.keys(document.body.dataset)) pip.document.body.dataset[k] = document.body.dataset[k]; } catch {} }
+function closePipUi(main){ if(pipHome){ pipHome.after(main); pipHome.remove(); pipHome = null; } const n = document.getElementById("pipNote"); if(n) n.remove(); if(pipObs){ pipObs.disconnect(); pipObs = null; } pip = null; $("pipBtn").textContent = "Yüzen pencere"; }
+async function togglePip(){
+  menuClose();
+  if(pip && !pip.closed){ pip.close(); return; }
+  try {
+    const w = await documentPictureInPicture.requestWindow({width:400, height:680});
+    const main = document.querySelector("main");
+    document.querySelectorAll("style, link[rel=stylesheet]").forEach(n => w.document.head.appendChild(n.cloneNode(true)));
+    w.document.documentElement.lang = "tr";
+    pipHome = document.createElement("div"); pipHome.id = "pipNote"; pipHome.textContent = "Döndi yüzen pencerede. Kapatınca buraya döner."; main.before(pipHome);
+    pip = w; w.document.body.appendChild(main); mirrorPip();
+    pipObs = new MutationObserver(mirrorPip); pipObs.observe(document.documentElement, {attributes:true}); pipObs.observe(document.body, {attributes:true});
+    w.addEventListener("pagehide", () => closePipUi(main));
+    $("pipBtn").textContent = "Yüzen pencereyi kapat";
+    track("pip");
+  } catch(e){ pip = null; toast("Yüzen pencere bu tarayıcıda açılamadı. Chrome veya Edge (bilgisayar) dene."); }
+}
+if("documentPictureInPicture" in window) $("pipBtn").hidden = false;
+$("pipBtn").addEventListener("click", togglePip);
 setTimeout(() => $("splash").classList.add("off"), 350); setTimeout(() => $("splash").remove(), 900);
 
 // ---- Kamera: soru sorulduğu anda tek kare çekilir ----
