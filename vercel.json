@@ -38,5 +38,12 @@
         }
       ]
     }
+  ],
+  "redirects": [
+    {
+      "source": "/(.*)",
+      "destination": "https://dondi.firdondu.com/$1",
+      "permanent": false
+    }
   ]
 }

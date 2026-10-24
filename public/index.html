@@ -269,13 +269,11 @@ html[data-embed] .top,html[data-embed] .modes,html[data-embed] .foot{display:non
 <div class="onb" id="consent" hidden><div class="card">
   <div class="st">AÇIK RIZA METNİ · KAMERA</div>
   <h2>Kamerayı kullanmadan önce</h2>
-  <p>Kamera, sen bir şey sorduğunda <b>tek kare</b> fotoğraf çeker. Bu fotoğraf cevap üretmek için <b>Türkiye dışındaki</b> sunucularda işlenir. Veri sorumlusu <b>DAĞDÖNDEREN</b>'dir. Aşağıdaki üç rıza birbirinden ayrıdır; her birini ayrı ayrı onaylaman gerekir. Kamera olmadan da Döndi'yi kullanabilirsin.</p>
+  <p>Kamera, sen bir şey sorduğunda <b>tek kare</b> fotoğraf çeker. Bu fotoğraf cevap üretmek için <b>Türkiye dışındaki</b> sunucularda işlenir. Veri sorumlusu <b>DAĞDÖNDEREN</b>'dir. Aşağıdaki iki rıza birbirinden ayrıdır; her birini ayrı ayrı onaylaman gerekir. Kamera olmadan da Döndi'yi kullanabilirsin.</p>
   <label class="ck"><input type="checkbox" id="c1"><span><b>1. Özel nitelikli veri işleme:</b> Fotoğrafta yüzümün, cildimin ya da sağlığıma ilişkin bilgilerin yer alabileceğini bilerek, bu verilerin soru sorduğum anda cevap üretmek amacıyla DAĞDÖNDEREN tarafından işlenmesine açık rıza veriyorum.</span></label>
   <details><summary>Ayrıntılar</summary>Veri: kamera karesi (yüz, cilt, çevre, belge gibi görünenler). Amaç: sorduğun soruya cevap vermek. Fotoğraf cihazında ve DAĞDÖNDEREN'in sunucusunda saklanmaz. Hukuki dayanak: KVKK m.6 kapsamında açık rızan.</details>
   <label class="ck"><input type="checkbox" id="c2"><span><b>2. Yurt dışına aktarım, Google:</b> Fotoğrafımın ve sorumun, yapay zekâ cevabı üretilmesi için Google'ın (Gemini API) Türkiye dışındaki sunucularına aktarılmasına açık rıza veriyorum.</span></label>
   <details><summary>Ayrıntılar</summary>Aktarılan: kamera karesi, sorun, sohbetin son mesajları ve (izin verdiysen) yaklaşık konum. Alıcı: Google (Gemini API), sunucular Türkiye dışında. Ücretsiz katmanda Google, gönderilen içeriği ürün geliştirmede kullanabilir; Google'ın kendi saklama ve gizlilik koşulları geçerlidir. <b>Bu aktarım standart sözleşmeler / açık rıza mekanizmalarına dayanmaktadır.</b></details>
-  <label class="ck"><input type="checkbox" id="c3"><span><b>3. Yurt dışına aktarım, Vercel:</b> Fotoğrafımın ve sorumun, uygulamanın çalıştığı Vercel altyapısının Türkiye dışındaki sunucuları üzerinden iletilmesine açık rıza veriyorum.</span></label>
-  <details><summary>Ayrıntılar</summary>Aktarılan: aynı içerik, sunucu üzerinden Google'a iletilirken Vercel Inc. altyapısından geçer; teknik hata ve erişim kayıtları tutulabilir. Alıcı: Vercel Inc., sunucular Türkiye dışında. <b>Bu aktarım standart sözleşmeler / açık rıza mekanizmalarına dayanmaktadır.</b></details>
   <p class="nt">Rızanı istediğin zaman geri alabilirsin: kamera ekranındaki <b>Rızamı geri al</b> butonu. Geri alınca kamera kullanılamaz. Ayrıntılar: <a href="/gizlilik.html" target="_blank" rel="noopener" style="color:var(--c)">Gizlilik ve KVKK metni</a>. İletişim: info@dagdonderen.com.tr</p>
   <div class="row"><button class="tbtn" id="cNo" type="button">Vazgeç</button><button class="tbtn" id="cYes" type="button" aria-pressed="true" disabled>Onayla ve kamerayı aç</button></div>
 </div></div>
@@ -607,9 +605,9 @@ function docPayload(userText){
 }
 function docConsent(){
   try { if(localStorage.getItem("docConsent") === "1") return true; } catch {}
-  if(!confirm("Belge yükleme onayı\n\nSeçtiğin belgenin içeriği, analiz için yurt dışındaki sunuculara (Google Gemini ve Vercel) aktarılır. Belgede kişisel veya finansal bilgi varsa bunlar da işlenir. Bu aktarım standart sözleşmeler / açık rıza mekanizmalarına dayanır. Gizlilik metni: /gizlilik.html\n\nOnaylıyor musun?")) return false;
+  if(!confirm("Belge yükleme onayı\n\nSeçtiğin belgenin içeriği, analiz için yurt dışındaki Google Gemini sunucularına aktarılır. Belgede kişisel veya finansal bilgi varsa bunlar da işlenir. Bu aktarım standart sözleşmeler / açık rıza mekanizmalarına dayanır. Gizlilik metni: /gizlilik.html\n\nOnaylıyor musun?")) return false;
   try { localStorage.setItem("docConsent", "1"); } catch {}
-  logConsent("document", {google:true, vercel:true}); return true;
+  logConsent("document", {google:true}); return true;
 }
 function b64(file){ return new Promise((res, rej) => { const fr = new FileReader(); fr.onload = () => res(String(fr.result).split(",")[1]); fr.onerror = () => rej(new Error("Dosya okunamadı.")); fr.readAsDataURL(file); }); }
 async function readDoc(f){
@@ -915,17 +913,17 @@ async function startStream(){
   stream = await navigator.mediaDevices.getUserMedia({video:{facingMode:facing, width:{ideal:1280}}, audio:false});
   $("vid").srcObject = stream;
 }
-const CONSENT_V = "1.0.1";
-function consentOk(){ try { const c = JSON.parse(localStorage.getItem("camConsent") || "null"); return !!(c && c.v === CONSENT_V && c.ozel && c.google && c.vercel); } catch { return false; } }
-function showConsent(){ ["c1","c2","c3"].forEach(i => $(i).checked = false); $("cYes").disabled = true; $("consent").hidden = false; }
-["c1","c2","c3"].forEach(i => $(i).addEventListener("change", () => { $("cYes").disabled = !(c1.checked && c2.checked && c3.checked); }));
+const CONSENT_V = "1.1.0";
+function consentOk(){ try { const c = JSON.parse(localStorage.getItem("camConsent") || "null"); return !!(c && c.v === CONSENT_V && c.ozel && c.google); } catch { return false; } }
+function showConsent(){ ["c1","c2"].forEach(i => $(i).checked = false); $("cYes").disabled = true; $("consent").hidden = false; }
+["c1","c2"].forEach(i => $(i).addEventListener("change", () => { $("cYes").disabled = !(c1.checked && c2.checked); }));
 $("cNo").addEventListener("click", () => { $("consent").hidden = true; });
 $("cYes").addEventListener("click", () => {
-  try { localStorage.setItem("camConsent", JSON.stringify({v:CONSENT_V, t:new Date().toISOString(), ozel:true, google:true, vercel:true})); } catch {}
-  logConsent("camera", {ozel:true, google:true, vercel:true});
+  try { localStorage.setItem("camConsent", JSON.stringify({v:CONSENT_V, t:new Date().toISOString(), ozel:true, google:true})); } catch {}
+  logConsent("camera", {ozel:true, google:true});
   $("consent").hidden = true; beginCam();
 });
-$("camRevoke").addEventListener("click", () => { try { localStorage.removeItem("camConsent"); } catch {} logConsent("camera_revoked", {ozel:false, google:false, vercel:false}); closeCam(); cap.className = ""; cap.textContent = "Kamera rızan geri alındı."; });
+$("camRevoke").addEventListener("click", () => { try { localStorage.removeItem("camConsent"); } catch {} logConsent("camera_revoked", {ozel:false, google:false}); closeCam(); cap.className = ""; cap.textContent = "Kamera rızan geri alındı."; });
 function openCam(){
   if(!navigator.onLine){ toast("Kamera sohbeti için internet gerekir."); return; }
   if(!navigator.mediaDevices || !navigator.mediaDevices.getUserMedia){ cap.textContent = "Bu tarayıcı kamerayı desteklemiyor."; return; }

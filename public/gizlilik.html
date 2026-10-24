@@ -46,23 +46,22 @@ a{color:var(--c)}
 <h2>4. Verilerin kimlerle paylaşılıyor?</h2>
 <ul>
 <li><b>Google (Gemini API):</b> Mesajların, (izin verirsen) yaklaşık konum bilgisi ve kamera karesi cevap üretmek için Google'a iletilir. Ücretsiz katmanda iletilen içerik Google tarafından ürün geliştirme amacıyla kullanılabilir. Ayrıntılar Google'ın kendi koşullarındadır.</li>
-<li><b>Vercel:</b> Uygulamayı barındırır.</li>
+<li><b>Barındırma:</b> Döndi, DAĞDÖNDEREN'in İstanbul'daki (Türkiye) sunucusunda çalışır (yurt içi bulut sağlayıcısı sunucu.com.tr). Rıza kayıtları, sayaçlar ve geri bildirimler bu sunucuda tutulur.</li>
 <li><b>Open-Meteo:</b> Hava durumu için şehir adı ya da yaklaşık konum gider.</li>
-<li><b>Upstash (kullanılırsa):</b> Günlük mesaj sayacını tutar.</li>
 </ul>
-<p>Bu hizmetlerin sunucuları yurt dışında olabilir. Yani verilerin yurt dışına aktarılabilir. <b>Bu aktarım standart sözleşmeler / açık rıza mekanizmalarına dayanmaktadır.</b></p>
+<p>Google ve Open-Meteo sunucuları yurt dışındadır; bu hizmetlere giden veriler yurt dışına aktarılır. <b>Bu aktarım standart sözleşmeler / açık rıza mekanizmalarına dayanmaktadır.</b></p>
 
 <h2>4.1 Kamera için ayrı açık rıza</h2>
-<p>Kamerayı ilk kez açmadan önce, birbirinden ayrı üç onay kutusuyla açık rızan istenir: (1) özel nitelikli verinin (yüz, cilt, sağlık bilgisi gibi) işlenmesi, (2) Google'a yurt dışı aktarım, (3) Vercel'e yurt dışı aktarım. Üçünü de onaylamadan kamera açılmaz. Kamera isteğe bağlıdır; Döndi'nin diğer özellikleri kamera olmadan kullanılabilir. Rızanı kamera ekranındaki <b>Rızamı geri al</b> butonuyla istediğin zaman geri çekebilirsin. Rıza kaydın (tarih, sürüm, onaylanan başlıklar) yalnızca cihazında tutulur.</p>
+<p>Kamerayı ilk kez açmadan önce, birbirinden ayrı iki onay kutusuyla açık rızan istenir: (1) özel nitelikli verinin (yüz, cilt, sağlık bilgisi gibi) işlenmesi ve (2) Google'a yurt dışı aktarım. İkisini de onaylamadan kamera açılmaz. Kamera isteğe bağlıdır; Döndi'nin diğer özellikleri kamera olmadan kullanılabilir. Rızanı kamera ekranındaki <b>Rızamı geri al</b> butonuyla istediğin zaman geri çekebilirsin. Rıza kaydın (tarih, sürüm, onaylanan başlıklar) yalnızca cihazında tutulur.</p>
 
 <h2>4.2 Sesli cevap</h2>
-<p>Döndi sesi seçiliyken, Döndi'nin yazdığı cevap metni seslendirilmek üzere Google'a (Gemini) Vercel üzerinden gönderilir ve ses dosyası geri döner. Ses cihazında çalınır ve sunucumuzda saklanmaz. İstemezsen Ayarlar'dan "Telefonun kendi sesi"ni seçebilirsin; o durumda seslendirme cihazında yapılır.</p>
+<p>Döndi sesi seçiliyken, Döndi'nin yazdığı cevap metni seslendirilmek üzere Türkiye'deki sunucumuz üzerinden Google'a (Gemini) gönderilir ve ses dosyası geri döner. Ses cihazında çalınır ve sunucumuzda saklanmaz. İstemezsen Ayarlar'dan "Telefonun kendi sesi"ni seçebilirsin; o durumda seslendirme cihazında yapılır.</p>
 
 <h2>4.3 Belge yükleme</h2>
-<p>Excel, Word, PDF, CSV veya TXT belgesi eklediğinde, belgenin içeriği analiz için Google (Gemini) ve Vercel üzerinden yurt dışına aktarılır. Belgeyi ilk eklemeden önce ayrı bir onay istenir; onay kaydı sunucuda tutulur. Belgenin kendisi sunucumuzda saklanmaz, yalnızca o istek süresince işlenir. Başkasına ait kişisel veri içeren belgeleri yüklemeden önce gerekli izne sahip olduğundan emin ol. Hatırlatıcılar yalnızca cihazında saklanır.</p>
+<p>Excel, Word, PDF, CSV veya TXT belgesi eklediğinde, belgenin içeriği analiz için Türkiye'deki sunucumuz üzerinden Google'a (Gemini) yurt dışına aktarılır. Belgeyi ilk eklemeden önce ayrı bir onay istenir; onay kaydı sunucuda tutulur. Belgenin kendisi sunucumuzda saklanmaz, yalnızca o istek süresince işlenir. Başkasına ait kişisel veri içeren belgeleri yüklemeden önce gerekli izne sahip olduğundan emin ol. Hatırlatıcılar yalnızca cihazında saklanır.</p>
 
 <h2>4.4 İşletme profili, web arama ve hatırlatıcılar</h2>
-<p>Ayarlar'da isteğe bağlı girdiğin işletme profili (sektör, aylık gelir/gider, nakit, borç, KDV) cihazında saklanır; sohbet sırasında hesaplarda kullanılabilmesi için mesajlarla birlikte Vercel üzerinden Google'a (Gemini) gönderilir. Güncel bilgi gereken sorularda arama sorgun Google Arama aracılığıyla işlenir. Kurduğun hatırlatıcılar yalnızca cihazında saklanır. İstediğin zaman profili silebilir veya "Verilerimi sil" ile tüm cihaz verilerini temizleyebilirsin.</p>
+<p>Ayarlar'da isteğe bağlı girdiğin işletme profili (sektör, aylık gelir/gider, nakit, borç, KDV) cihazında saklanır; sohbet sırasında hesaplarda kullanılabilmesi için mesajlarla birlikte Türkiye'deki sunucumuz üzerinden Google'a (Gemini) gönderilir. Güncel bilgi gereken sorularda arama sorgun Google Arama aracılığıyla işlenir. Kurduğun hatırlatıcılar yalnızca cihazında saklanır. İstediğin zaman profili silebilir veya "Verilerimi sil" ile tüm cihaz verilerini temizleyebilirsin.</p>
 
 <h2>4.4a Kişisel ve Finans modları</h2>
 <p>Döndi iki moda sahiptir. <b>Finans</b> modunda girdiğin gelir, gider, borç gibi rakamlar ve yüklediğin belgeler hesap yapmak için yapay zekâ sağlayıcısına gönderilir; bu çıktılar yatırım, vergi veya muhasebe tavsiyesi değildir. Sohbetlerin cihazında moda göre ayrı listelenir. Finans modundaki ücretsiz hak sayacı yalnızca cihazında tutulur.</p>
@@ -81,7 +80,7 @@ a{color:var(--c)}
 <h2>4.9 Cihazda saklama ve çerezler</h2>
 <p>Döndi pazarlama veya reklam çerezi kullanmaz. Sohbetlerin, ayarların ve plan kodun yalnızca cihazındaki tarayıcı deposunda (localStorage) tutulur. Menüdeki "Verilerimi sil" ile hepsi silinir. Uygulamanın çevrimdışı açılması için bir önbellek (service worker) kullanılır.</p>
 <h2>4.10 Yurt dışına aktarım</h2>
-<p>Yapay zekâ cevapları ve sesli cevaplar Google (Gemini) servislerine; barındırma Vercel altyapısına gönderilerek işlenir. Bu servislerin sunucuları yurt dışında olabilir. Aktarım, açık rızan veya KVKK'nın ilgili aktarım mekanizmaları çerçevesinde yapılır. Şirket planlarında FIRDÖNDÜ bağlantısı yalnızca şirket yöneticisinin ayrıca onayıyla etkinleşir.</p>
+<p>Yapay zekâ cevapları ve sesli cevaplar Google (Gemini) servislerine gönderilerek işlenir; Google'ın sunucuları yurt dışındadır. Uygulamanın kendisi ve sunucuda tutulan kayıtlar Türkiye'dedir. Aktarım, açık rızan veya KVKK'nın ilgili aktarım mekanizmaları çerçevesinde yapılır. Şirket planlarında FIRDÖNDÜ bağlantısı yalnızca şirket yöneticisinin ayrıca onayıyla etkinleşir.</p>
 <h2>5. Hukuki dayanak</h2>
 <p>Hizmetin sunulması için gerekli işleme ve meşru menfaatimiz. Konum, kamera ve görüntü gibi isteğe bağlı veriler için senin açık rızan. İzni tarayıcı ayarlarından ya da uygulamadaki İzinler butonundan istediğin zaman geri çekebilirsin.</p>
 
