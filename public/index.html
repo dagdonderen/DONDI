@@ -1084,7 +1084,9 @@ function greeting(){
   const end = new Date(); end.setHours(23, 59, 59, 999);
   const bugun = rems.filter(r => r.at > now && r.at <= end.getTime()).length;
   const ek = bugun ? ` Bugün ${bugun} hatırlatıcın var.` : "";
-  return `${sel}${ad}. Ben Döndi.${bolum}${ek} Dinliyorum.`;
+  // Kendini yalnızca ilk açılışta tanıtır.
+  const tanit = lsGet("introDone") ? "" : " Ben Döndi."; lsSet("introDone", "1");
+  return `${sel}${ad}.${tanit}${bolum}${ek} Dinliyorum.`;
 }
 function greet(){
   greeted = true; $("go").hidden = true; unlockTts();
