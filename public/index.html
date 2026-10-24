@@ -329,7 +329,13 @@ html[data-embed] .top,html[data-embed] .modes,html[data-embed] .foot{display:non
 <div class="onb" id="onb" hidden><div class="card wide">
   <div class="st">BAŞLANGIÇ</div><h2>Döndi'yi ayarlayalım</h2>
   <p class="nt"><b style="color:#b79cff">Kişisel</b> mod günlük işlerin için (ücretsiz). <b style="color:#4aa8ff">Finans</b> mod bütçe (mavi, bireysel) ve nakit akışı/maliyet (<b style="color:#aab85a">zeytin yeşili</b>, şirket) hesapları için; üstteki anahtarla geçiş yaparsın.</p>
+  <div class="st" style="margin-top:12px">AYDINLATMA METNİ</div>
+  <p class="nt">Veri sorumlusu DAĞDÖNDEREN'dir. Döndi; mesajlarını, (izin verirsen) konumunu, kamera karesini ve belgelerini cevap üretmek için işler. Sohbet geçmişin cihazında kalır; rıza ve bilgilendirme kayıtları ispat için İstanbul'daki sunucumuzda saklanır. Ayrıntılar, hukuki sebepler ve KVKK m.11 kapsamındaki hakların: <a href="/gizlilik.html" target="_blank" rel="noopener" style="color:var(--c)">Aydınlatma Metni</a>.</p>
+  <label class="ck"><input type="checkbox" id="aydCk"><span><b>Aydınlatma Metni'ni okudum, bilgi edindim.</b> (Bu bir rıza değil, bilgilendirildiğine dair beyandır.)</span></label>
   <label class="ck"><input type="checkbox" id="ageCk"><span><b>18 yaşından büyüğüm.</b> Döndi yalnızca 18 yaşını doldurmuş kullanıcılar içindir.</span></label>
+  <div class="st" style="margin-top:12px">AÇIK RIZA METNİ · YURT DIŞINA AKTARIM</div>
+  <p class="nt">Döndi'nin cevapları ve sesi, Google LLC'nin Gemini yapay zekâ servisiyle üretilir; Google'ın sunucuları Türkiye dışındadır. Aktarılanlar: yazdığın ve söylediğin mesajlar, sohbetin son mesajları, eklediğin belgelerin ilgili bölümleri, (izin verirsen) yaklaşık konumun ve seslendirilecek cevap metinleri. Amaç: cevap üretmek ve seslendirmek. Ücretsiz katmanda Google içeriği ürün geliştirmede kullanabilir. Bu rızayı vermek zorunda değilsin; vermezsen Döndi'nin sohbet, ses ve belge özellikleri çalışmaz. Rızanı istediğin zaman <b>İzinler</b> bölümünden geri alabilirsin.</p>
+  <label class="ck"><input type="checkbox" id="gemCk"><span><b>Açık rızam:</b> Yukarıda belirtilen verilerimin, cevap üretilmesi ve seslendirilmesi amacıyla Google LLC'nin (Gemini API) Türkiye dışındaki sunucularına aktarılmasına açık rıza veriyorum.</span></label>
   <div class="plist" id="pList"></div>
   <p class="nt">İzinleri sonradan <b>İzinler</b> butonundan değiştirebilirsin. <a href="/gizlilik.html" target="_blank" rel="noopener" style="color:var(--c)">Gizlilik ve KVKK metni</a></p>
   <div class="row"><button class="tbtn" id="oAll" type="button">Mikrofon ve konumu iste</button><button class="tbtn" id="oOk" type="button" aria-pressed="true" disabled>Başla</button></div>
@@ -458,6 +464,7 @@ function chunksOf(text){
   if(cur.trim()) out.push(cur.trim()); return out.slice(0, 3);
 }
 async function fetchTts(t){
+  if(!gemOk()) throw new Error("rıza yok");
   const r = await fetch("/api/tts", {method:"POST", headers:{"Content-Type":"application/json"}, body: JSON.stringify({text:t, voice: settings.ttsVoice || "Orus", ent: getEnt() || undefined, app: settings.app, fsub: settings.fsub})});
   const d = await r.json().catch(() => ({})); if(!r.ok || !d.audio) throw new Error("tts");
   const bin = atob(d.audio), arr = new Uint8Array(bin.length); for(let i = 0; i < bin.length; i++) arr[i] = bin.charCodeAt(i);
@@ -523,6 +530,7 @@ $("micBtn").addEventListener("click", () => { unlockTts(); setAuto(!auto); });
 // Gönderme
 async function send(text, viaVoice, image){
   text = (text || "").trim(); if(!text || busy) return;
+  if(!gemOk()){ toast("Sohbet için Google'a aktarım rızası gerekiyor. İzinler bölümünden verebilirsin."); openPanel(); return; }
   if(!navigator.onLine){ toast("İnternet yok. Bağlanınca tekrar dene."); return; }
   track(image ? "camera" : viaVoice ? "voice" : "chat");
   const wasAuto = auto; busy = true; sendBtn.disabled = true; setState("thinking");
@@ -959,7 +967,7 @@ const PROWS = [
 const PST = {granted:"Verildi", denied:"Reddedildi", unsupported:"Desteklenmiyor"};
 let perm = {}; try { perm = JSON.parse(localStorage.getItem("perm") || "{}"); } catch {}
 function deviceId(){ let d = null; try { d = localStorage.getItem("did"); } catch {} if(!d){ d = (crypto.randomUUID ? crypto.randomUUID() : Date.now() + "-" + Math.random().toString(16).slice(2)); try { localStorage.setItem("did", d); } catch {} } return d; }
-function logConsent(type, items){ try { fetch("/api/consent", {method:"POST", headers:{"Content-Type":"application/json"}, body: JSON.stringify({deviceId:deviceId(), type, version:CONSENT_V, items}), keepalive:true}).catch(()=>{}); } catch {} }
+function logConsent(type, items, version){ try { fetch("/api/consent", {method:"POST", headers:{"Content-Type":"application/json"}, body: JSON.stringify({deviceId:deviceId(), type, version:version || CONSENT_V, items}), keepalive:true}).catch(()=>{}); } catch {} }
 async function askPerm(p){
   if(!p.ok()){ perm[p.k] = "unsupported"; }
   else { try { await p.ask(); perm[p.k] = "granted"; if(p.log) logConsent(p.log, {granted:true}); } catch { perm[p.k] = "denied"; } }
@@ -976,15 +984,24 @@ function renderRows(){
     box.appendChild(r);
   });
 }
-function openPanel(){ $("ageCk").checked = !!localStorage.getItem("onb3"); $("oOk").disabled = !$("ageCk").checked; renderRows(); $("onb").hidden = false; }
-$("ageCk").addEventListener("change", e => { $("oOk").disabled = !e.target.checked; });
+const AYD_V = "1.1", GEM_V = "1.0";
+function lsGet(k){ try { return localStorage.getItem(k); } catch { return null; } }
+function lsSet(k, v){ try { v === null ? localStorage.removeItem(k) : localStorage.setItem(k, v); } catch {} }
+function gemOk(){ return lsGet("gem") === GEM_V; }
+function onbReady(){ $("oOk").disabled = !($("ageCk").checked && $("aydCk").checked); }
+function openPanel(){ $("ageCk").checked = !!lsGet("onb3"); $("aydCk").checked = lsGet("ayd") === AYD_V; $("gemCk").checked = gemOk(); onbReady(); renderRows(); $("onb").hidden = false; }
+$("ageCk").addEventListener("change", onbReady);
+$("aydCk").addEventListener("change", onbReady);
 $("oAll").addEventListener("click", async () => { for(const p of PROWS){ if(p.ask && !perm[p.k]) await askPerm(p); } });
 $("oOk").addEventListener("click", () => {
-  if(!localStorage.getItem("onb3")){ logConsent("age18", {over18:true}); try { localStorage.setItem("onb3", "1"); } catch {} setTimeout(showHint, 400); }
+  if(lsGet("ayd") !== AYD_V){ logConsent("aydinlatma", {read:true}, AYD_V); lsSet("ayd", AYD_V); }
+  if($("gemCk").checked && !gemOk()){ logConsent("gemini", {google:true}, GEM_V); lsSet("gem", GEM_V); }
+  else if(!$("gemCk").checked && gemOk()){ logConsent("gemini_revoked", {google:false}, GEM_V); lsSet("gem", null); }
+  if(!lsGet("onb3")){ logConsent("age18", {over18:true}); lsSet("onb3", "1"); setTimeout(showHint, 400); }
   $("onb").hidden = true;
 });
 $("permBtn").addEventListener("click", openPanel);
-if(!localStorage.getItem("onb3")) openPanel(); else showHint();
+if(!lsGet("onb3") || lsGet("ayd") !== AYD_V || !gemOk()) openPanel(); else showHint();
 </script>
 </body>
 </html>
