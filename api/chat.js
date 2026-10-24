@@ -4,6 +4,7 @@ import { redis, hasRedis } from "../lib/redis.js";
 import { RATES_DECL, getExchangeRates } from "../lib/rates.js";
 import { resolvePlan, gateTool, bump, monthKey } from "../lib/plans.js";
 import { CFO_DECLS, CFO_TOOLS, CFO_RULES, ACTION_DECLS, ACTION_TOOLS } from "../lib/cfo.js";
+import { FIN_DECLS, FIN_TOOLS, FIN_RULES } from "../lib/fin.js";
 
 const MODEL = process.env.GEMINI_MODEL || "gemini-flash-latest";
 const FALLBACK_MODEL = process.env.GEMINI_FALLBACK_MODEL || "gemini-3.5-flash-lite";
@@ -54,7 +55,7 @@ Cevapları kısa tut; telefonda okunacağını unutma. Gerekirse madde işareti 
 Selamlamayı yalnızca sohbetin ilk mesajında yap; sonraki cevaplarda doğrudan konuya gir.
 Döviz kuru (dolar, euro, altın dışı) sorulursa get_exchange_rates aracını kullan; kuru asla hafızandan söyleme, bülten tarihini belirt. Araç hata verirse rakam uydurma, alınamadığını söyle.
 Hava durumu sorulursa get_weather aracını kullan. Şehir belirtilmemişse önce hangi şehir olduğunu sor.
-Tıbbi, hukuki ve finansal konularda genel bilgi ver, uzmana danışmayı öner.${fin ? CFO_RULES : ""}
+Tıbbi, hukuki ve finansal konularda genel bilgi ver, uzmana danışmayı öner.${fin ? CFO_RULES + FIN_RULES : ""}
 Hatırlatıcı/zamanlayıcı için set_reminder, takvim için add_to_calendar aracını çağır. Hatırlatıcılar uygulama açıkken bildirim verir; kullanıcıya bunu kısaca belirt.${ctx.doc ? "\nKullanıcı bir belge yükledi (içerik mesajın başında). Analizi yalnızca belgedeki verilere dayandır, belgede olmayan rakamı uydurma; eksik ya da belirsiz yerleri belirt. Gerekirse nakit akışı ve maliyet araçlarını belgedeki rakamlarla kullan." : ""}
 Şu an (Türkiye saati): ${now}.${ctx.loc ? `
 Kullanıcının yaklaşık konumu biliniyor. Şehir belirtmeden hava durumu sorarsa get_weather aracını city alanını boş bırakarak çağır.` : ""}${ctx.hasImage ? IMAGE_RULES : ""}${profileText(ctx.profile)}`;
@@ -158,7 +159,7 @@ async function webSearch(query, apiKey) {
 }
 
 const toolsFor = (app) => [{
-  functionDeclarations: [RATES_DECL, ...(app === "finans" ? CFO_DECLS : CFO_DECLS.filter((d) => d.name === "web_search")), ...ACTION_DECLS, {
+  functionDeclarations: [RATES_DECL, ...(app === "finans" ? [...CFO_DECLS, ...FIN_DECLS] : CFO_DECLS.filter((d) => d.name === "web_search")), ...ACTION_DECLS, {
     name: "get_weather",
     description: "Bir şehir için güncel hava durumunu ve 3 günlük tahmini getirir.",
     parameters: {
@@ -234,13 +235,16 @@ async function tryModel(model, apiKey, base, ctx) {
           if (blocked) {
             result = blocked;
             if (blocked.upgrade) collected.push({ kind: "upgrade", data: { neden: blocked.upgrade } });
-          } else if (CFO_TOOLS[fc.name]) {
-            result = CFO_TOOLS[fc.name](fc.args || {});
+          } else if (CFO_TOOLS[fc.name] || FIN_TOOLS[fc.name]) {
+            result = (CFO_TOOLS[fc.name] || FIN_TOOLS[fc.name])(fc.args || {});
             if (!result.error) collected.push({ kind: fc.name, data: result, input: fc.args || {} });
           } else if (fc.name === "get_exchange_rates") {
             result = await getExchangeRates(fc.args || {});
           } else if (fc.name === "web_search") {
             result = await webSearch(fc.args?.query, apiKey);
+          } else if (fc.name === "kap_search") {
+            const sk = String(fc.args?.sirket || "").slice(0, 80).trim(), kn = String(fc.args?.konu || "son finansal sonuçlar ve KAP bildirimleri").slice(0, 100);
+            result = sk ? await webSearch(`${sk} ${kn} KAP kap.org.tr son durum ve piyasa görünümü (tavsiye verme, olguları ve tarihleri ver)`, apiKey) : { error: "Şirket adı boş." };
           } else if (ACTION_TOOLS[fc.name]) {
             result = ACTION_TOOLS[fc.name](fc.args || {});
             if (!result.error) collected.push({ kind: fc.name, data: result });
@@ -315,7 +319,7 @@ export default async function handler(req, res) {
     fin: app === "finans" && fsub === "isletme" ? cleanFin(profile?.fin) : {},
   };
   const img = typeof image === "string" && image.length < 1500000 && /^[A-Za-z0-9+/=]+$/.test(image) ? image : null;
-  const docText = doc && typeof doc.text === "string" ? { name: String(doc.name || "belge").replace(/[^\p{L}\p{N} ._-]/gu, "").slice(0, 80), text: doc.text.slice(0, 40000) } : null;
+  const docText = doc && typeof doc.text === "string" ? { name: String(doc.name || "belge").replace(/[^\p{L}\p{N} ._-]/gu, "").slice(0, 80), text: doc.text.slice(0, 40000), cont: doc.cont === true } : null;
   const pdfData = typeof pdf === "string" && pdf.length < 3200000 && /^[A-Za-z0-9+/=]+$/.test(pdf) ? pdf : null;
   const loc = location && Math.abs(location.lat) <= 90 && Math.abs(location.lon) <= 180
     ? { lat: Number(location.lat.toFixed?.(2) ?? location.lat), lon: Number(location.lon.toFixed?.(2) ?? location.lon) } : null;
@@ -334,7 +338,8 @@ export default async function handler(req, res) {
   }
   if (docText || pdfData) {
     if (!eff.features.belge) return res.status(402).json({ error: "Belge analizi Pro planlarda. Menüdeki Planlar bölümüne bak.", upgrade: "belge" });
-    const n = await bump(`doc:${monthKey()}:${sid}`, 40 * 86400);
+    // Aynı belge üzerindeki devam soruları yeni belge sayılmaz (mesaj kotası zaten geçerli)
+    const n = docText?.cont ? 0 : await bump(`doc:${monthKey()}:${sid}`, 40 * 86400);
     if (n > eff.limits.belge_aylik) return res.status(402).json({ error: "Bu ayki belge analizi hakkın doldu.", upgrade: "belge" });
   }
 

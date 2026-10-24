@@ -3,6 +3,8 @@
 ## v1.0.0 (ilk genel sürüm, açık beta)
 - Planlar: Ücretsiz, Bireysel Plus/Pro, Şirket Plus/Pro/Pro Max. İmzalı etkinleştirme kodu, sunucuda kısıtlar (araç, aylık mesaj, belge, web arama, sesli cevap), plan başına model, Planlar ekranı, beta bayrağı.
 - Yasal belge şablonları: abonelik şartları, ön bilgilendirme, mesafeli satış, iptal/iade, şirket hizmet sözleşmesi (legal/ + scripts/build_legal.mjs). Şirket bilgisi girilene kadar TASLAK bandıyla yayınlanır.
+- Gelişmiş finans araçları: bilanço oran analizi (likidite/kaldıraç/kârlılık/FAVÖK), gelir-gider tahmini (trend+mevsimsellik, %80 aralık), bütçe-gerçekleşen sapma, şüpheli harcama tespiti (aykırı tutar, mükerrer, limit altı parçalama), içsel kredi risk puanı, rapor taslağı (Word/PDF), KAP/piyasa analizi (tavsiyesiz). Plan kapısı: `analiz` özelliği Pro ve üstü.
+- Yüzlerce sayfalık belgeden bilgi çekme: PDF/Word/Excel cihazda okunur (pdf.js yerel), soruya göre en ilgili bölümler sayfa numarasıyla modele gönderilir.
 - Gerçek maliyet ölçümü (token kullanımı, plan bazlı).
 - Döviz kurları: TCMB bülteninden doğrudan okuyan get_exchange_rates aracı (web aramasına bağımlı değil).
 - Redis: REDIS_URL (standart Redis) desteği, dış paket gerektirmez.

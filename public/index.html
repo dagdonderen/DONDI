@@ -258,7 +258,7 @@ html[data-embed] .top,html[data-embed] .modes,html[data-embed] .foot{display:non
     <div id="cList"><input id="cQ" type="search" placeholder="Sohbetlerde ara…" aria-label="Ara"><div id="cItems"></div></div>
     <div id="log"></div>
     <div id="att" hidden></div>
-    <form id="f"><div class="pill"><button id="clip" type="button" aria-label="Belge ekle" title="Excel, Word veya PDF ekle"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="5" width="18" height="14" rx="3"/><circle cx="9" cy="10.5" r="1.8"/><path d="M4 17l5-4.5 3.5 3L16 12l4 4"/></svg></button><input type="file" id="fileIn" hidden accept=".xlsx,.xls,.csv,.txt,.docx,.pdf"><textarea id="t" rows="1" placeholder="Yaz…" aria-label="Mesaj"></textarea></div>
+    <form id="f"><div class="pill"><button id="clip" type="button" aria-label="Belge ekle" title="Excel, Word veya PDF ekle (yüzlerce sayfalık PDF de olur)"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="5" width="18" height="14" rx="3"/><circle cx="9" cy="10.5" r="1.8"/><path d="M4 17l5-4.5 3.5 3L16 12l4 4"/></svg></button><input type="file" id="fileIn" hidden accept=".xlsx,.xls,.csv,.txt,.docx,.pdf"><textarea id="t" rows="1" placeholder="Yaz…" aria-label="Mesaj"></textarea></div>
     <button class="rbtn" id="camBtn" type="button" aria-label="Kamerayı aç"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M4 8a2 2 0 0 1 2-2h2l1.5-2h5L16 6h2a2 2 0 0 1 2 2v9a2 2 0 0 1-2 2H6a2 2 0 0 1-2-2z"/><circle cx="12" cy="12.5" r="3.5"/></svg></button>
     <button class="rbtn mic" id="micBtn" type="button" aria-label="Sohbeti başlat veya durdur"><svg class="i-mic" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><rect x="9" y="3" width="6" height="11" rx="3"/><path d="M5 11a7 7 0 0 0 14 0M12 18v3"/></svg><svg class="i-stop" viewBox="0 0 24 24" fill="currentColor"><rect x="7" y="7" width="10" height="10" rx="2"/></svg></button>
     <button class="rbtn mic" id="send" type="submit" aria-label="Gönder"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12h14M13 6l6 6-6 6"/></svg></button></form>
@@ -343,8 +343,8 @@ const $ = id => document.getElementById(id) || (pip && !pip.closed ? pip.documen
 const core = $("core"), status = $("status"), cap = $("cap"), log = $("log"), input = $("t"), sendBtn = $("send");
 const SUGS = {
   kisisel:[["Hava durumu","Bugün hava nasıl olacak? Şehrimi söyleyeyim."],["Plan yap","Yarın için 3 maddelik bir günlük plan hazırla."],["Mesaj yaz","Bir arkadaşıma doğum günü mesajı yazar mısın?"],["Özetle","Sana yapıştıracağım metni 3 cümlede özetler misin?"],["Hatırlat","Bana 30 dakika sonra su içmemi hatırlat."]],
-  bireysel:[["Bütçe yap","Aylık bütçemi çıkaralım. Gelir ve giderlerimi sana sırayla söyleyeyim."],["Borç planı","Borçlarımı kapatmak için bir ödeme planı yapalım. Sorularını sor."],["Birikim hedefi","Belirli bir hedef için aylık ne kadar biriktirmem gerektiğini hesaplayalım."],["Ya şöyle olsa?","Kira ya da maaş değişirse bütçem nasıl etkilenir, karşılaştıralım."],["Güncel kur","Bugünkü dolar ve euro kuru kaç?"]],
-  isletme:[["Nakit akışı","12 aylık nakit akış tablosu çıkaralım. Sorularını sor."],["Maliyet hesabı","Bir ürünün birim maliyetini ve satış fiyatını hesaplayalım."],["Ya şöyle olsa?","Fiyat artırma ya da reklam harcaması gibi senaryoları karşılaştıralım. Bana ne sormalısın?"],["Vergi takvimi","Bu ay ve gelecek ay ödemem gereken vergi ve SGK tarihleri için hatırlatıcı kuralım. Önce işletme türümü sor."],["Güncel kur","Bugünkü dolar ve euro kuru kaç?"]]
+  bireysel:[["Bütçe yap","Aylık bütçemi çıkaralım. Gelir ve giderlerimi sana sırayla söyleyeyim."],["Borç planı","Borçlarımı kapatmak için bir ödeme planı yapalım. Sorularını sor."],["Birikim hedefi","Belirli bir hedef için aylık ne kadar biriktirmem gerektiğini hesaplayalım."],["Ya şöyle olsa?","Kira ya da maaş değişirse bütçem nasıl etkilenir, karşılaştıralım."],["Güncel kur","Bugünkü dolar ve euro kuru kaç?"],["Gelir-gider tahmini","Geçmiş aylık gelir ve giderlerime bakıp önümüzdeki aylar için tahmin yapalım."],["Şüpheli harcama","Hesap ekstremi/harcama listemi vereceğim. Olağandışı ya da mükerrer kalemleri bulalım."],["Şirket analizi (KAP)","Bir borsa şirketinin son durumunu KAP bildirimleri ve haberlerle analiz et. Al-sat tavsiyesi verme."]],
+  isletme:[["Bilanço özeti","Bilanço ve gelir tablosu rakamlarımı vereceğim. Oranları, güçlü ve riskli yönleri çıkaralım."],["Gelir-gider tahmini","Geçmiş aylık gelir ve giderlerime bakıp önümüzdeki aylar için tahmin yapalım."],["Şüpheli harcama","Harcama listemi vereceğim. Şüpheli, mükerrer ya da olağandışı kalemleri bulalım."],["Kredi risk puanı","Şirketin finansal oranlarından içsel bir kredi risk puanı çıkaralım."],["Uzun belgeden bilgi","Yüzlerce sayfalık bir PDF yükleyeceğim; içinden sorduğum bilgiyi sayfa numarasıyla bul."],["Şirket analizi (KAP)","Bir borsa şirketinin son durumunu KAP bildirimleri ve haberlerle analiz et. Al-sat tavsiyesi verme."],["Rapor taslağı","Bu ayın finansal rapor taslağını hazırlayalım. Neye ihtiyacın var?"],["Nakit akışı","12 aylık nakit akış tablosu çıkaralım. Sorularını sor."],["Maliyet hesabı","Bir ürünün birim maliyetini ve satış fiyatını hesaplayalım."],["Ya şöyle olsa?","Fiyat artırma ya da reklam harcaması gibi senaryoları karşılaştıralım. Bana ne sormalısın?"],["Vergi takvimi","Bu ay ve gelecek ay ödemem gereken vergi ve SGK tarihleri için hatırlatıcı kuralım. Önce işletme türümü sor."],["Güncel kur","Bugünkü dolar ve euro kuru kaç?"]]
 };
 const sugKey = () => settings.app === "finans" ? settings.fsub : "kisisel";
 let chats = []; try { chats = JSON.parse(localStorage.getItem("chats") || "[]"); } catch {}
@@ -533,8 +533,9 @@ async function send(text, viaVoice, image){
   history.push({role:"user", content:text}); syncChips(); const userEl = addMsg("user", image ? "[Kamera] " + text : (attached ? "[Belge: " + attached.name + "] " + text : text));
   let wait = document.createElement("div"); wait.className = "msg bot"; wait.textContent = "…"; log.appendChild(wait);
   try{
-    const r = await fetch("/api/chat", {method:"POST", headers:{"Content-Type":"application/json"}, body: JSON.stringify({messages: history, image: image || undefined, ent: getEnt() || undefined, app: settings.app, fsub: settings.fsub, profile: {name: settings.name, tone: settings.tone, fin: settings.fin}, doc: attached && attached.text ? {name: attached.name, text: attached.text} : undefined, pdf: attached && attached.pdf ? attached.pdf : undefined, location: (()=>{ try { return JSON.parse(localStorage.getItem("loc")||"null"); } catch { return null; } })()})});
+    const r = await fetch("/api/chat", {method:"POST", headers:{"Content-Type":"application/json"}, body: JSON.stringify({messages: history, image: image || undefined, ent: getEnt() || undefined, app: settings.app, fsub: settings.fsub, profile: {name: settings.name, tone: settings.tone, fin: settings.fin}, doc: docPayload(text), pdf: attached && attached.pdf ? attached.pdf : undefined, location: (()=>{ try { return JSON.parse(localStorage.getItem("loc")||"null"); } catch { return null; } })()})});
     let data = {}; try { data = await r.json(); } catch {}
+    if(r.ok && attached) attached.used = true;
     if(data.upgrade){ setTimeout(() => openPlans(data.error), 400); }
     if(!r.ok || !data.reply) throw new Error(data.error || "Şu an cevap veremiyorum. Biraz sonra tekrar dene.");
     history.push({role:"assistant", content:data.reply}); save();
@@ -558,7 +559,52 @@ function loadScript(src){ return new Promise((res, rej) => { const el = document
 const XLSX_SRC = "https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js";
 const MAMMOTH_SRC = "https://cdnjs.cloudflare.com/ajax/libs/mammoth/1.6.0/mammoth.browser.min.js";
 let attached = null;
-function showAtt(){ const a = $("att"); if(!attached){ a.hidden = true; a.innerHTML = ""; return; } a.hidden = false; a.innerHTML = ""; const sp = document.createElement("span"); sp.textContent = "📎 " + attached.name; const x = document.createElement("button"); x.type = "button"; x.textContent = "×"; x.setAttribute("aria-label","Belgeyi kaldır"); x.onclick = () => { attached = null; showAtt(); }; a.append(sp, x); }
+function showAtt(){ const a = $("att"); if(!attached){ a.hidden = true; a.innerHTML = ""; return; } a.hidden = false; a.innerHTML = ""; const sp = document.createElement("span"); sp.textContent = "📎 " + attached.name + (attached.lib ? " · " + attached.lib.pages + " sayfa/bölüm, soruna göre ilgili kısımları bulurum" : ""); const x = document.createElement("button"); x.type = "button"; x.textContent = "×"; x.setAttribute("aria-label", "Belgeyi kaldır"); x.onclick = () => { attached = null; showAtt(); }; a.append(sp, x); }
+
+// ---- Büyük belge: PDF metni çıkar, parçala, soruya göre en ilgili kısımları bul ----
+const PDFJS_SRC = "/vendor/pdfjs/pdf.min.js";
+async function extractPdf(f){
+  if(!window.pdfjsLib) await loadScript(PDFJS_SRC);
+  pdfjsLib.GlobalWorkerOptions.workerSrc = "/vendor/pdfjs/pdf.worker.min.js";
+  const doc = await pdfjsLib.getDocument({data: new Uint8Array(await f.arrayBuffer())}).promise;
+  const pages = []; let chars = 0; const n = Math.min(doc.numPages, 2500);
+  for(let i = 1; i <= n; i++){
+    const pg = await doc.getPage(i); const tc = await pg.getTextContent(); let line = "", y = null, out = "";
+    for(const it of tc.items){ if(y !== null && Math.abs(it.transform[5] - y) > 3){ out += line.trim() + "\n"; line = ""; } line += it.str + (it.hasEOL ? "\n" : " "); y = it.transform[5]; }
+    out += line.trim(); pages.push(out); chars += out.length; pg.cleanup();
+    if(i % 10 === 0 || i === n) cap.textContent = "Belge okunuyor… " + i + "/" + n + " sayfa";
+  }
+  try { doc.destroy(); } catch {}
+  return {pages, chars};
+}
+function splitText(t, label){ const out = []; const paras = t.split(/\n+/); let cur = "", k = 1; for(const p of paras){ if(cur.length + p.length > 2400 && cur){ out.push([label + " " + k++, cur]); cur = ""; } cur += p + "\n"; } if(cur.trim()) out.push([label + " " + k, cur]); return out; }
+const STOP = new Set("ve ile bir bu su o icin de da mi mu ne nasil kadar gibi daha cok en ama veya ya ki her ise olan olarak var yok mi".split(" "));
+function norm(t){ return t.toLocaleLowerCase("tr").replace(/ı/g,"i").replace(/ş/g,"s").replace(/ğ/g,"g").replace(/ü/g,"u").replace(/ö/g,"o").replace(/ç/g,"c").replace(/[^a-z0-9 ]+/g," "); }
+function toks(t){ return norm(t).split(/ +/).filter(w => w.length > 1 && !STOP.has(w)).map(w => w.length > 5 ? w.slice(0, 5) : w); }
+function libDoc(name, parts){
+  // parts: [[etiket, metin]] -> ~1800 karakterlik parçalar, BM25 dizini
+  const chunks = [];
+  parts.forEach(([lab, txt]) => { const t = txt.trim(); if(!t) return; if(t.length <= 2200) chunks.push({lab, t}); else { for(let i = 0; i < t.length; i += 1800) chunks.push({lab, t: t.slice(i, i + 2200)}); } });
+  const df = new Map(); let totLen = 0;
+  chunks.forEach(c => { c.tf = new Map(); toks(c.t).forEach(w => c.tf.set(w, (c.tf.get(w) || 0) + 1)); c.len = [...c.tf.values()].reduce((a, b) => a + b, 0) || 1; totLen += c.len; c.tf.forEach((_, w) => df.set(w, (df.get(w) || 0) + 1)); });
+  const total = chunks.reduce((a, c) => a + c.t.length, 0);
+  return {name, lib: {pages: parts.length, chunks, df, avg: totLen / Math.max(1, chunks.length), total}};
+}
+function retrieve(L, query, budget){
+  const q = [...new Set(toks(query))]; const N = L.chunks.length; if(!q.length) return L.chunks.slice(0, 6);
+  const sc = L.chunks.map((c, i) => { let s = 0; for(const w of q){ const f = c.tf.get(w); if(!f) continue; const d = L.df.get(w) || 0; const idf = Math.log(1 + (N - d + 0.5) / (d + 0.5)); s += idf * (f * 2.2) / (f + 1.2 * (0.25 + 0.75 * c.len / L.avg)); } return {i, s}; }).filter(x => x.s > 0).sort((a, b) => b.s - a.s);
+  const picked = []; let used = 0; for(const x of sc){ const c = L.chunks[x.i]; if(used + c.t.length > budget) continue; picked.push(x.i); used += c.t.length; if(picked.length >= 14) break; }
+  picked.sort((a, b) => a - b); return picked.map(i => L.chunks[i]);
+}
+function docPayload(userText){
+  if(!attached) return undefined;
+  if(!attached.lib) return attached.text ? {name: attached.name, text: attached.text, cont: !!attached.used} : undefined;
+  const L = attached.lib;
+  if(L.total <= 36000) return {name: attached.name, text: L.chunks.map(c => "[" + c.lab + "]\n" + c.t).join("\n\n"), cont: !!attached.used};
+  const prev = history.filter(m => m.role === "user").slice(-3, -1).map(m => m.content).join(" ");
+  const hit = retrieve(L, userText + " " + (userText.length < 25 ? prev : ""), 30000);
+  return {name: attached.name, cont: !!attached.used, text: "BELGE PARÇALARI (" + L.pages + " sayfa/bölümlük belgeden soruyla en ilgili kısımlar; sayfa numaralarını cevapta belirt):\n\n" + (hit.length ? hit.map(c => "[" + c.lab + "]\n" + c.t).join("\n\n") : "(Soruyla eşleşen bölüm bulunamadı.)")};
+}
 function docConsent(){
   try { if(localStorage.getItem("docConsent") === "1") return true; } catch {}
   if(!confirm("Belge yükleme onayı\n\nSeçtiğin belgenin içeriği, analiz için yurt dışındaki sunuculara (Google Gemini ve Vercel) aktarılır. Belgede kişisel veya finansal bilgi varsa bunlar da işlenir. Bu aktarım standart sözleşmeler / açık rıza mekanizmalarına dayanır. Gizlilik metni: /gizlilik.html\n\nOnaylıyor musun?")) return false;
@@ -568,19 +614,25 @@ function docConsent(){
 function b64(file){ return new Promise((res, rej) => { const fr = new FileReader(); fr.onload = () => res(String(fr.result).split(",")[1]); fr.onerror = () => rej(new Error("Dosya okunamadı.")); fr.readAsDataURL(file); }); }
 async function readDoc(f){
   const ext = (f.name.split(".").pop() || "").toLowerCase();
-  if(ext === "pdf"){ if(f.size > 2300000) throw new Error("PDF en fazla ~2,3 MB olabilir."); return {name:f.name, pdf: await b64(f)}; }
-  if(f.size > 5000000) throw new Error("Dosya çok büyük (en fazla 5 MB).");
-  if(ext === "csv" || ext === "txt") return {name:f.name, text: (await f.text()).slice(0, 40000)};
+  if(ext === "pdf"){
+    if(f.size > 90000000) throw new Error("PDF en fazla 90 MB olabilir.");
+    let ex = null; try { ex = await extractPdf(f); } catch(e){ console.error("PDF okuma:", e); }
+    if(ex && ex.chars >= 150 * Math.max(1, ex.pages.length)) return libDoc(f.name, ex.pages.map((t, i) => ["s." + (i + 1), t]));
+    if(f.size <= 2300000) return {name:f.name, pdf: await b64(f)};
+    throw new Error("Bu PDF taranmış (görüntü) gibi görünüyor ve metni okunamadı. Metin içeren bir PDF yükle ya da 2,3 MB altı bir dosya kullan.");
+  }
+  if(f.size > 30000000) throw new Error("Dosya çok büyük (en fazla 30 MB).");
+  if(ext === "csv" || ext === "txt"){ const t = await f.text(); return t.length <= 38000 ? {name:f.name, text:t} : libDoc(f.name, splitText(t, "böl.")); }
   if(ext === "xlsx" || ext === "xls"){
     if(!window.XLSX) await loadScript(XLSX_SRC);
     const wb = XLSX.read(await f.arrayBuffer(), {type:"array"});
-    const out = wb.SheetNames.slice(0, 5).map(n => "## Sayfa: " + n + "\n" + XLSX.utils.sheet_to_csv(wb.Sheets[n], {FS:";"})).join("\n\n");
-    return {name:f.name, text: out.slice(0, 40000)};
+    const out = wb.SheetNames.slice(0, 12).map(n => "## Sayfa: " + n + "\n" + XLSX.utils.sheet_to_csv(wb.Sheets[n], {FS:";"})).join("\n\n");
+    return out.length <= 38000 ? {name:f.name, text: out} : libDoc(f.name, splitText(out, "böl."));
   }
   if(ext === "docx"){
     if(!window.mammoth) await loadScript(MAMMOTH_SRC);
     const r = await mammoth.extractRawText({arrayBuffer: await f.arrayBuffer()});
-    return {name:f.name, text: r.value.slice(0, 40000)};
+    return r.value.length <= 38000 ? {name:f.name, text: r.value} : libDoc(f.name, splitText(r.value, "böl."));
   }
   throw new Error("Desteklenen türler: Excel, Word (.docx), PDF, CSV, TXT.");
 }
@@ -616,8 +668,24 @@ function icsFor(d){
   return ["BEGIN:VCALENDAR","VERSION:2.0","PRODID:-//Dondi//TR","BEGIN:VEVENT","UID:" + Date.now() + "@dondi","DTSTAMP:" + f(new Date()),"DTSTART:" + f(st),"DTEND:" + f(en),"SUMMARY:" + t(d.title),"DESCRIPTION:" + t(d.notes || ""),"END:VEVENT","END:VCALENDAR"].join("\r\n");
 }
 const COST_LBL = {adet:"Adet",degisken_birim_maliyet:"Değişken birim maliyet",sabit_gider_birim_payi:"Sabit gider birim payı",birim_maliyet:"Birim maliyet",toplam_maliyet:"Toplam maliyet",kdv_orani_pct:"KDV oranı (%)",satis_fiyati_kdv_haric:"Satış fiyatı (KDV hariç)",satis_fiyati_kdv_dahil:"Satış fiyatı (KDV dahil)",birim_kar:"Birim kâr",toplam_kar:"Toplam kâr",kar_marji_pct:"Kâr marjı (%)",maliyet_uzeri_ekleme_pct:"Maliyet üzeri ekleme (%)",basabas_adedi:"Başabaş adedi"};
+const RATIO_LBL = {donen_varliklar:"Dönen varlıklar",toplam_varlik:"Toplam varlık",toplam_borc:"Toplam borç",calisma_sermayesi:"Çalışma sermayesi",cari_oran:"Cari oran",asit_test_orani:"Asit-test oranı",nakit_orani:"Nakit oranı",borc_varlik_orani_pct:"Borç/varlık (%)",borc_ozkaynak_orani:"Borç/özkaynak",kisa_vadeli_borc_payi_pct:"Kısa vadeli borç payı (%)",brut_kar:"Brüt kâr",brut_kar_marji_pct:"Brüt kâr marjı (%)",faaliyet_kar_marji_pct:"Faaliyet kâr marjı (%)",net_kar_marji_pct:"Net kâr marjı (%)",aktif_karliligi_roa_pct:"Aktif kârlılığı ROA (%)",ozkaynak_karliligi_roe_pct:"Özkaynak kârlılığı ROE (%)",faiz_karsilama_orani:"Faiz karşılama oranı",alacak_devir_hizi:"Alacak devir hızı",alacak_tahsil_suresi_gun:"Ortalama tahsil süresi (gün)",stok_devir_hizi:"Stok devir hızı",stok_tutma_suresi_gun:"Stok tutma süresi (gün)",aktif_devir_hizi:"Aktif devir hızı",favok:"FAVÖK",net_borc_favok:"Net borç/FAVÖK"};
+const SHEETK = new Set(["cash_flow_table","cost_calc","scenario_compare","balance_sheet_analysis","forecast_series","budget_table","anomaly_detect","credit_score"]);
+function ratioRows(o, prev){ return Object.keys(RATIO_LBL).filter(k => o[k] != null || (prev && prev[k] != null)).map(k => prev ? [RATIO_LBL[k], prev[k] == null ? "-" : prev[k], o[k] == null ? "-" : o[k]] : [RATIO_LBL[k], o[k]]); }
+function reportHtml(d){
+  const fm = v => typeof v === "number" ? v.toLocaleString("tr-TR", {maximumFractionDigits:2}) : esc2(v);
+  return '<h1>' + esc2(d.baslik) + '</h1>' + (d.donem ? '<p><b>Dönem:</b> ' + esc2(d.donem) + '</p>' : '') + d.bolumler.map(b => '<h2>' + esc2(b.baslik) + '</h2>' + String(b.metin || "").split(/\n+/).map(x => '<p>' + esc2(x) + '</p>').join("") + (b.tablo ? '<table><thead><tr>' + b.tablo.baslik.map(h => '<th>' + esc2(h) + '</th>').join("") + '</tr></thead><tbody>' + b.tablo.satirlar.map(r => '<tr>' + r.map(c => '<td>' + fm(c) + '</td>').join("") + '</tr>').join("") + '</tbody></table>' : '')).join("") + '<p class="sm">' + esc2(d.uyari || "") + ' Döndi ile hazırlandı · ' + new Date().toLocaleDateString("tr-TR") + '</p>';
+}
+const REP_CSS = 'body{font-family:Calibri,Arial,sans-serif;font-size:11pt;padding:24px;max-width:820px;margin:auto}h1{font-size:20pt}h2{font-size:14pt;margin-top:22px;border-bottom:1px solid #999}table{border-collapse:collapse;width:100%;margin:8px 0}th,td{border:1px solid #999;padding:5px 9px;text-align:right}th:first-child,td:first-child{text-align:left}th{background:#eee}.sm{color:#666;font-size:9pt;margin-top:28px}';
+function exportReportWord(d){ dl("Rapor_Taslagi.doc", new Blob(["\ufeff", '<html xmlns:o="urn:schemas-microsoft-com:office:office" xmlns:w="urn:schemas-microsoft-com:office:word"><head><meta charset="utf-8"><title>' + esc2(d.baslik) + '</title><style>' + REP_CSS + '</style></head><body>' + reportHtml(d) + '</body></html>'], {type:"application/msword"})); }
+function exportReportPdf(d){ const w = window.open("", "_blank"); if(!w){ alert("Açılır pencereye izin ver."); return; } w.document.write('<!doctype html><meta charset="utf-8"><title>' + esc2(d.baslik) + '</title><style>' + REP_CSS + '</style>' + reportHtml(d)); w.document.close(); setTimeout(() => w.print(), 400); }
 function sheetOf(r){
   const d = r.data;
+  if(r.kind === "balance_sheet_analysis"){ const pv = d.onceki_oranlar; return {name:"Bilanço Oran Analizi", head: pv ? ["Gösterge","Önceki dönem","Bu dönem"] : ["Gösterge","Değer"], rows: ratioRows(d.oranlar, pv), note:(d.donem ? d.donem + " | " : "") + (d.yorumlar || []).join(" ")}; }
+  if(r.kind === "forecast_series"){ const L = []; const g = d.gelir && d.gelir.tahminler, q = d.gider && d.gider.tahminler; const n = (g || q).length; for(let i = 0; i < n; i++) L.push([(i + 1) + ". ay", g ? g[i].tahmin : "-", g ? g[i].alt : "-", g ? g[i].ust : "-", q ? q[i].tahmin : "-", d.net ? d.net[i].tahmin : "-"]); return {name:"Gelir-Gider Tahmini", head:["Dönem","Gelir tahmini","Gelir alt (%80)","Gelir üst (%80)","Gider tahmini","Net"], rows:L, note:"Yöntem: " + ((d.gelir || d.gider).yontem) + ". " + d.not}; }
+  if(r.kind === "budget_table"){ return {name:"Bütçe ve Sapma", head:["Kalem","Tür","Bütçe","Gerçekleşen","Fark","Sapma %","Durum"], rows: d.kalemler.map(x => [x.kalem, x.tur, x.butce == null ? "-" : x.butce, x.gerceklesen == null ? "-" : x.gerceklesen, x.fark == null ? "-" : x.fark, x.sapma_pct == null ? "-" : x.sapma_pct, x.durum]), note:"Bütçe net: " + d.butce_net + " | Gerçekleşen net: " + d.gerceklesen_net + " | Net fark: " + d.net_fark}; }
+  if(r.kind === "anomaly_detect"){ return {name:"Şüpheli İşlem Raporu", head:["No","Tarih","Açıklama","Kategori","Tutar","Risk","Seviye","Nedenler"], rows: d.supheli_islemler.map(x => [x.no, x.tarih, x.aciklama, x.kategori, x.tutar, x.risk_puani, x.seviye, x.nedenler.join("; ")]), note: d.incelenen_islem + " işlem incelendi, " + d.isaretlenen + " işaretlendi. " + d.not}; }
+  if(r.kind === "credit_score"){ return {name:"Kredi Risk Puanı", head:["Bileşen","Ağırlık","Puan","Değer"], rows: d.bilesenler.map(x => [x.ad, x.agirlik, x.puan == null ? "-" : x.puan, x.deger == null ? "-" : x.deger]), note:"Toplam puan: " + d.puan + "/100 · " + d.derece + " · " + d.not}; }
+
   if(r.kind === "cash_flow_table"){ const rows = d.aylar.map(x => [x.ay, x.gelir, x.gider, x.net, x.kapanis_bakiye]); rows.push(["TOPLAM", d.toplam_gelir, d.toplam_gider, d.toplam_net, ""]); return {name:"Nakit Akışı", head:["Ay","Gelir","Gider","Net","Kapanış bakiyesi"], rows, note:"Açılış bakiyesi: " + d.acilis_bakiye + " | En düşük bakiye: " + d.en_dusuk_bakiye + " (" + d.en_dusuk_bakiye_ayi + ")"}; }
   if(r.kind === "scenario_compare"){ return {name:"Senaryo Karşılaştırma", head:["Senaryo","Aylık gelir","Aylık kâr","Kâr marjı %","Kapanış nakit","En düşük nakit","Başabaş ciro"], rows: d.senaryolar.map(x => [x.senaryo, x.aylik_gelir, x.aylik_kar, x.kar_marji_pct, x.kapanis_nakit, x.en_dusuk_nakit, x.basabas_aylik_ciro == null ? "-" : x.basabas_aylik_ciro]), note:"Süre: " + d.ay + " ay | Açılış nakit: " + d.acilis_nakit + " | En iyi: " + d.en_iyi_senaryo}; }
   return {name:"Maliyet Hesabı", head:["Kalem","Değer"], rows: Object.entries(d).filter(([k,v]) => COST_LBL[k] && v != null).map(([k,v]) => [COST_LBL[k], v])};
@@ -643,7 +711,8 @@ function handleResults(results, el){
     if(r.kind === "set_reminder"){ addRem(r.data); box.appendChild(mkBtn("⏰ " + (r.data.at ? r.data.at.replace("T"," ") : r.data.in_minutes + " dk sonra") + " · " + r.data.text.slice(0,24), () => {})); }
     else if(r.kind === "add_to_calendar"){ const ics = icsFor(r.data); if(ics) box.appendChild(mkBtn("📅 Takvime ekle (" + r.data.title + ")", () => dl("etkinlik.ics", new Blob([ics], {type:"text/calendar;charset=utf-8"})))); }
     else if(r.kind === "upgrade"){ box.appendChild(mkBtn("⭐ Planları gör", () => openPlans("Bu özellik için üst bir plan gerekiyor."))); }
-    else if(r.kind === "cash_flow_table" || r.kind === "cost_calc" || r.kind === "scenario_compare"){ finCount(); const sh = sheetOf(r); box.append(mkBtn("Excel", gx(() => exportXlsx(sh))), mkBtn("Word", gx(() => exportWord(sh))), mkBtn("CSV", gx(() => exportCsv(sh))), mkBtn("PDF", gx(() => exportPdf(sh)))); }
+    else if(r.kind === "finance_report"){ box.append(mkBtn("📄 Rapor · Word", gx(() => exportReportWord(r.data))), mkBtn("Rapor · PDF", gx(() => exportReportPdf(r.data)))); }
+    else if(SHEETK.has(r.kind)){ finCount(); const sh = sheetOf(r); box.append(mkBtn("Excel", gx(() => exportXlsx(sh))), mkBtn("Word", gx(() => exportWord(sh))), mkBtn("CSV", gx(() => exportCsv(sh))), mkBtn("PDF", gx(() => exportPdf(sh)))); }
   });
   if(box.children.length && el) el.appendChild(box);
 }

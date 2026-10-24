@@ -38,3 +38,10 @@ Beta (BETA_OPEN=1, kodsuz herkes): 300 mesaj/ay, 30/gün, 5 belge, 20 arama, 30 
 2. Avukat incelemesi, sonra `"hazir": true` ve `node scripts/build_legal.mjs --strict`.
 3. Ödeme sağlayıcı seçimi (iyzico / PayTR vb.) ve satın alma + iptal akışı.
 4. Vercel env: PLAN_SECRET, HASH_SALT; beta bitince BETA_OPEN=0.
+
+## Özellik kapıları (güncel)
+- hesap (Plus ve üstü): nakit akışı, maliyet, bütçe-sapma, gelir-gider tahmini, rapor taslağı.
+- senaryo (Pro ve üstü): senaryo karşılaştırma.
+- analiz (Pro ve üstü): bilanço oran analizi, şüpheli harcama tespiti, kredi risk puanı, KAP/piyasa analizi (tavsiyesiz; web arama kotasından düşer).
+- belge (Pro ve üstü): uzun belge/mevzuattan bilgi çekme. Aynı belge üzerindeki devam soruları yeni belge sayılmaz.
+- Ücretsiz: finans araçlarından ayda 3 deneme. Beta: hepsi açık (FIRDÖNDÜ hariç).
