@@ -180,6 +180,11 @@ body[data-auto="1"] #micBtn{animation:pulse 1.6s ease-in-out infinite}
 #toast{position:fixed;left:12px;right:12px;bottom:calc(90px + env(safe-area-inset-bottom));z-index:31;max-width:420px;margin:0 auto;background:var(--pop);border:1px solid var(--line);color:var(--ink);border-radius:14px;padding:12px 14px;font-size:14px;text-align:center;box-shadow:0 10px 40px rgba(0,0,0,.5)}
 #splash{position:fixed;inset:0;z-index:100;background:#0b0907;display:grid;place-content:center;justify-items:center;gap:16px;color:#f0b254;letter-spacing:.3em;transition:opacity .4s}
 #splash.off{opacity:0;pointer-events:none}
+#go{position:fixed;inset:0;z-index:40;background:rgba(10,8,6,.86);display:grid;place-items:center;padding:24px}#go[hidden]{display:none}
+#goBtn{background:none;border:0;color:var(--ink);display:grid;justify-items:center;gap:14px;font:inherit}
+#goBtn .orb{width:132px;height:132px;border-radius:50%;background:radial-gradient(circle at 35% 30%,#fff6,transparent 45%),var(--c);box-shadow:0 0 60px var(--c);animation:goP 2.2s ease-in-out infinite}
+#goBtn b{font-size:20px;letter-spacing:.08em}#goBtn small{color:var(--mut);font-size:14px}
+@keyframes goP{50%{transform:scale(1.06);box-shadow:0 0 90px var(--c)}}
 #splash .sp{width:46px;height:46px;border-radius:50%;border:3px solid rgba(240,178,84,.25);border-top-color:#f0b254;animation:spin 1s linear infinite}
 @keyframes spin{to{transform:rotate(360deg)}}
 .modal{position:fixed;inset:0;z-index:40;background:rgba(0,0,0,.6);display:grid;place-items:center;padding:16px}
@@ -319,6 +324,7 @@ html[data-embed] .top,html[data-embed] .modes,html[data-embed] .foot{display:non
 </div></div>
 <div id="net" role="status" hidden>İnternet yok. Bağlantı gelince Döndi tekrar cevap verebilir.</div>
 <div id="toast" role="status" hidden></div>
+<div id="go" hidden><button id="goBtn" type="button" aria-label="Döndi ile sesli sohbeti başlat"><span class="orb"></span><b>Döndi'yi başlat</b><small>Dokun, sesli sohbet başlasın</small></button></div>
 <div id="splash" aria-hidden="true"><div class="sp"></div><b>DÖNDİ</b></div>
 <div id="fb" class="modal" hidden><div class="mbox"><h3>Geri bildirim</h3>
   <p class="nt">Ne beğendin, ne çalışmadı? Mesajın içeriği dışında kişisel veri gönderilmez.</p>
@@ -377,7 +383,7 @@ function setState(s){ document.body.dataset.auto = auto ? "1" : "0"; const cm = 
 let autoFails = 0, awakeUntil = 0, wl = null;
 const wakeOn = () => settings.wake !== false;
 async function holdScreen(on){ try { if(on && navigator.wakeLock && !wl){ wl = await navigator.wakeLock.request("screen"); wl.addEventListener("release", () => { wl = null; }); } else if(!on && wl){ await wl.release(); wl = null; } } catch {} }
-document.addEventListener("visibilitychange", () => { if(auto && document.visibilityState === "visible") holdScreen(true); });
+document.addEventListener("visibilitychange", () => { if(auto && document.visibilityState === "visible"){ holdScreen(true); if(state === "idle" && !busy) setTimeout(() => { if(auto && state === "idle" && !busy) listen(); }, 300); } });
 function setAuto(on){
   auto = on; $("autoBtn").setAttribute("aria-pressed", String(on)); autoFails = 0; holdScreen(on); if(on) awakeUntil = Date.now() + 15000;
   if(on){ if(state === "idle") listen(); else setState(state); }
@@ -499,6 +505,18 @@ function wakeGate(text){
   if(!m && Date.now() > awakeUntil) return {ignore:true};
   return {text: m ? text.slice(m.index + m[0].length).replace(/^[\s,.!?:;-]+/, "") : text, woke: !!m};
 }
+// Ses tanıma alternatiflerinden, Döndi'nin bildiği kelimeleri en çok içereni seçer.
+const VOCAB = /(döndi|nakit|maliyet|kdv|bütçe|fatura|hatırlat|hava|kur|dolar|euro|borç|kredi|gelir|gider|stok|tahsilat|ödeme|vergi|sgk|kamera|belge)/gi;
+function bestAlt(r){
+  let best = r[0].transcript, bs = -1;
+  for(let i = 0; i < r.length; i++){ const a = r[i]; const sc = (a.confidence || 0) + ((a.transcript.match(VOCAB) || []).length * 0.15) + (WAKE_RE.test(a.transcript.toLocaleLowerCase("tr")) ? 0.2 : 0); if(sc > bs){ bs = sc; best = a.transcript; } }
+  return best;
+}
+// "Döndü/Dondu/Dönti" gibi duyulan hitabı cümle başında veya virgülle seslenildiğinde "Döndi" yapar.
+function fixName(t){
+  return t.replace(/(^|[.!?]\s*)(döndü|dondu|dönti|tönti|dönde|döni|dondi)(?=[\s,!?.]|$)/giu, (m, a) => a + "Döndi")
+          .replace(/(merhaba|selam|hey|bak|tamam|teşekkürler|sağ ol)\s+(döndü|dondu|dönti|dondi)(?=[\s,!?.]|$)/giu, (m, a) => a + " Döndi");
+}
 function voiceCmd(t){
   const n = t.toLocaleLowerCase("tr").replace(/[.,!?]/g, "").trim();
   if(/^(dur|sus|yeter|kes|sessiz ol)$/.test(n)){ stopSpeak(); setState("idle"); cap.className = ""; cap.textContent = "Tamam."; if(auto) setTimeout(listen, 300); return true; }
@@ -508,9 +526,9 @@ function voiceCmd(t){
 function listen(){
   if(!SR){ cap.textContent = "Bu tarayıcı sesli komutu desteklemiyor. Chrome ya da Edge dene, ya da Mesajlaş'ı kullan."; cap.className = ""; return; }
   if(busy) return;
-  stopSpeak(); heard = ""; rec = new SR(); rec.lang = "tr-TR"; rec.interimResults = true; rec.continuous = false;
+  stopSpeak(); heard = ""; rec = new SR(); rec.lang = "tr-TR"; rec.interimResults = true; rec.continuous = false; rec.maxAlternatives = 5;
   rec.onstart = () => { setState("listening"); cap.className = "me"; cap.textContent = "…"; };
-  rec.onresult = e => { let t = "", fin = false; for(const r of e.results){ t += r[0].transcript; if(r.isFinal) fin = true; } heard = t; cap.textContent = t; clearTimeout(silT); silT = setTimeout(() => { try { rec.stop(); } catch {} }, fin ? 120 : 900); };
+  rec.onresult = e => { let t = "", fin = false; for(const r of e.results){ t += bestAlt(r); if(r.isFinal) fin = true; } t = fixName(t); heard = t; cap.textContent = t; clearTimeout(silT); silT = setTimeout(() => { try { rec.stop(); } catch {} }, fin ? 120 : 900); };
   rec.onspeechend = () => { clearTimeout(silT); silT = setTimeout(() => { try { rec.stop(); } catch {} }, 350); };
   rec.onerror = e => { if(e.error === "not-allowed" || e.error === "service-not-allowed"){ cap.className = ""; cap.textContent = (navigator.standalone ? "iPhone'da ana ekrandan açılan uygulamada ses tanıma çalışmıyor (Apple kısıtı). Döndi'yi Safari'de aç ya da yazarak kullan." : "Mikrofon izni verilmedi. Adres çubuğundaki kilit simgesinden izin ver. iPhone'da Ayarlar > Genel > Klavye > Dikte'yi Aç'ın da açık olması gerekir."); $("sMic").textContent = "Mikrofon: izin yok"; setAuto(false); } };
   rec.onend = () => { clearTimeout(silT); if(state !== "listening") return; if(heard.trim()){ autoFails = 0; const g = wakeGate(heard);
@@ -519,7 +537,7 @@ function listen(){
       if(!t){ awakeUntil = Date.now() + 15000; setState("idle"); cap.className = ""; cap.textContent = "Dinliyorum…"; setTimeout(() => { if(auto && state === "idle" && !busy) listen(); }, 200); return; }
       if(auto && voiceCmd(t)) return;
       send(t, true, camOn ? capture() : null); }
-    else if(auto){ autoFails++; if(autoFails > 25){ setAuto(false); cap.textContent = "Seni duyamadım, sohbeti durdurdum. Devam için küreye dokun."; } else { setState("idle"); setTimeout(() => { if(auto && state === "idle" && !busy) listen(); }, 60); } }
+    else if(auto){ autoFails++; if(autoFails > 1e9){ setAuto(false); cap.textContent = "Seni duyamadım, sohbeti durdurdum. Devam için küreye dokun."; } else { setState("idle"); setTimeout(() => { if(auto && state === "idle" && !busy) listen(); }, 60); } }
     else { setState("idle"); cap.className = ""; cap.textContent = "Seni duyamadım. Tekrar dokun."; } };
   try { rec.start(); } catch {}
 }
@@ -541,7 +559,7 @@ async function send(text, viaVoice, image){
   history.push({role:"user", content:text}); syncChips(); const userEl = addMsg("user", image ? "[Kamera] " + text : (attached ? "[Belge: " + attached.name + "] " + text : text));
   let wait = document.createElement("div"); wait.className = "msg bot"; wait.textContent = "…"; log.appendChild(wait);
   try{
-    const r = await fetch("/api/chat", {method:"POST", headers:{"Content-Type":"application/json"}, body: JSON.stringify({messages: history, image: image || undefined, ent: getEnt() || undefined, app: settings.app, fsub: settings.fsub, profile: {name: settings.name, tone: settings.tone, fin: settings.fin}, doc: docPayload(text), pdf: attached && attached.pdf ? attached.pdf : undefined, location: (()=>{ try { return JSON.parse(localStorage.getItem("loc")||"null"); } catch { return null; } })()})});
+    const r = await fetch("/api/chat", {method:"POST", headers:{"Content-Type":"application/json"}, body: JSON.stringify({messages: history, voice: !!viaVoice, image: image || undefined, ent: getEnt() || undefined, app: settings.app, fsub: settings.fsub, profile: {name: settings.name, tone: settings.tone, fin: settings.fin}, doc: docPayload(text), pdf: attached && attached.pdf ? attached.pdf : undefined, location: (()=>{ try { return JSON.parse(localStorage.getItem("loc")||"null"); } catch { return null; } })()})});
     let data = {}; try { data = await r.json(); } catch {}
     if(r.ok && attached) attached.used = true;
     if(data.upgrade){ setTimeout(() => openPlans(data.error), 400); }
@@ -1049,11 +1067,29 @@ $("oOk").addEventListener("click", () => {
   if(lsGet("ayd") !== AYD_V){ logConsent("aydinlatma", {read:true}, AYD_V); lsSet("ayd", AYD_V); }
   if($("gemCk").checked && !gemOk()){ logConsent("gemini", {google:true}, GEM_V); lsSet("gem", GEM_V); }
   else if(!$("gemCk").checked && gemOk()){ logConsent("gemini_revoked", {google:false}, GEM_V); lsSet("gem", null); }
-  if(!lsGet("onb3")){ logConsent("age18", {over18:true}); lsSet("onb3", "1"); setTimeout(showHint, 400); }
+  if(!lsGet("onb3")){ logConsent("age18", {over18:true}); lsSet("onb3", "1"); }
   $("onb").hidden = true;
+  if(gemOk() && !greeted) greet();
 });
 $("permBtn").addEventListener("click", openPanel);
-if(!lsGet("onb3") || lsGet("ayd") !== AYD_V || !gemOk()) openPanel(); else showHint();
+// ---- Her açılışta sesli karşılama; durdurulana kadar sesli sohbet sürer ----
+let greeted = false;
+function greeting(){
+  const h = new Date().getHours(), sel = h < 5 ? "İyi geceler" : h < 12 ? "Günaydın" : h < 18 ? "İyi günler" : "İyi akşamlar";
+  const ad = settings.name ? ", " + settings.name : "";
+  const tail = settings.app === "finans"
+    ? (settings.fsub === "isletme" ? "Şirketinin finans asistanı hazır. Nakit, maliyet ya da vergi; hangisine bakalım?" : "Bütçen ve hesapların için hazırım. Neye bakalım?")
+    : "Seni dinliyorum. Bugün ne yapalım?";
+  return `${sel}${ad}! Ben Döndi. ${tail}`;
+}
+function greet(){
+  greeted = true; $("go").hidden = true; unlockTts();
+  const t = greeting(); cap.className = ""; cap.textContent = t; setState("speaking");
+  let go = false; const start = () => { if(go) return; go = true; setState("idle"); setAuto(true); };
+  setTimeout(start, 2500 + t.length * 85); speak(t, start, null);
+}
+$("goBtn").addEventListener("click", greet);
+if(!lsGet("onb3") || lsGet("ayd") !== AYD_V || !gemOk()) openPanel(); else $("go").hidden = false;
 </script>
 </body>
 </html>

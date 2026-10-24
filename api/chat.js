@@ -31,6 +31,8 @@ function profileText(p) {
   return t;
 }
 
+const VOICE_RULES = `
+SES MODU: Kullanıcının son mesajı konuşmadan otomatik yazıya çevrildi; ses tanıma hataları olabilir. Kelimeleri bağlama göre doğru anlamına göre yorumla (ör. sana hitaben söylenen "Döndü", "Dönti", "Dondu" = senin adın "Döndi"). Anlam gerçekten belirsizse kısaca teyit et ("... mı demek istedin?"). Cevabın sesli okunacak: tablo ve uzun liste kullanma, 1-3 kısa cümleyle doğal konuş.`;
 const IMAGE_RULES = `
 Bu mesajla birlikte kullanıcının kamerasından bir kare ya da eklediği bir görsel geldi (loş/parlak ışık için otomatik iyileştirilmiş olabilir). Görüntüye bakarak kısa ve net cevap ver.
 - Elindeki nesne sorulursa: nesneyi tanı, ne olduğunu ve gerekirse ne işe yaradığını kısaca söyle. Emin değilsen bunu belirt.
@@ -60,7 +62,7 @@ Hava durumu sorulursa get_weather aracını kullan. Şehir belirtilmemişse önc
 Tıbbi, hukuki ve finansal konularda genel bilgi ver, uzmana danışmayı öner.${fin ? CFO_RULES + FIN_RULES : ""}
 Hatırlatıcı/zamanlayıcı için set_reminder, takvim için add_to_calendar aracını çağır. Hatırlatıcılar uygulama açıkken bildirim verir; kullanıcıya bunu kısaca belirt.${ctx.doc ? "\nKullanıcı bir belge yükledi (içerik mesajın başında). Analizi yalnızca belgedeki verilere dayandır, belgede olmayan rakamı uydurma; eksik ya da belirsiz yerleri belirt. Gerekirse nakit akışı ve maliyet araçlarını belgedeki rakamlarla kullan." : ""}
 Şu an (Türkiye saati): ${now}.${ctx.loc ? `
-Kullanıcının yaklaşık konumu biliniyor. Şehir belirtmeden hava durumu sorarsa get_weather aracını city alanını boş bırakarak çağır.` : ""}${ctx.hasImage ? IMAGE_RULES : ""}${profileText(ctx.profile)}`;
+Kullanıcının yaklaşık konumu biliniyor. Şehir belirtmeden hava durumu sorarsa get_weather aracını city alanını boş bırakarak çağır.` : ""}${ctx.hasImage ? IMAGE_RULES : ""}${ctx.voice ? VOICE_RULES : ""}${profileText(ctx.profile)}`;
 }
 
 // ---- Hava durumu aracı ----
@@ -386,7 +388,7 @@ export default async function handler(req, res) {
   const t0 = Date.now();
   for (const model of models) {
     if (Date.now() - t0 > 35000) break; // zaman sınırına yaklaşıldı
-    const out = await tryModel(model, apiKey, base, { eff, sid, app, fsub, loc, hasImage: !!img, doc: !!(docText || pdfData), profile: prof });
+    const out = await tryModel(model, apiKey, base, { eff, sid, app, fsub, loc, hasImage: !!img, voice: !!(req.body && req.body.voice), doc: !!(docText || pdfData), profile: prof });
     if (out.text) return res.status(200).json({ reply: out.text, results: out.collected || [] });
     if (out.fatal) break;
   }
