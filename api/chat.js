@@ -1,5 +1,6 @@
 // Döndi – Gemini sürümü + canlı hava durumu (Open-Meteo) + kalıcı günlük limit (Upstash Redis)
 import { createHash } from "node:crypto";
+import { redis, hasRedis } from "../lib/redis.js";
 import { CFO_DECLS, CFO_TOOLS, CFO_RULES, ACTION_DECLS, ACTION_TOOLS } from "../lib/cfo.js";
 
 const MODEL = process.env.GEMINI_MODEL || "gemini-flash-latest";
@@ -247,8 +248,6 @@ async function tryModel(model, apiKey, base, ctx) {
 
 // ---- Günlük mesaj limiti ----
 // Upstash Redis tanımlıysa kalıcı sayaç kullanılır, değilse bellek içi (en iyi çaba) sayaç.
-const REDIS_URL = process.env.UPSTASH_REDIS_REST_URL || process.env.KV_REST_API_URL;
-const REDIS_TOKEN = process.env.UPSTASH_REDIS_REST_TOKEN || process.env.KV_REST_API_TOKEN;
 
 const usage = new Map();
 function checkLimitMemory(id) {
@@ -263,17 +262,11 @@ function checkLimitMemory(id) {
 async function checkLimit(ip) {
   // IP adresi düz metin olarak saklanmaz, özetlenir (gizlilik)
   const id = createHash("sha256").update(ip).digest("hex").slice(0, 24);
-  if (!REDIS_URL || !REDIS_TOKEN) return checkLimitMemory(id);
+  if (!hasRedis()) return checkLimitMemory(id);
   try {
     const day = new Date().toISOString().slice(0, 10);
     const key = `dondi:rl:${day}:${id}`;
-    const r = await fetch(`${REDIS_URL}/pipeline`, {
-      method: "POST",
-      headers: { Authorization: `Bearer ${REDIS_TOKEN}`, "Content-Type": "application/json" },
-      body: JSON.stringify([["INCR", key], ["EXPIRE", key, 90000]]),
-    });
-    if (!r.ok) throw new Error("Redis HTTP " + r.status);
-    const out = await r.json();
+    const out = await redis([["INCR", key], ["EXPIRE", key, 90000]]);
     const count = Number(out?.[0]?.result);
     if (!Number.isFinite(count)) throw new Error("Redis beklenmeyen cevap");
     return count <= DAILY_LIMIT;

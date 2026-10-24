@@ -1,6 +1,7 @@
 # Değişiklik geçmişi
 
 ## v1.0.0 (ilk genel sürüm, açık beta)
+- Redis: REDIS_URL (standart Redis) desteği, dış paket gerektirmez.
 - Kişisel (mor, ücretsiz) ve Finans modları; Finans içinde Bireysel (mavi) / İşletme (zeytin yeşili) ayrımı.
 - Her mod kendi talimat, araç, öneri ve sohbet listesine sahip.
 - Finans için aylık ücretsiz hak sayacı (beta'da sınırsız), fiyat anketi sorusu.

@@ -1,8 +1,7 @@
 // Rıza ve onay kayıtları (ispat için). Upstash Redis tanımlı değilse kayıt yapılamaz (503).
 import { createHash } from "node:crypto";
+import { redis, hasRedis } from "../lib/redis.js";
 
-const REDIS_URL = process.env.UPSTASH_REDIS_REST_URL || process.env.KV_REST_API_URL;
-const REDIS_TOKEN = process.env.UPSTASH_REDIS_REST_TOKEN || process.env.KV_REST_API_TOKEN;
 const TYPES = new Set(["age18", "camera", "camera_revoked", "location", "document"]);
 
 export default async function handler(req, res) {
@@ -15,7 +14,7 @@ export default async function handler(req, res) {
   for (const [k, v] of Object.entries(b.items || {}).slice(0, 8)) {
     if (/^[A-Za-z0-9_]{1,20}$/.test(k)) items[k] = !!v;
   }
-  if (!REDIS_URL || !REDIS_TOKEN) {
+  if (!hasRedis()) {
     console.error("Rıza kaydı yapılamadı: Redis tanımlı değil.");
     return res.status(503).json({ error: "Kayıt servisi tanımlı değil." });
   }
@@ -31,12 +30,7 @@ export default async function handler(req, res) {
   };
   const key = `dondi:consent:${id}`;
   try {
-    const r = await fetch(`${REDIS_URL}/pipeline`, {
-      method: "POST",
-      headers: { Authorization: `Bearer ${REDIS_TOKEN}`, "Content-Type": "application/json" },
-      body: JSON.stringify([["LPUSH", key, JSON.stringify(rec)], ["LTRIM", key, 0, 99]]),
-    });
-    if (!r.ok) throw new Error("Redis HTTP " + r.status);
+    await redis([["LPUSH", key, JSON.stringify(rec)], ["LTRIM", key, 0, 99]]);
     return res.status(200).json({ ok: true });
   } catch (e) {
     console.error("Rıza kaydı hatası:", e?.message);

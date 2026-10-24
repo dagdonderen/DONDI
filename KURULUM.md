@@ -48,3 +48,6 @@ Sorun olursa ekran görüntüsü ve Vercel → Logs çıktısı yeterli.
 | App Store / Google Play | Geliştirici hesapları ve mağaza incelemesi | Ücretli hesaplar |
 | Vektör veritabanı (Pinecone, Chroma) | Şu an bilgi birikimi yok, gereksiz maliyet | Büyük belge arşivi ihtiyacı doğunca |
 | Hukuki metinlerin incelenmesi | Avukat işi | KVKK avukatı: aydınlatma, açık rıza, VERBİS, saklama süreleri |
+
+## Redis bağlantısı (not)
+Kod hem Upstash REST (`UPSTASH_REDIS_REST_URL/TOKEN`, `KV_REST_API_URL/TOKEN`) hem de standart `REDIS_URL` (redis:// veya rediss://) ile çalışır. Vercel'de bağlanınca değişken adı fark etmez. `HASH_SALT` değişkenini ayrıca eklemeyi unutma.
