@@ -1,6 +1,6 @@
 // Anonim kullanım olayları ve hata kayıtları. Kişisel veri, mesaj içeriği veya IP saklanmaz.
 import { redis, hasRedis } from "../lib/redis.js";
-const EVENTS = new Set(["open", "chat", "voice", "camera", "doc", "export", "reminder", "install", "feedback", "mode_kisisel", "mode_finans", "pip"]);
+const EVENTS = new Set(["open", "chat", "voice", "camera", "doc", "export", "reminder", "install", "feedback", "mode_kisisel", "mode_finans", "pip", "plans", "plan_apply", "upgrade"]);
 const mem = new Map();
 export default async function handler(req, res) {
   if (req.method !== "POST") return res.status(405).json({ error: "Yalnızca POST." });
