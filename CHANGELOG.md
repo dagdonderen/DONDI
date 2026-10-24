@@ -1,6 +1,7 @@
 # Değişiklik geçmişi
 
 ## v1.0.0 (ilk genel sürüm, açık beta)
+- Döviz kurları: TCMB bülteninden doğrudan okuyan get_exchange_rates aracı (web aramasına bağımlı değil).
 - Redis: REDIS_URL (standart Redis) desteği, dış paket gerektirmez.
 - Kişisel (mor, ücretsiz) ve Finans modları; Finans içinde Bireysel (mavi) / İşletme (zeytin yeşili) ayrımı.
 - Her mod kendi talimat, araç, öneri ve sohbet listesine sahip.

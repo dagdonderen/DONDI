@@ -1,6 +1,7 @@
 // Döndi – Gemini sürümü + canlı hava durumu (Open-Meteo) + kalıcı günlük limit (Upstash Redis)
 import { createHash } from "node:crypto";
 import { redis, hasRedis } from "../lib/redis.js";
+import { RATES_DECL, getExchangeRates } from "../lib/rates.js";
 import { CFO_DECLS, CFO_TOOLS, CFO_RULES, ACTION_DECLS, ACTION_TOOLS } from "../lib/cfo.js";
 
 const MODEL = process.env.GEMINI_MODEL || "gemini-flash-latest";
@@ -50,6 +51,7 @@ function systemPrompt(ctx) {
 Kullanıcı hangi dilde yazarsa o dilde cevap ver (varsayılan Türkçe).
 Cevapları kısa tut; telefonda okunacağını unutma. Gerekirse madde işareti kullan.
 Selamlamayı yalnızca sohbetin ilk mesajında yap; sonraki cevaplarda doğrudan konuya gir.
+Döviz kuru (dolar, euro, altın dışı) sorulursa get_exchange_rates aracını kullan; kuru asla hafızandan söyleme, bülten tarihini belirt. Araç hata verirse rakam uydurma, alınamadığını söyle.
 Hava durumu sorulursa get_weather aracını kullan. Şehir belirtilmemişse önce hangi şehir olduğunu sor.
 Tıbbi, hukuki ve finansal konularda genel bilgi ver, uzmana danışmayı öner.${fin ? CFO_RULES : ""}
 Hatırlatıcı/zamanlayıcı için set_reminder, takvim için add_to_calendar aracını çağır. Hatırlatıcılar uygulama açıkken bildirim verir; kullanıcıya bunu kısaca belirt.${ctx.doc ? "\nKullanıcı bir belge yükledi (içerik mesajın başında). Analizi yalnızca belgedeki verilere dayandır, belgede olmayan rakamı uydurma; eksik ya da belirsiz yerleri belirt. Gerekirse nakit akışı ve maliyet araçlarını belgedeki rakamlarla kullan." : ""}
@@ -155,7 +157,7 @@ async function webSearch(query, apiKey) {
 }
 
 const toolsFor = (app) => [{
-  functionDeclarations: [...(app === "finans" ? CFO_DECLS : CFO_DECLS.filter((d) => d.name === "web_search")), ...ACTION_DECLS, {
+  functionDeclarations: [RATES_DECL, ...(app === "finans" ? CFO_DECLS : CFO_DECLS.filter((d) => d.name === "web_search")), ...ACTION_DECLS, {
     name: "get_weather",
     description: "Bir şehir için güncel hava durumunu ve 3 günlük tahmini getirir.",
     parameters: {
@@ -221,6 +223,8 @@ async function tryModel(model, apiKey, base, ctx) {
           if (CFO_TOOLS[fc.name]) {
             result = CFO_TOOLS[fc.name](fc.args || {});
             if (!result.error) collected.push({ kind: fc.name, data: result, input: fc.args || {} });
+          } else if (fc.name === "get_exchange_rates") {
+            result = await getExchangeRates(fc.args || {});
           } else if (fc.name === "web_search") {
             result = await webSearch(fc.args?.query, apiKey);
           } else if (ACTION_TOOLS[fc.name]) {
