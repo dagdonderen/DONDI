@@ -198,7 +198,8 @@ body[data-auto="1"] #micBtn{animation:pulse 1.6s ease-in-out infinite}
 .fsub[hidden]{display:none}
 .fsub button{border:1px solid var(--line);background:none;color:var(--mut);font-size:13px;font-family:inherit;padding:6px 14px;border-radius:999px;cursor:pointer}
 .fsub button[aria-pressed=true]{border-color:var(--c);color:var(--c)}
-html[data-app=kisisel] #clip{display:none}
+#imgAdd{border:0;background:none;width:38px;height:38px;color:var(--c);display:grid;place-items:center;flex:none;padding:0}#imgAdd svg{width:24px;height:24px}
+.cam{z-index:16}#camTorch[hidden]{display:none}
 .quota{font-size:12px;color:var(--mut);text-align:center;margin:2px 0}
 @media(max-height:620px){.modes{margin-bottom:2px}}
 :root[data-mode=light] .rbtn.mic,:root[data-mode=light] .modes button[aria-selected=true]{color:#fff}
@@ -258,7 +259,7 @@ html[data-embed] .top,html[data-embed] .modes,html[data-embed] .foot{display:non
     <div id="cList"><input id="cQ" type="search" placeholder="Sohbetlerde ara…" aria-label="Ara"><div id="cItems"></div></div>
     <div id="log"></div>
     <div id="att" hidden></div>
-    <form id="f"><div class="pill"><button id="clip" type="button" aria-label="Belge ekle" title="Excel, Word veya PDF ekle (yüzlerce sayfalık PDF de olur)"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="5" width="18" height="14" rx="3"/><circle cx="9" cy="10.5" r="1.8"/><path d="M4 17l5-4.5 3.5 3L16 12l4 4"/></svg></button><input type="file" id="fileIn" hidden accept=".xlsx,.xls,.csv,.txt,.docx,.pdf"><textarea id="t" rows="1" placeholder="Yaz…" aria-label="Mesaj"></textarea></div>
+    <form id="f"><div class="pill"><button id="clip" type="button" aria-label="Belge ekle" title="Excel, Word veya PDF ekle (yüzlerce sayfalık PDF de olur)"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="5" width="18" height="14" rx="3"/><circle cx="9" cy="10.5" r="1.8"/><path d="M4 17l5-4.5 3.5 3L16 12l4 4"/></svg></button><button id="imgAdd" type="button" aria-label="Görsel ekle" title="Fotoğraf veya ekran görüntüsü ekle"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="4" width="18" height="16" rx="3"/><circle cx="9" cy="10" r="2"/><path d="M21 16l-5-5-9 9"/></svg></button><input type="file" id="fileIn" hidden accept=".xlsx,.xls,.csv,.txt,.docx,.pdf"><input type="file" id="imgIn" hidden accept="image/*"><textarea id="t" rows="1" placeholder="Yaz…" aria-label="Mesaj"></textarea></div>
     <button class="rbtn" id="camBtn" type="button" aria-label="Kamerayı aç"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M4 8a2 2 0 0 1 2-2h2l1.5-2h5L16 6h2a2 2 0 0 1 2 2v9a2 2 0 0 1-2 2H6a2 2 0 0 1-2-2z"/><circle cx="12" cy="12.5" r="3.5"/></svg></button>
     <button class="rbtn mic" id="micBtn" type="button" aria-label="Sohbeti başlat veya durdur"><svg class="i-mic" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><rect x="9" y="3" width="6" height="11" rx="3"/><path d="M5 11a7 7 0 0 0 14 0M12 18v3"/></svg><svg class="i-stop" viewBox="0 0 24 24" fill="currentColor"><rect x="7" y="7" width="10" height="10" rx="2"/></svg></button>
     <button class="rbtn mic" id="send" type="submit" aria-label="Gönder"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12h14M13 6l6 6-6 6"/></svg></button></form>
@@ -302,7 +303,7 @@ html[data-embed] .top,html[data-embed] .modes,html[data-embed] .foot{display:non
 <div class="cam" id="cam" hidden>
   <video id="vid" playsinline muted autoplay></video>
   <div class="frame"></div>
-  <div class="camtop"><button class="tbtn" id="camFlip" type="button">Kamerayı çevir</button><button class="tbtn" id="camRevoke" type="button">Rızamı geri al</button><button class="tbtn" id="camClose" type="button">Kapat</button></div>
+  <div class="camtop"><button class="tbtn" id="camFlip" type="button">Kamerayı çevir</button><button class="tbtn" id="camTorch" type="button" hidden>Işık</button><button class="tbtn" id="camRevoke" type="button">Rızamı geri al</button><button class="tbtn" id="camClose" type="button">Kapat</button></div>
   <div class="cambot" id="camBox">
     <div class="camrow"><input id="camIn" placeholder="Kameraya bakarak sor…" aria-label="Soru"><button id="camMic" type="button">Konuş</button><button id="camSend" type="button">Sor</button></div>
   </div>
@@ -365,8 +366,9 @@ const APPC_LIGHT = {kisisel:["#6d4fd6","#4a2fb0"], finans:["#0b62c9","#1f4fb0"],
 const colorKey = () => settings.app === "finans" && settings.fsub === "isletme" ? "isletme" : settings.app;
 const THEMES = {altin:["#f0b94a","#d9733f"], mavi:["#3de1ff","#8b6cff"], mor:["#b79cff","#3de1ff"], yesil:["#4dffb0","#3de1ff"]};
 let origApp = null;
-let settings = {name:"", tone:"samimi", voice:"", rate:1, theme:"altin", voiceKind:"dondi", ttsVoice:"Orus", mode:"dark", big:"0", fin:{}, app:"kisisel", fsub:"bireysel", wake:true};
+let settings = {name:"", tone:"samimi", voice:"", rate:1, theme:"altin", voiceKind:"dondi", ttsVoice:"Orus", mode:"dark", big:"0", fin:{}, app:"kisisel", fsub:"bireysel", wake:false};
 try { Object.assign(settings, JSON.parse(localStorage.getItem("settings") || "{}")); } catch {}
+if(!settings.wakeMig){ settings.wake = false; settings.wakeMig = 1; try { localStorage.setItem("settings", JSON.stringify(settings)); } catch {} }
 if(EMBED){ origApp = settings.app; settings.app = "finans"; document.documentElement.dataset.embed = "1"; }
 const saveSettings = () => { try { localStorage.setItem("settings", JSON.stringify(EMBED && origApp ? {...settings, app:origApp} : settings)); } catch {} };
 const cleanName = s => String(s || "").replace(/[^\p{L}\p{N} '’.-]/gu, "").trim().slice(0, 30);
@@ -508,7 +510,7 @@ function listen(){
   if(busy) return;
   stopSpeak(); heard = ""; rec = new SR(); rec.lang = "tr-TR"; rec.interimResults = true; rec.continuous = false;
   rec.onstart = () => { setState("listening"); cap.className = "me"; cap.textContent = "…"; };
-  rec.onresult = e => { let t = "", fin = false; for(const r of e.results){ t += r[0].transcript; if(r.isFinal) fin = true; } heard = t; cap.textContent = t; clearTimeout(silT); silT = setTimeout(() => { try { rec.stop(); } catch {} }, fin ? 150 : 1100); };
+  rec.onresult = e => { let t = "", fin = false; for(const r of e.results){ t += r[0].transcript; if(r.isFinal) fin = true; } heard = t; cap.textContent = t; clearTimeout(silT); silT = setTimeout(() => { try { rec.stop(); } catch {} }, fin ? 120 : 900); };
   rec.onspeechend = () => { clearTimeout(silT); silT = setTimeout(() => { try { rec.stop(); } catch {} }, 350); };
   rec.onerror = e => { if(e.error === "not-allowed" || e.error === "service-not-allowed"){ cap.className = ""; cap.textContent = (navigator.standalone ? "iPhone'da ana ekrandan açılan uygulamada ses tanıma çalışmıyor (Apple kısıtı). Döndi'yi Safari'de aç ya da yazarak kullan." : "Mikrofon izni verilmedi. Adres çubuğundaki kilit simgesinden izin ver. iPhone'da Ayarlar > Genel > Klavye > Dikte'yi Aç'ın da açık olması gerekir."); $("sMic").textContent = "Mikrofon: izin yok"; setAuto(false); } };
   rec.onend = () => { clearTimeout(silT); if(state !== "listening") return; if(heard.trim()){ autoFails = 0; const g = wakeGate(heard);
@@ -517,7 +519,7 @@ function listen(){
       if(!t){ awakeUntil = Date.now() + 15000; setState("idle"); cap.className = ""; cap.textContent = "Dinliyorum…"; setTimeout(() => { if(auto && state === "idle" && !busy) listen(); }, 200); return; }
       if(auto && voiceCmd(t)) return;
       send(t, true, camOn ? capture() : null); }
-    else if(auto){ autoFails++; if(autoFails > 6){ setAuto(false); cap.textContent = "Seni duyamadım, sohbeti durdurdum. Devam için küreye dokun."; } else { setState("idle"); setTimeout(() => { if(auto && state === "idle" && !busy) listen(); }, 300); } }
+    else if(auto){ autoFails++; if(autoFails > 25){ setAuto(false); cap.textContent = "Seni duyamadım, sohbeti durdurdum. Devam için küreye dokun."; } else { setState("idle"); setTimeout(() => { if(auto && state === "idle" && !busy) listen(); }, 60); } }
     else { setState("idle"); cap.className = ""; cap.textContent = "Seni duyamadım. Tekrar dokun."; } };
   try { rec.start(); } catch {}
 }
@@ -724,7 +726,9 @@ function handleResults(results, el){
 }
 
 // Arayüz bağlantıları
-$("f").addEventListener("submit", e => { e.preventDefault(); const v = input.value; input.value = ""; syncTyping(); input.style.height = "auto"; send(v, false); });
+$("f").addEventListener("submit", e => { e.preventDefault(); let v = input.value; const img = attachedImg ? attachedImg.data : null;
+  if(img && !v.trim()) v = "Bu görselde ne var? Kısaca açıkla."; input.value = ""; syncTyping(); input.style.height = "auto";
+  if(img){ attachedImg = null; showAtt(); } send(v, false, img); });
 input.addEventListener("keydown", e => { if(e.key === "Enter" && !e.shiftKey && matchMedia("(pointer:fine)").matches){ e.preventDefault(); $("f").requestSubmit(); } });
 const syncTyping = () => $("f").classList.toggle("typing", input.value.trim().length > 0);
 input.addEventListener("input", () => { syncTyping(); input.style.height = "auto"; input.style.height = Math.min(input.scrollHeight, 110) + "px"; });
@@ -909,27 +913,74 @@ loadPlan();
 setTimeout(() => $("splash").classList.add("off"), 350); setTimeout(() => $("splash").remove(), 900);
 
 // ---- Kamera: soru sorulduğu anda tek kare çekilir ----
+// Loş veya aşırı parlak ışıkta görüntüyü dengeler: parlaklık histogramına göre seviye germe + gama düzeltme.
+function enhance(c){
+  try {
+    const g = c.getContext("2d", {willReadFrequently:true}), im = g.getImageData(0, 0, c.width, c.height), d = im.data;
+    const h = new Uint32Array(256); let tot = 0, mean = 0;
+    for(let i = 0; i < d.length; i += 16){ const y = (d[i] * 77 + d[i+1] * 150 + d[i+2] * 29) >> 8; h[y]++; tot++; mean += y; }
+    mean /= tot; let lo = 0, hi = 255, acc = 0;
+    for(let i = 0; i < 256; i++){ acc += h[i]; if(acc > tot * 0.01){ lo = i; break; } }
+    acc = 0; for(let i = 255; i >= 0; i--){ acc += h[i]; if(acc > tot * 0.01){ hi = i; break; } }
+    if(mean > 90 && mean < 170 && hi - lo > 110) return c;
+    const lo2 = Math.min(lo, mean * 0.5), hi2 = Math.min(255, Math.max(hi, mean * 1.6, lo2 + 80));
+    const m = Math.min(0.95, Math.max(0.03, (mean - lo2) / (hi2 - lo2)));
+    const gamma = Math.min(2.5, Math.max(0.35, Math.log(0.47) / Math.log(m))), lut = new Uint8ClampedArray(256);
+    for(let i = 0; i < 256; i++){ const x = Math.min(1, Math.max(0, (i - lo2) / (hi2 - lo2))); lut[i] = Math.round(255 * Math.pow(x, gamma)); }
+    for(let i = 0; i < d.length; i += 4){ d[i] = lut[d[i]]; d[i+1] = lut[d[i+1]]; d[i+2] = lut[d[i+2]]; }
+    g.putImageData(im, 0, 0);
+  } catch {}
+  return c;
+}
+function toJpeg(src, w, h){
+  const k = Math.min(1, 1280 / Math.max(w, h));
+  const c = document.createElement("canvas"); c.width = Math.round(w * k); c.height = Math.round(h * k);
+  c.getContext("2d").drawImage(src, 0, 0, c.width, c.height);
+  return enhance(c).toDataURL("image/jpeg", 0.82).split(",")[1];
+}
 function capture(){
   const v = $("vid"); if(!v.videoWidth) return null;
-  const k = Math.min(1, 896 / Math.max(v.videoWidth, v.videoHeight));
-  const c = document.createElement("canvas"); c.width = Math.round(v.videoWidth * k); c.height = Math.round(v.videoHeight * k);
-  c.getContext("2d").drawImage(v, 0, 0, c.width, c.height);
-  return c.toDataURL("image/jpeg", 0.7).split(",")[1];
+  return toJpeg(v, v.videoWidth, v.videoHeight);
 }
+let torchOn = false;
 async function startStream(){
   if(stream) stream.getTracks().forEach(t => t.stop());
-  stream = await navigator.mediaDevices.getUserMedia({video:{facingMode:facing, width:{ideal:1280}}, audio:false});
+  stream = await navigator.mediaDevices.getUserMedia({video:{facingMode:facing, width:{ideal:1920}, height:{ideal:1080}}, audio:false});
   $("vid").srcObject = stream;
+  torchOn = false;
+  try {
+    const tr = stream.getVideoTracks()[0], cp = tr.getCapabilities ? tr.getCapabilities() : {}, adv = {};
+    if((cp.exposureMode || []).includes("continuous")) adv.exposureMode = "continuous";
+    if((cp.whiteBalanceMode || []).includes("continuous")) adv.whiteBalanceMode = "continuous";
+    if((cp.focusMode || []).includes("continuous")) adv.focusMode = "continuous";
+    if(Object.keys(adv).length) tr.applyConstraints({advanced:[adv]}).catch(() => {});
+    $("camTorch").hidden = !cp.torch;
+  } catch { $("camTorch").hidden = true; }
 }
 const CONSENT_V = "1.1.0";
 function consentOk(){ try { const c = JSON.parse(localStorage.getItem("camConsent") || "null"); return !!(c && c.v === CONSENT_V && c.ozel && c.google); } catch { return false; } }
 function showConsent(){ ["c1","c2"].forEach(i => $(i).checked = false); $("cYes").disabled = true; $("consent").hidden = false; }
 ["c1","c2"].forEach(i => $(i).addEventListener("change", () => { $("cYes").disabled = !(c1.checked && c2.checked); }));
 $("cNo").addEventListener("click", () => { $("consent").hidden = true; });
+let pendingImg = false;
 $("cYes").addEventListener("click", () => {
   try { localStorage.setItem("camConsent", JSON.stringify({v:CONSENT_V, t:new Date().toISOString(), ozel:true, google:true})); } catch {}
   logConsent("camera", {ozel:true, google:true});
-  $("consent").hidden = true; beginCam();
+  $("consent").hidden = true;
+  if(pendingImg){ pendingImg = false; $("imgIn").click(); } else beginCam();
+});
+let attachedImg = null;
+$("imgAdd").addEventListener("click", () => { if(!gemOk()){ openPanel(); return; } if(!consentOk()){ pendingImg = true; showConsent(); return; } $("imgIn").click(); });
+$("imgIn").addEventListener("change", async e => {
+  const f = e.target.files && e.target.files[0]; e.target.value = ""; if(!f) return;
+  if(f.size > 20 * 1024 * 1024){ toast("Görsel çok büyük (en fazla 20 MB)."); return; }
+  try {
+    const bmp = await createImageBitmap(f, {imageOrientation:"from-image"});
+    attachedImg = {name: f.name || "görsel", data: toJpeg(bmp, bmp.width, bmp.height)}; bmp.close && bmp.close();
+    const a = $("att"); a.hidden = false; a.innerHTML = ""; const sp = document.createElement("span"); sp.textContent = "🖼 " + attachedImg.name + " · sorunu yaz ve gönder";
+    const x = document.createElement("button"); x.type = "button"; x.textContent = "×"; x.setAttribute("aria-label", "Görseli kaldır"); x.onclick = () => { attachedImg = null; showAtt(); }; a.append(sp, x);
+    input.focus();
+  } catch { toast("Görsel açılamadı. JPG veya PNG dene."); }
 });
 $("camRevoke").addEventListener("click", () => { try { localStorage.removeItem("camConsent"); } catch {} logConsent("camera_revoked", {ozel:false, google:false}); closeCam(); cap.className = ""; cap.textContent = "Kamera rızan geri alındı."; });
 function openCam(){
@@ -941,7 +992,7 @@ function openCam(){
 async function beginCam(){
   if(!navigator.mediaDevices || !navigator.mediaDevices.getUserMedia){ cap.textContent = "Bu tarayıcı kamerayı desteklemiyor."; return; }
   try { await startStream(); } catch { cap.textContent = "Kamera açılamadı. Tarayıcıdan kamera iznini kontrol et."; return; }
-  camOn = true; $("cam").hidden = false; $("camBox").prepend(cap); $("camBox").prepend(status);
+  camOn = true; const hn = $("hint"); if(hn) hn.hidden = true; $("cam").hidden = false; $("camBox").prepend(cap); $("camBox").prepend(status);
   cap.className = ""; cap.textContent = "Kameraya göster, konuş. Seni dinliyorum."; setAuto(true);
 }
 function closeCam(){
@@ -951,6 +1002,7 @@ function closeCam(){
 function askCam(text){ text = (text || "").trim(); if(!text) return; const img = capture(); if(!img){ cap.textContent = "Kamera henüz hazır değil, bir saniye bekle."; return; } $("camIn").value = ""; send(text, true, img); }
 $("camBtn").addEventListener("click", () => { unlockTts(); openCam(); });
 $("camClose").addEventListener("click", closeCam);
+$("camTorch").addEventListener("click", async () => { try { const tr = stream && stream.getVideoTracks()[0]; torchOn = !torchOn; await tr.applyConstraints({advanced:[{torch:torchOn}]}); $("camTorch").textContent = torchOn ? "Işığı kapat" : "Işık"; } catch { toast("Bu cihazda ışık açılamadı."); } });
 $("camFlip").addEventListener("click", async () => { facing = facing === "environment" ? "user" : "environment"; try { await startStream(); } catch { cap.textContent = "Kamera çevrilemedi."; } });
 $("camMic").addEventListener("click", () => { unlockTts(); setAuto(!auto); });
 $("camSend").addEventListener("click", () => { unlockTts(); askCam($("camIn").value); });

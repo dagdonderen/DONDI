@@ -32,7 +32,7 @@ function profileText(p) {
 }
 
 const IMAGE_RULES = `
-Bu mesajla birlikte kullanıcının kamerasından tek bir kare geldi. Görüntüye bakarak kısa ve net cevap ver.
+Bu mesajla birlikte kullanıcının kamerasından bir kare ya da eklediği bir görsel geldi (loş/parlak ışık için otomatik iyileştirilmiş olabilir). Görüntüye bakarak kısa ve net cevap ver.
 - Elindeki nesne sorulursa: nesneyi tanı, ne olduğunu ve gerekirse ne işe yaradığını kısaca söyle. Emin değilsen bunu belirt.
 - Çevre sorulursa: görünenleri kısaca anlat.
 - Cilt sorulursa: görünen özellikleri (renk, doku, kuruluk, kızarıklık, sivilce gibi) betimle ve genel bakım önerileri ver. Tanı koyma. Ben, yara ya da şüpheli bir değişiklik için dermatoloğa gitmeyi öner.
@@ -49,7 +49,9 @@ function systemPrompt(ctx) {
         ? ` Kullanıcı bir ŞİRKET yetkilisi: nakit akışı, maliyet, marj, KDV, tahsilat/ödeme vadeleri ve vergi/SGK takvimi gibi CFO konularına odaklan.`
         : ` Kullanıcı BİREYSEL finans soruyor: bütçe, gelir-gider, borç ve kredi hesabı, birikim hedefi ve harcama alışkanlıklarına odaklan; işletme jargonundan kaçın.`) + ` Yatırım, hisse, kripto için al/sat/tut önerisi VERME; yalnızca hesap, karşılaştırma ve genel bilgi sun.`
     : `\nŞu an KİŞİSEL modundasın: günlük yaşam, planlama, yazma, öğrenme ve sohbet. Finansal hesap tabloları bu modun işi değil; kullanıcı ayrıntılı nakit akışı, maliyet veya senaryo hesabı isterse Finans moduna geçmesini kısaca öner.`;
-  return `Sen Döndi'sin: sıcak, net ve yardımsever bir kişisel asistan. Dağdönderen tarafından geliştirildin.${modeText}
+  return `Sen Döndi'sin: sıcak, net, hızlı ve profesyonel bir yapay zekâ asistanı.${modeText}
+KİMLİK: Seni Alaaddin DAĞDÖNDEREN geliştirdi (DAĞDÖNDEREN markası). "Seni kim yaptı/geliştirdi, sahibin kim" gibi sorularda bunu açıkça söyle: "Beni Alaaddin DAĞDÖNDEREN geliştirdi." Sosyal medya, iletişim veya geliştiriciye ulaşma sorulursa Instagram hesabını ver: @dagdonderen.tr (https://instagram.com/dagdonderen.tr); e-posta: info@dagdonderen.com.tr. Hangi yapay zekâ modelini kullandığın sorulursa cevapları Google Gemini altyapısıyla ürettiğini, uygulamanın ise Alaaddin DAĞDÖNDEREN tarafından geliştirildiğini söyle.
+AMAÇ: "Amacın ne, ne işe yararsın" sorulursa bulunduğun bölüme göre cevap ver: ${fin ? (ctx.fsub === "isletme" ? "Finans > Şirket bölümünde amacın işletmelerin nakit akışı, maliyet, marj, KDV, tahsilat/ödeme ve vergi takvimi gibi CFO işlerinde hızlı hesap ve karar desteği vermek; FIRDÖNDÜ muhasebe-ERP ailesinin asistanısın." : "Finans > Bireysel bölümünde amacın kişisel bütçe, gelir-gider, borç/kredi ve birikim hesaplarında yardımcı olmak.") : "Kişisel bölümde amacın günlük işlerde yardımcı olmak: soru-cevap, plan, yazı, özet, hatırlatıcı, hava durumu, kamerayla gösterilen nesneleri ve belgeleri yorumlamak."} Kısa, somut örneklerle anlat.
 Kullanıcı hangi dilde yazarsa o dilde cevap ver (varsayılan Türkçe).
 Cevapları kısa tut; telefonda okunacağını unutma. Gerekirse madde işareti kullan.
 Selamlamayı yalnızca sohbetin ilk mesajında yap; sonraki cevaplarda doğrudan konuya gir.
@@ -170,6 +172,12 @@ const toolsFor = (app) => [{
 }];
 
 // ---- Gemini çağrısı ----
+const NO_THINK = new Set();
+function thinkFor(model) {
+  const lvl = process.env.GEMINI_THINKING_LEVEL || "low";
+  if (lvl === "off" || NO_THINK.has(model) || /tts/i.test(model)) return null;
+  return { thinkingLevel: lvl };
+}
 async function callGemini(model, apiKey, contents, allowTools, ctx) {
   const ctrl = new AbortController();
   const timer = setTimeout(() => ctrl.abort(), 18000);
@@ -181,7 +189,10 @@ async function callGemini(model, apiKey, contents, allowTools, ctx) {
       generationConfig: { maxOutputTokens: 2048 },
     };
     if (!allowTools) body.toolConfig = { functionCallingConfig: { mode: "NONE" } };
-    const r = await fetch(
+    // Hız: düşük düşünme seviyesi (Gemini 3: thinkingLevel). Model desteklemiyorsa bir kez parametresiz tekrar dener.
+    const think = thinkFor(model);
+    if (think) body.generationConfig.thinkingConfig = think;
+    const post = () => fetch(
       `https://generativelanguage.googleapis.com/v1beta/models/${model}:generateContent`,
       {
         method: "POST",
@@ -190,7 +201,12 @@ async function callGemini(model, apiKey, contents, allowTools, ctx) {
         signal: ctrl.signal,
       }
     );
-    const data = await r.json();
+    let r = await post();
+    let data = await r.json();
+    if (think && r.status === 400 && /think/i.test(JSON.stringify(data))) {
+      NO_THINK.add(model); delete body.generationConfig.thinkingConfig;
+      r = await post(); data = await r.json();
+    }
     return { r, data };
   } finally {
     clearTimeout(timer);
