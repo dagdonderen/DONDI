@@ -1075,12 +1075,16 @@ $("permBtn").addEventListener("click", openPanel);
 // ---- Her açılışta sesli karşılama; durdurulana kadar sesli sohbet sürer ----
 let greeted = false;
 function greeting(){
+  // Ad yalnızca kullanıcının kendi Ayarlar'da yazdığı addır; boşsa adsız selamlanır.
+  const now = Date.now(), last = Number(lsGet("lastGreet") || 0); lsSet("lastGreet", String(now));
+  if(now - last < 60 * 60 * 1000) return "Tekrar hoş geldin. Dinliyorum.";
   const h = new Date().getHours(), sel = h < 5 ? "İyi geceler" : h < 12 ? "Günaydın" : h < 18 ? "İyi günler" : "İyi akşamlar";
   const ad = settings.name ? ", " + settings.name : "";
-  const tail = settings.app === "finans"
-    ? (settings.fsub === "isletme" ? "Şirketinin finans asistanı hazır. Nakit, maliyet ya da vergi; hangisine bakalım?" : "Bütçen ve hesapların için hazırım. Neye bakalım?")
-    : "Seni dinliyorum. Bugün ne yapalım?";
-  return `${sel}${ad}! Ben Döndi. ${tail}`;
+  const bolum = settings.app === "finans" ? (settings.fsub === "isletme" ? " Şirket finansı bölümündeyiz." : " Bireysel finans bölümündeyiz.") : "";
+  const end = new Date(); end.setHours(23, 59, 59, 999);
+  const bugun = rems.filter(r => r.at > now && r.at <= end.getTime()).length;
+  const ek = bugun ? ` Bugün ${bugun} hatırlatıcın var.` : "";
+  return `${sel}${ad}. Ben Döndi.${bolum}${ek} Dinliyorum.`;
 }
 function greet(){
   greeted = true; $("go").hidden = true; unlockTts();
