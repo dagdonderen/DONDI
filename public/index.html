@@ -185,10 +185,23 @@ body[data-auto="1"] #micBtn{animation:pulse 1.6s ease-in-out infinite}
 .modal{position:fixed;inset:0;z-index:40;background:rgba(0,0,0,.6);display:grid;place-items:center;padding:16px}
 .modal[hidden]{display:none}
 .mbox{width:100%;max-width:420px;background:var(--pop);border:1px solid var(--line);border-radius:18px;padding:18px;display:grid;gap:10px}
-.mbox h3{margin:0}.mbox textarea,.mbox input{width:100%;box-sizing:border-box;background:var(--inp);color:var(--ink);border:1px solid var(--line);border-radius:12px;padding:10px;font:inherit}
+.mbox h3{margin:0}.mbox select,.mbox textarea,.mbox input{width:100%;box-sizing:border-box;background:var(--inp);color:var(--ink);border:1px solid var(--line);border-radius:12px;padding:10px;font:inherit}
 .stars{display:flex;gap:6px}.stars button{background:none;border:0;font-size:28px;color:var(--mut);padding:0;cursor:pointer}.stars button.on{color:#f0b254}
 .thinking{opacity:.6}
 @media (prefers-reduced-motion:reduce){#splash .sp{animation:none}}
+
+/* v1.0 modlar: Kişisel = mor, Finans = mavi */
+.modes{display:flex;gap:4px;margin:0 auto 6px;padding:4px;border:1px solid var(--line);border-radius:999px;background:var(--panel);width:max-content;max-width:100%}
+.modes button{border:0;background:none;color:var(--mut);font-weight:600;font-size:14px;font-family:inherit;padding:9px 20px;border-radius:999px;cursor:pointer}
+.modes button[aria-selected=true]{background:linear-gradient(135deg,var(--c),var(--v));color:#07101c}
+.fsub{display:flex;gap:6px;justify-content:center;margin:0 auto 6px}
+.fsub[hidden]{display:none}
+.fsub button{border:1px solid var(--line);background:none;color:var(--mut);font-size:13px;font-family:inherit;padding:6px 14px;border-radius:999px;cursor:pointer}
+.fsub button[aria-pressed=true]{border-color:var(--c);color:var(--c)}
+html[data-app=kisisel] #clip{display:none}
+.quota{font-size:12px;color:var(--mut);text-align:center;margin:2px 0}
+@media(max-height:620px){.modes{margin-bottom:2px}}
+:root[data-mode=light] .rbtn.mic,:root[data-mode=light] .modes button[aria-selected=true]{color:#fff}
 </style>
 </head>
 <body>
@@ -215,6 +228,8 @@ body[data-auto="1"] #micBtn{animation:pulse 1.6s ease-in-out infinite}
   </div>
 </div>
 <main>
+  <div class="modes" id="modes" role="tablist" aria-label="Mod"><button type="button" role="tab" data-app="kisisel">Kişisel</button><button type="button" role="tab" data-app="finans">Finans</button></div>
+  <div class="fsub" id="fsub" hidden><button type="button" data-f="bireysel">Bireysel</button><button type="button" data-f="isletme">İşletme</button></div>
   <section class="stage">
     <div class="core" id="core" data-s="idle">
       <i class="r4"></i><i class="r3"></i><i class="r1"></i><i class="r2"></i><i class="glow"></i>
@@ -226,6 +241,7 @@ body[data-auto="1"] #micBtn{animation:pulse 1.6s ease-in-out infinite}
     <div class="chips" id="chips"></div>
   </section>
   <section class="chat" id="chat" aria-label="Mesajlaşma">
+    <div class="quota" id="quota" hidden></div>
     <div id="cList"><input id="cQ" type="search" placeholder="Sohbetlerde ara…" aria-label="Ara"><div id="cItems"></div></div>
     <div id="log"></div>
     <div id="att" hidden></div>
@@ -268,7 +284,7 @@ body[data-auto="1"] #micBtn{animation:pulse 1.6s ease-in-out infinite}
     <input id="fKdv" inputmode="numeric" placeholder="KDV oranı %, örn. 20" autocomplete="off"></div>
   <p class="nt">İşletme profili cihazında saklanır; cevap üretmek için sohbetle birlikte sunucuya ve Google'a gönderilir.</p>
   <label class="fld">Konuşma hızı: <span id="sRateV">1x</span><input id="sRate" type="range" min="0.7" max="1.3" step="0.1" value="1"></label>
-  <div class="fld">Tema<div id="sTheme"><button class="tbtn" data-t="altin" type="button">Altın</button><button class="tbtn" data-t="mavi" type="button">Mavi</button><button class="tbtn" data-t="mor" type="button">Mor</button><button class="tbtn" data-t="yesil" type="button">Yeşil</button></div></div>
+  <div class="fld" hidden>Tema<div id="sTheme"><button class="tbtn" data-t="altin" type="button">Altın</button><button class="tbtn" data-t="mavi" type="button">Mavi</button><button class="tbtn" data-t="mor" type="button">Mor</button><button class="tbtn" data-t="yesil" type="button">Yeşil</button></div></div>
   <p class="nt">Tercihlerin cihazında saklanır. Adın ve tonun, cevap üretmek için sunucuya ve Google'a gönderilir.</p>
   <div class="row"><button class="tbtn" id="sTest" type="button">Sesi dene</button><button class="tbtn" id="sClose" type="button" aria-pressed="true">Tamam</button></div>
 </div></div>
@@ -287,11 +303,13 @@ body[data-auto="1"] #micBtn{animation:pulse 1.6s ease-in-out infinite}
 <div id="fb" class="modal" hidden><div class="mbox"><h3>Geri bildirim</h3>
   <p class="nt">Ne beğendin, ne çalışmadı? Mesajın içeriği dışında kişisel veri gönderilmez.</p>
   <div id="fbStars" class="stars" role="radiogroup" aria-label="Puan"></div>
+  <label class="nt" for="fbPrice">Finans modu aylık ücretli olsa kullanır mıydın?</label><select id="fbPrice"><option value="">Seçmek istemiyorum</option><option>Hayır</option><option>Belki, 50 TL altı</option><option>Evet, 50–100 TL</option><option>Evet, 100–200 TL</option><option>Evet, 200 TL üstü</option></select>
   <textarea id="fbText" rows="4" maxlength="1000" placeholder="Yorumun…"></textarea>
   <input id="fbContact" type="text" maxlength="120" placeholder="İstersen e-posta (cevap için)" autocomplete="email">
   <div class="row"><button class="tbtn" id="fbCancel" type="button">Vazgeç</button><button class="tbtn" id="fbSend" type="button" aria-pressed="true">Gönder</button></div></div></div>
 <div class="onb" id="onb" hidden><div class="card wide">
   <div class="st">BAŞLANGIÇ</div><h2>Döndi'yi ayarlayalım</h2>
+  <p class="nt"><b style="color:#b79cff">Kişisel</b> mod günlük işlerin için (ücretsiz). <b style="color:#4aa8ff">Finans</b> mod bütçe, nakit akışı ve maliyet hesapları için; üstteki anahtarla geçiş yaparsın.</p>
   <label class="ck"><input type="checkbox" id="ageCk"><span><b>18 yaşından büyüğüm.</b> Döndi yalnızca 18 yaşını doldurmuş kullanıcılar içindir.</span></label>
   <div class="plist" id="pList"></div>
   <p class="nt">İzinleri sonradan <b>İzinler</b> butonundan değiştirebilirsin. <a href="/gizlilik.html" target="_blank" rel="noopener" style="color:var(--c)">Gizlilik ve KVKK metni</a></p>
@@ -300,17 +318,25 @@ body[data-auto="1"] #micBtn{animation:pulse 1.6s ease-in-out infinite}
 <script>
 const $ = id => document.getElementById(id);
 const core = $("core"), status = $("status"), cap = $("cap"), log = $("log"), input = $("t"), sendBtn = $("send");
-const SUG = [["Hava durumu","Bugün hava nasıl olacak? Şehrimi söyleyeyim."],["Plan yap","Yarın için 3 maddelik bir günlük plan hazırla."],["Mesaj yaz","Bir arkadaşıma doğum günü mesajı yazar mısın?"],["Özetle","Sana yapıştıracağım metni 3 cümlede özetler misin?"],["Nakit akışı","12 aylık nakit akış tablosu çıkaralım. Sorularını sor."],["Maliyet hesabı","Bir ürünün birim maliyetini ve satış fiyatını hesaplayalım."],["Ya şöyle olsa?","Fiyat artırma ya da reklam harcaması gibi senaryoları karşılaştıralım. Bana ne sormalısın?"],["Vergi takvimi","Bu ay ve gelecek ay ödemem gereken vergi ve SGK tarihleri için hatırlatıcı kuralım. Önce işletme türümü sor."],["Güncel kur","Bugünkü dolar ve euro kuru kaç?"]];
+const SUGS = {
+  kisisel:[["Hava durumu","Bugün hava nasıl olacak? Şehrimi söyleyeyim."],["Plan yap","Yarın için 3 maddelik bir günlük plan hazırla."],["Mesaj yaz","Bir arkadaşıma doğum günü mesajı yazar mısın?"],["Özetle","Sana yapıştıracağım metni 3 cümlede özetler misin?"],["Hatırlat","Bana 30 dakika sonra su içmemi hatırlat."]],
+  bireysel:[["Bütçe yap","Aylık bütçemi çıkaralım. Gelir ve giderlerimi sana sırayla söyleyeyim."],["Borç planı","Borçlarımı kapatmak için bir ödeme planı yapalım. Sorularını sor."],["Birikim hedefi","Belirli bir hedef için aylık ne kadar biriktirmem gerektiğini hesaplayalım."],["Ya şöyle olsa?","Kira ya da maaş değişirse bütçem nasıl etkilenir, karşılaştıralım."],["Güncel kur","Bugünkü dolar ve euro kuru kaç?"]],
+  isletme:[["Nakit akışı","12 aylık nakit akış tablosu çıkaralım. Sorularını sor."],["Maliyet hesabı","Bir ürünün birim maliyetini ve satış fiyatını hesaplayalım."],["Ya şöyle olsa?","Fiyat artırma ya da reklam harcaması gibi senaryoları karşılaştıralım. Bana ne sormalısın?"],["Vergi takvimi","Bu ay ve gelecek ay ödemem gereken vergi ve SGK tarihleri için hatırlatıcı kuralım. Önce işletme türümü sor."],["Güncel kur","Bugünkü dolar ve euro kuru kaç?"]]
+};
+const sugKey = () => settings.app === "finans" ? settings.fsub : "kisisel";
 let chats = []; try { chats = JSON.parse(localStorage.getItem("chats") || "[]"); } catch {}
 if(!chats.length){ let old = []; try { old = JSON.parse(localStorage.getItem("chat") || "[]"); } catch {} chats = [{id:Date.now().toString(36), title:"", ts:Date.now(), msgs:old}]; }
 let curId = null; try { curId = localStorage.getItem("curChat"); } catch {}
+const chatApp = c => c.m || "kisisel";
 let cur = chats.find(c => c.id === curId) || chats[0];
 let history = cur.msgs;
 let voiceOn = true, auto = false, busy = false, state = "idle", camOn = false, stream = null, facing = "environment";
-const save = () => { cur.ts = Date.now(); if(!cur.title){ const f = history.find(m => m.role==="user"); if(f) cur.title = f.content.slice(0,40); } try { localStorage.setItem("chats", JSON.stringify(chats)); localStorage.setItem("curChat", cur.id); } catch {} };
+const save = () => { cur.ts = Date.now(); if(!cur.m) cur.m = (typeof settings !== "undefined" && settings.app) || "kisisel"; if(!cur.title){ const f = history.find(m => m.role==="user"); if(f) cur.title = f.content.slice(0,40); } try { localStorage.setItem("chats", JSON.stringify(chats)); localStorage.setItem("curChat", cur.id); } catch {} };
 const THEMES_LIGHT = {altin:["#b4600a","#c0431f"], mavi:["#0b7f9e","#5b3fd0"], mor:["#6d4fd6","#0b7f9e"], yesil:["#0b8a58","#0b7f9e"]};
+const APPC = {kisisel:["#b79cff","#7c5cff"], finans:["#4aa8ff","#2f6bff"]};
+const APPC_LIGHT = {kisisel:["#6d4fd6","#4a2fb0"], finans:["#0b62c9","#1f4fb0"]};
 const THEMES = {altin:["#f0b94a","#d9733f"], mavi:["#3de1ff","#8b6cff"], mor:["#b79cff","#3de1ff"], yesil:["#4dffb0","#3de1ff"]};
-let settings = {name:"", tone:"samimi", voice:"", rate:1, theme:"altin", voiceKind:"dondi", ttsVoice:"Orus", mode:"dark", big:"0", fin:{}};
+let settings = {name:"", tone:"samimi", voice:"", rate:1, theme:"altin", voiceKind:"dondi", ttsVoice:"Orus", mode:"dark", big:"0", fin:{}, app:"kisisel", fsub:"bireysel"};
 try { Object.assign(settings, JSON.parse(localStorage.getItem("settings") || "{}")); } catch {}
 const saveSettings = () => { try { localStorage.setItem("settings", JSON.stringify(settings)); } catch {} };
 const cleanName = s => String(s || "").replace(/[^\p{L}\p{N} '’.-]/gu, "").trim().slice(0, 30);
@@ -355,11 +381,11 @@ function renderLog(){ syncChips(); log.innerHTML = ""; if(!history.length){ log.
 
 // Çoklu sohbet
 function switchChat(id){ const c = chats.find(x => x.id === id); if(!c || busy) return; cur = c; history = c.msgs; save(); renderLog(); $("cList").classList.remove("show"); }
-function newChat(){ if(busy) return; if(!history.length){ $("cList").classList.remove("show"); return; } cur = {id:Date.now().toString(36), title:"", ts:Date.now(), msgs:[]}; chats.unshift(cur); history = cur.msgs; save(); renderLog(); $("cList").classList.remove("show"); }
-function delChat(id){ if(busy) return; chats = chats.filter(x => x.id !== id); if(!chats.length) chats = [{id:Date.now().toString(36), title:"", ts:Date.now(), msgs:[]}]; if(cur.id === id){ cur = chats[0]; history = cur.msgs; renderLog(); } save(); renderList(); }
+function newChat(){ if(busy) return; if(!history.length){ $("cList").classList.remove("show"); return; } cur = {id:Date.now().toString(36), title:"", ts:Date.now(), msgs:[], m:settings.app}; chats.unshift(cur); history = cur.msgs; save(); renderLog(); $("cList").classList.remove("show"); }
+function delChat(id){ if(busy) return; chats = chats.filter(x => x.id !== id); if(!chats.some(x => chatApp(x) === settings.app)) chats.unshift({id:Date.now().toString(36), title:"", ts:Date.now(), msgs:[], m:settings.app}); if(cur.id === id){ cur = chats.find(x => chatApp(x) === settings.app); history = cur.msgs; renderLog(); } save(); renderList(); }
 function renderList(){
   const q = $("cQ").value.trim().toLocaleLowerCase("tr"), box = $("cItems"); box.innerHTML = "";
-  const rows = chats.filter(c => c.msgs.length).filter(c => !q || (c.title||"").toLocaleLowerCase("tr").includes(q) || c.msgs.some(m => m.content.toLocaleLowerCase("tr").includes(q))).sort((a,b) => b.ts - a.ts);
+  const rows = chats.filter(c => c.msgs.length && chatApp(c) === settings.app).filter(c => !q || (c.title||"").toLocaleLowerCase("tr").includes(q) || c.msgs.some(m => m.content.toLocaleLowerCase("tr").includes(q))).sort((a,b) => b.ts - a.ts);
   if(!rows.length){ box.innerHTML = '<div class="empty">'+(q?"Sonuç yok.":"Kayıtlı sohbet yok.")+'</div>'; return; }
   rows.forEach(c => {
     const hit = q ? c.msgs.find(m => m.content.toLocaleLowerCase("tr").includes(q)) : null;
@@ -458,7 +484,7 @@ async function send(text, viaVoice, image){
   history.push({role:"user", content:text}); syncChips(); const userEl = addMsg("user", image ? "[Kamera] " + text : (attached ? "[Belge: " + attached.name + "] " + text : text));
   let wait = document.createElement("div"); wait.className = "msg bot"; wait.textContent = "…"; log.appendChild(wait);
   try{
-    const r = await fetch("/api/chat", {method:"POST", headers:{"Content-Type":"application/json"}, body: JSON.stringify({messages: history, image: image || undefined, profile: {name: settings.name, tone: settings.tone, fin: settings.fin}, doc: attached && attached.text ? {name: attached.name, text: attached.text} : undefined, pdf: attached && attached.pdf ? attached.pdf : undefined, location: (()=>{ try { return JSON.parse(localStorage.getItem("loc")||"null"); } catch { return null; } })()})});
+    const r = await fetch("/api/chat", {method:"POST", headers:{"Content-Type":"application/json"}, body: JSON.stringify({messages: history, image: image || undefined, app: settings.app, fsub: settings.fsub, profile: {name: settings.name, tone: settings.tone, fin: settings.fin}, doc: attached && attached.text ? {name: attached.name, text: attached.text} : undefined, pdf: attached && attached.pdf ? attached.pdf : undefined, location: (()=>{ try { return JSON.parse(localStorage.getItem("loc")||"null"); } catch { return null; } })()})});
     let data = {}; try { data = await r.json(); } catch {}
     if(!r.ok || !data.reply) throw new Error(data.error || "Şu an cevap veremiyorum. Biraz sonra tekrar dene.");
     history.push({role:"assistant", content:data.reply}); save();
@@ -566,7 +592,7 @@ function handleResults(results, el){
   results.forEach(r => {
     if(r.kind === "set_reminder"){ addRem(r.data); box.appendChild(mkBtn("⏰ " + (r.data.at ? r.data.at.replace("T"," ") : r.data.in_minutes + " dk sonra") + " · " + r.data.text.slice(0,24), () => {})); }
     else if(r.kind === "add_to_calendar"){ const ics = icsFor(r.data); if(ics) box.appendChild(mkBtn("📅 Takvime ekle (" + r.data.title + ")", () => dl("etkinlik.ics", new Blob([ics], {type:"text/calendar;charset=utf-8"})))); }
-    else if(r.kind === "cash_flow_table" || r.kind === "cost_calc" || r.kind === "scenario_compare"){ const sh = sheetOf(r); box.append(mkBtn("Excel", () => exportXlsx(sh)), mkBtn("Word", () => exportWord(sh)), mkBtn("CSV", () => exportCsv(sh)), mkBtn("PDF", () => exportPdf(sh))); }
+    else if(r.kind === "cash_flow_table" || r.kind === "cost_calc" || r.kind === "scenario_compare"){ finCount(); const sh = sheetOf(r); box.append(mkBtn("Excel", () => exportXlsx(sh)), mkBtn("Word", () => exportWord(sh)), mkBtn("CSV", () => exportCsv(sh)), mkBtn("PDF", () => exportPdf(sh))); }
   });
   if(box.children.length && el) el.appendChild(box);
 }
@@ -591,8 +617,8 @@ function syncChips(){ $("chips").style.display = history.length ? "none" : "flex
 $("voiceBtn").addEventListener("click", e => { voiceOn = !voiceOn; e.currentTarget.setAttribute("aria-pressed", voiceOn); if(!voiceOn) stopSpeak(); });
 $("autoBtn").addEventListener("click", () => { unlockTts(); setAuto(!auto); });
 function chip(parent, cls, label, text){ const b = document.createElement("button"); b.type = "button"; b.className = cls; b.textContent = label; b.addEventListener("click", () => { unlockTts(); send(text, true); }); parent.appendChild(b); }
-SUG.forEach(([l, t]) => chip($("chips"), "chip", l, t));
-const APP_VERSION = "1.9.0";
+function renderChips(){ const c = $("chips"); c.innerHTML = ""; SUGS[sugKey()].forEach(([l, t]) => chip(c, "chip", l, t)); }
+const APP_VERSION = "1.0.0";
 // ---- Ayarlar (v1.1) ----
 function fillVoices(){
   if(!synth) return; const sel = $("sVoice"); sel.innerHTML = "";
@@ -602,7 +628,7 @@ function fillVoices(){
 }
 function chosenVoice(){ if(synth && settings.voice){ const f = synth.getVoices().find(x => x.name === settings.voice); if(f) return f; } if(synth){ const m = synth.getVoices().find(x => /^tr/i.test(x.lang) && /tolga|cem|erkek|male/i.test(x.name)); if(m) return m; } return trVoice; }
 function readFin(){ const n = id => { const v = String($(id).value).replace(/[^\d]/g,""); return v ? Number(v) : null; }; return {sektor: $("fSek").value.replace(/[^\p{L}\p{N} ,.&/-]/gu,"").trim().slice(0,60), gelir:n("fGel"), gider:n("fGid"), nakit:n("fNak"), borc:n("fBor"), kdv:n("fKdv")}; }
-function applyTheme(){ document.documentElement.dataset.mode = settings.mode || "dark"; document.documentElement.dataset.big = settings.big || "0"; document.querySelector('meta[name=theme-color]').content = settings.mode === "light" ? "#f6f1e8" : "#0b0907"; const t = (settings.mode === "light" ? THEMES_LIGHT : THEMES)[settings.theme] || THEMES.altin; document.documentElement.style.setProperty("--c", t[0]); document.documentElement.style.setProperty("--v", t[1]); }
+function applyTheme(){ document.documentElement.dataset.mode = settings.mode || "dark"; document.documentElement.dataset.big = settings.big || "0"; document.querySelector('meta[name=theme-color]').content = settings.mode === "light" ? "#f6f1e8" : "#0b0907"; document.documentElement.dataset.app = settings.app; const t = (settings.mode === "light" ? APPC_LIGHT : APPC)[settings.app] || APPC.kisisel; document.documentElement.style.setProperty("--c", t[0]); document.documentElement.style.setProperty("--v", t[1]); }
 function themeBtns(){ document.querySelectorAll("#sTheme button").forEach(b => b.setAttribute("aria-pressed", String(b.dataset.t === settings.theme))); }
 $("setBtn").addEventListener("click", () => { $("sName").value = settings.name; $("sTone").value = settings.tone; $("sVoiceKind").value = settings.voiceKind || "dondi"; $("sTtsVoice").value = settings.ttsVoice || "Orus"; $("sMode").value = settings.mode || "dark"; $("sBig").value = settings.big || "0"; const F = settings.fin || {}; $("fSek").value = F.sektor || ""; $("fGel").value = F.gelir || ""; $("fGid").value = F.gider || ""; $("fNak").value = F.nakit || ""; $("fBor").value = F.borc || ""; $("fKdv").value = F.kdv != null ? F.kdv : ""; $("sRate").value = settings.rate; $("sRateV").textContent = settings.rate + "x"; fillVoices(); themeBtns(); $("set").hidden = false; });
 $("sRate").addEventListener("input", e => { $("sRateV").textContent = e.target.value + "x"; });
@@ -637,7 +663,7 @@ $("fbBtn").addEventListener("click", () => { menuClose(); $("fb").hidden = false
 $("fbCancel").addEventListener("click", () => $("fb").hidden = true);
 $("fbSend").addEventListener("click", async () => {
   const text = $("fbText").value.trim(); if(text.length < 3){ toast("Birkaç kelime yaz lütfen."); return; }
-  try { const r = await fetch("/api/feedback", {method:"POST", headers:{"Content-Type":"application/json"}, body: JSON.stringify({text, rating:fbRate, contact:$("fbContact").value.trim(), v:APP_VERSION})}); if(!r.ok) throw 0; $("fb").hidden = true; $("fbText").value = ""; toast("Teşekkürler, iletildi."); }
+  try { const r = await fetch("/api/feedback", {method:"POST", headers:{"Content-Type":"application/json"}, body: JSON.stringify({text, price:$("fbPrice").value, app:settings.app, rating:fbRate, contact:$("fbContact").value.trim(), v:APP_VERSION})}); if(!r.ok) throw 0; $("fb").hidden = true; $("fbText").value = ""; toast("Teşekkürler, iletildi."); }
   catch { toast("Gönderilemedi. info@dagdonderen.com.tr adresine yazabilirsin."); }
 });
 $("expBtn").addEventListener("click", () => {
@@ -648,6 +674,29 @@ $("expBtn").addEventListener("click", () => {
 if("serviceWorker" in navigator) addEventListener("load", () => navigator.serviceWorker.register("/sw.js").catch(() => {}));
 let deferredInstall = null; addEventListener("beforeinstallprompt", e => { e.preventDefault(); deferredInstall = e; });
 addEventListener("appinstalled", () => track("install"));
+
+// ---- v1.0: Kişisel / Finans modları ----
+const FIN_FREE = 3, monthKey = () => new Date().toISOString().slice(0, 7);
+function finUse(){ try { const u = JSON.parse(localStorage.getItem("finUse") || "{}"); return u.m === monthKey() ? u.n : 0; } catch { return 0; } }
+function finCount(){ try { localStorage.setItem("finUse", JSON.stringify({m:monthKey(), n:finUse() + 1})); } catch {} syncQuota(); }
+function syncQuota(){ const q = $("quota"); if(!q) return; q.hidden = settings.app !== "finans"; q.textContent = "Bu ay finans hesabı: " + finUse() + " / " + FIN_FREE + " ücretsiz hak (beta döneminde sınırsız)"; }
+function applyApp(){
+  applyTheme();
+  document.querySelectorAll("#modes button").forEach(b => b.setAttribute("aria-selected", String(b.dataset.app === settings.app)));
+  $("fsub").hidden = settings.app !== "finans";
+  document.querySelectorAll("#fsub button").forEach(b => b.setAttribute("aria-pressed", String(b.dataset.f === settings.fsub)));
+  renderChips(); syncQuota();
+}
+function switchApp(app){
+  if(busy || app === settings.app) return; settings.app = app; saveSettings();
+  let c = chats.filter(x => chatApp(x) === app).sort((a, b) => b.ts - a.ts)[0];
+  if(!c){ c = {id:Date.now().toString(36), title:"", ts:Date.now(), msgs:[], m:app}; chats.unshift(c); }
+  cur = c; history = c.msgs; save(); renderLog(); applyApp(); track(app === "finans" ? "mode_finans" : "mode_kisisel"); $("cList").classList.remove("show");
+}
+document.querySelectorAll("#modes button").forEach(b => b.addEventListener("click", () => { stopSpeak(); switchApp(b.dataset.app); }));
+document.querySelectorAll("#fsub button").forEach(b => b.addEventListener("click", () => { settings.fsub = b.dataset.f; saveSettings(); applyApp(); }));
+if(chatApp(cur) !== settings.app){ const c = chats.filter(x => chatApp(x) === settings.app).sort((a, b) => b.ts - a.ts)[0]; if(c){ cur = c; } else { cur = {id:Date.now().toString(36), title:"", ts:Date.now(), msgs:[], m:settings.app}; chats.unshift(cur); } history = cur.msgs; save(); renderLog(); }
+applyApp();
 setTimeout(() => $("splash").classList.add("off"), 350); setTimeout(() => $("splash").remove(), 900);
 
 // ---- Kamera: soru sorulduğu anda tek kare çekilir ----

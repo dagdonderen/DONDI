@@ -1,5 +1,7 @@
 # Döndi – Yayın Planı (24 Ekim 2026)
 
+**Sürüm: v1.0.0.** Modlar: Kişisel (mor, ücretsiz) · Finans (mavi; Bireysel/İşletme, ücretli plan v1.2'de).
+
 ## Karar: Bugün "Açık Beta" olarak yayınla
 Web uygulaması (PWA) zaten canlı. Mağaza, üyelik ve ödeme olmadan **ücretsiz beta** olarak, sınırlı bir gruba (20–50 kişi) aç. Her sürümde (v1.x) otomatik güncellenir; kullanıcı bir şey yapmaz.
 
@@ -7,7 +9,7 @@ Web uygulaması (PWA) zaten canlı. Mağaza, üyelik ve ödeme olmadan **ücrets
 | Alan | Durum |
 |---|---|
 | Kullanıcı izinleri (18+, kamera, konum, belge) | ✅ var, rıza kaydı Redis ile |
-| Gizlilik/KVKK, Kullanım şartları | ✅ v1.9.0 (avukat kontrolü önerilir) |
+| Gizlilik/KVKK, Kullanım şartları | ✅ v1.0.0 (avukat kontrolü önerilir) |
 | Veri silme / indirme | ✅ menüden (cihaz + sunucudaki rıza kaydı) |
 | Onboarding, ana akış | ✅ |
 | Verilerin kaydı | ✅ cihazda (localStorage) |
@@ -23,7 +25,7 @@ Web uygulaması (PWA) zaten canlı. Mağaza, üyelik ve ödeme olmadan **ücrets
 
 ## Bugün senin yapacakların (sırayla)
 1. Vercel → Storage → Upstash Redis bağla (rıza kaydı, istatistik, geri bildirim için). Env: `HASH_SALT`, `GEMINI_API_KEY`.
-2. Redeploy et, menüde **v1.9.0** yazdığını gör.
+2. Redeploy et, menüde **v1.0.0** yazdığını gör.
 3. iPhone Safari'de "Ana Ekrana Ekle" ile kur, test kontrol listesi:
    - İlk açılış → yaş onayı → onboarding
    - Yaz, konuş (Safari'de; ana ekran uygulamasında tanıma çalışmaz), kamera, belge yükle
@@ -32,7 +34,7 @@ Web uygulaması (PWA) zaten canlı. Mağaza, üyelik ve ödeme olmadan **ücrets
 4. 20–50 kişiye linki ver, 1 hafta geri bildirim topla (Redis'te `dondi:fb`).
 
 ## Sonraki sürümler (öncelik sırası)
-- v2.0: Supabase Auth (e-posta+Google giriş, doğrulama, şifre sıfırlama), sohbetlerin bulutta eşitlenmesi, hesap silme.
-- v2.1: İşletme planı ödemesi (iyzico) + abonelik yönetimi.
-- v2.2: Capacitor ile iOS/Android + arka plan bildirimleri.
+- v1.1: Supabase Auth (e-posta+Google giriş, doğrulama, şifre sıfırlama), sohbetlerin bulutta eşitlenmesi, hesap silme.
+- v1.2: Finans planı ödemesi (iyzico) + abonelik yönetimi.
+- v1.3: bildirimler ve bulut eşitleme; v2.0: Capacitor ile iOS/Android + arka plan bildirimleri.
 Not: Hesap + ödeme eklenince Gizlilik metni, şartlar ve ödeme/iade bölümü güncellenmeli; hukuki gözden geçirme yapılmalı.

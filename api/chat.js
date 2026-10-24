@@ -39,12 +39,18 @@ function systemPrompt(ctx) {
   const now = new Intl.DateTimeFormat("tr-TR", {
     dateStyle: "full", timeStyle: "short", timeZone: "Europe/Istanbul",
   }).format(new Date());
-  return `Sen Döndi'sin: sıcak, net ve yardımsever bir kişisel asistan. Dağdönderen tarafından geliştirildin.
+  const fin = ctx.app === "finans";
+  const modeText = fin
+    ? `\nŞu an FİNANS modundasın: rakam odaklı, net ve sakin bir finans asistanısın.` + (ctx.fsub === "isletme"
+        ? ` Kullanıcı bir İŞLETME sahibi: nakit akışı, maliyet, marj, KDV, tahsilat/ödeme vadeleri ve vergi/SGK takvimi gibi CFO konularına odaklan.`
+        : ` Kullanıcı BİREYSEL finans soruyor: bütçe, gelir-gider, borç ve kredi hesabı, birikim hedefi ve harcama alışkanlıklarına odaklan; işletme jargonundan kaçın.`) + ` Yatırım, hisse, kripto için al/sat/tut önerisi VERME; yalnızca hesap, karşılaştırma ve genel bilgi sun.`
+    : `\nŞu an KİŞİSEL modundasın: günlük yaşam, planlama, yazma, öğrenme ve sohbet. Finansal hesap tabloları bu modun işi değil; kullanıcı ayrıntılı nakit akışı, maliyet veya senaryo hesabı isterse Finans moduna geçmesini kısaca öner.`;
+  return `Sen Döndi'sin: sıcak, net ve yardımsever bir kişisel asistan. Dağdönderen tarafından geliştirildin.${modeText}
 Kullanıcı hangi dilde yazarsa o dilde cevap ver (varsayılan Türkçe).
 Cevapları kısa tut; telefonda okunacağını unutma. Gerekirse madde işareti kullan.
 Selamlamayı yalnızca sohbetin ilk mesajında yap; sonraki cevaplarda doğrudan konuya gir.
 Hava durumu sorulursa get_weather aracını kullan. Şehir belirtilmemişse önce hangi şehir olduğunu sor.
-Tıbbi, hukuki ve finansal konularda genel bilgi ver, uzmana danışmayı öner.${CFO_RULES}
+Tıbbi, hukuki ve finansal konularda genel bilgi ver, uzmana danışmayı öner.${fin ? CFO_RULES : ""}
 Hatırlatıcı/zamanlayıcı için set_reminder, takvim için add_to_calendar aracını çağır. Hatırlatıcılar uygulama açıkken bildirim verir; kullanıcıya bunu kısaca belirt.${ctx.doc ? "\nKullanıcı bir belge yükledi (içerik mesajın başında). Analizi yalnızca belgedeki verilere dayandır, belgede olmayan rakamı uydurma; eksik ya da belirsiz yerleri belirt. Gerekirse nakit akışı ve maliyet araçlarını belgedeki rakamlarla kullan." : ""}
 Şu an (Türkiye saati): ${now}.${ctx.loc ? `
 Kullanıcının yaklaşık konumu biliniyor. Şehir belirtmeden hava durumu sorarsa get_weather aracını city alanını boş bırakarak çağır.` : ""}${ctx.hasImage ? IMAGE_RULES : ""}${profileText(ctx.profile)}`;
@@ -147,8 +153,8 @@ async function webSearch(query, apiKey) {
   } finally { clearTimeout(timer); }
 }
 
-const TOOLS = [{
-  functionDeclarations: [...CFO_DECLS, ...ACTION_DECLS, {
+const toolsFor = (app) => [{
+  functionDeclarations: [...(app === "finans" ? CFO_DECLS : CFO_DECLS.filter((d) => d.name === "web_search")), ...ACTION_DECLS, {
     name: "get_weather",
     description: "Bir şehir için güncel hava durumunu ve 3 günlük tahmini getirir.",
     parameters: {
@@ -166,7 +172,7 @@ async function callGemini(model, apiKey, contents, allowTools, ctx) {
     const body = {
       systemInstruction: { parts: [{ text: systemPrompt(ctx) }] },
       contents,
-      tools: TOOLS,
+      tools: toolsFor(ctx.app),
       generationConfig: { maxOutputTokens: 2048 },
     };
     if (!allowTools) body.toolConfig = { functionCallingConfig: { mode: "NONE" } };
@@ -289,11 +295,13 @@ function cleanFin(f) {
 export default async function handler(req, res) {
   if (req.method !== "POST") return res.status(405).json({ error: "Yalnızca POST." });
 
-  const { messages, location, image, profile, doc, pdf } = req.body ?? {};
+  const { messages, location, image, profile, doc, pdf, app: appIn, fsub: fsubIn } = req.body ?? {};
+  const app = appIn === "finans" ? "finans" : "kisisel";
+  const fsub = fsubIn === "isletme" ? "isletme" : "bireysel";
   const prof = {
     name: String(profile?.name || "").replace(/[^\p{L}\p{N} '’.-]/gu, "").trim().slice(0, 30),
     tone: Object.hasOwn(TONES, profile?.tone) ? profile.tone : "",
-    fin: cleanFin(profile?.fin),
+    fin: app === "finans" && fsub === "isletme" ? cleanFin(profile?.fin) : {},
   };
   const img = typeof image === "string" && image.length < 1500000 && /^[A-Za-z0-9+/=]+$/.test(image) ? image : null;
   const docText = doc && typeof doc.text === "string" ? { name: String(doc.name || "belge").replace(/[^\p{L}\p{N} ._-]/gu, "").slice(0, 80), text: doc.text.slice(0, 40000) } : null;
@@ -335,7 +343,7 @@ export default async function handler(req, res) {
   const t0 = Date.now();
   for (const model of models) {
     if (Date.now() - t0 > 35000) break; // zaman sınırına yaklaşıldı
-    const out = await tryModel(model, apiKey, base, { loc, hasImage: !!img, doc: !!(docText || pdfData), profile: prof });
+    const out = await tryModel(model, apiKey, base, { app, fsub, loc, hasImage: !!img, doc: !!(docText || pdfData), profile: prof });
     if (out.text) return res.status(200).json({ reply: out.text, results: out.collected || [] });
     if (out.fatal) break;
   }
