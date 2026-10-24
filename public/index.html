@@ -314,9 +314,9 @@ html[data-embed] .top,html[data-embed] .modes,html[data-embed] .foot{display:non
   <div class="st">PLANLAR</div><h2>Döndi planları</h2>
   <p class="nt" id="plCur"></p>
   <div id="plList"></div>
-  <div class="fld" hidden><b>Aktivasyon kodun var mı?</b><br><span style="font-size:12px">Satın aldığında ya da deneme için sana verilen kodu buraya yapıştır.</span><input id="plCode" autocomplete="off" placeholder="v1.…" style="width:100%;margin-top:6px"></div>
+  <div class="fld" style="display:none"><b>Aktivasyon kodun var mı?</b><br><span style="font-size:12px">Satın aldığında ya da deneme için sana verilen kodu buraya yapıştır.</span><input id="plCode" autocomplete="off" placeholder="v1.…" style="width:100%;margin-top:6px"></div>
   <p class="nt" id="plNote">Ücretler KDV dahildir. Abonelik şartları ve iptal/iade koşulları: <a href="/abonelik-sartlari.html" target="_blank" rel="noopener" style="color:var(--c)">Abonelik Şartları</a>.</p>
-  <div class="row"><button class="tbtn" id="plApply" type="button">Kodu uygula</button><button class="tbtn" id="plClose" type="button" aria-pressed="true">Kapat</button></div>
+  <div class="row"><button class="tbtn" id="plApply" type="button" style="display:none">Kodu uygula</button><button class="tbtn" id="plClose" type="button" aria-pressed="true">Kapat</button></div>
 </div></div>
 <div id="net" role="status" hidden>İnternet yok. Bağlantı gelince Döndi tekrar cevap verebilir.</div>
 <div id="toast" role="status" hidden></div>
@@ -799,7 +799,7 @@ addEventListener("appinstalled", () => track("install"));
 const FIN_FREE = 3, monthKey = () => new Date().toISOString().slice(0, 7);
 function finUse(){ try { const u = JSON.parse(localStorage.getItem("finUse") || "{}"); return u.m === monthKey() ? u.n : 0; } catch { return 0; } }
 function finCount(){ try { localStorage.setItem("finUse", JSON.stringify({m:monthKey(), n:finUse() + 1})); } catch {} syncQuota(); }
-function syncQuota(){ const q = $("quota"); if(!q) return; q.hidden = settings.app !== "finans"; q.textContent = "Bu ay finans hesabı: " + finUse() + " / " + FIN_FREE + " ücretsiz hak (beta döneminde sınırsız)"; }
+function syncQuota(){ const q = $("quota"); if(!q) return; q.style.cursor = "pointer"; q.title = "Planları gör"; q.onclick = () => openPlans(); q.hidden = settings.app !== "finans"; q.textContent = "Bu ay finans hesabı: " + finUse() + " / " + FIN_FREE + " ücretsiz hak (beta döneminde sınırsız)"; }
 function applyApp(){
   applyTheme();
   document.querySelectorAll("#modes button").forEach(b => b.setAttribute("aria-selected", String(b.dataset.app === settings.app)));
@@ -852,23 +852,43 @@ async function loadPlan(){
   try { const r = await fetch("/api/plans", {method:"POST", headers:{"Content-Type":"application/json"}, body: JSON.stringify({ent:getEnt(), app:settings.app, fsub:settings.fsub})}); if(r.ok) planInfo = await r.json(); } catch {}
   return planInfo;
 }
+let plTab = null;
+function planHas(p, flag){ return flag === null ? true : flag === "model" ? p.limits.model === "flash" : !!p.features[flag]; }
+function limLine(p){ const l = p.limits; return ["Ayda " + l.mesaj_aylik + " mesaj", l.belge_aylik ? l.belge_aylik + " belge analizi" : null, l.arama_aylik + " web araması", "günde " + l.tts_gunluk + " sesli cevap"].filter(Boolean).join(" · "); }
 function renderPlans(note){
   const pi = planInfo; const box = $("plList"); box.innerHTML = "";
   if(!pi){ box.textContent = "Plan bilgisi şu an alınamadı. İnternet bağlantını kontrol et."; return; }
   const me = pi.plan, cur = (pi.plans.find(p => p.id === me) || {ad: me === "beta" ? "Beta" : me}).ad;
-  $("plCur").textContent = (note ? note + " " : "") + "Şu anki planın: " + cur + (pi.beta && me === "beta" ? " (beta döneminde tüm özellikler geçici olarak açık)." : ".") + (pi.exp ? " Bitiş: " + new Date(pi.exp * 1000).toLocaleDateString("tr-TR") + "." : "");
-  const groups = [["KİŞİSEL", p => p.segment === null], ["FİNANS · BİREYSEL", p => p.segment === "bireysel"], ["FİNANS · ŞİRKET", p => p.segment === "sirket"]];
-  groups.forEach(([t, f]) => {
-    const g = document.createElement("div"); g.className = "plg"; g.textContent = t; box.appendChild(g);
-    pi.plans.filter(f).forEach(p => {
-      const d = document.createElement("div"); d.className = "pl" + (p.id === me ? " me" : "");
-      const h = document.createElement("h4"); h.textContent = p.ad; if(p.id === me){ const tg = document.createElement("span"); tg.className = "tag"; tg.textContent = "senin planın"; h.appendChild(tg); }
-      const pr = document.createElement("div"); pr.className = "pr"; pr.textContent = p.fiyat.aylik ? "Yakında · " + TL(p.fiyat.aylik) + " / ay (yıllık " + TL(p.fiyat.yillik) + ")" : "Ücretsiz";
-      const os = document.createElement("div"); os.className = "os"; os.textContent = p.ozet + " Ayda " + p.limits.mesaj_aylik + " mesaj" + (p.limits.belge_aylik ? ", " + p.limits.belge_aylik + " belge analizi" : "") + (p.limits.model === "flash" ? ", gelişmiş model" : "") + ".";
-      d.append(h, pr, os); box.appendChild(d);
+  $("plCur").textContent = (note ? note + " " : "") + "Şu anki planın: " + cur + (pi.beta && me === "beta" ? ". Beta döneminde tüm özellikler (FIRDÖNDÜ bağlantısı hariç) geçici olarak açık; ücretli planlar yakında." : ".") + (pi.exp ? " Bitiş: " + new Date(pi.exp * 1000).toLocaleDateString("tr-TR") + "." : "");
+  if(!plTab) plTab = settings.app === "finans" ? (settings.fsub === "isletme" ? "sirket" : "bireysel") : "kisisel";
+  const tabs = document.createElement("div"); tabs.className = "row"; tabs.style.cssText = "margin:10px 0 4px;flex-wrap:wrap";
+  [["kisisel", "Kişisel"], ["bireysel", "Finans · Bireysel"], ["sirket", "Finans · Şirket"]].forEach(([k, l]) => { const b = document.createElement("button"); b.type = "button"; b.className = "tbtn"; b.textContent = l; b.setAttribute("aria-pressed", String(plTab === k)); b.onclick = () => { plTab = k; renderPlans(note); }; tabs.appendChild(b); });
+  box.appendChild(tabs);
+  const card = (p, title, price, lines, extra, isMe) => {
+    const d = document.createElement("div"); d.className = "pl" + (isMe ? " me" : "");
+    const h = document.createElement("h4"); h.textContent = title; if(isMe){ const tg = document.createElement("span"); tg.className = "tag"; tg.textContent = "senin planın"; h.appendChild(tg); } d.appendChild(h);
+    const pr = document.createElement("div"); pr.className = "pr"; pr.textContent = price; d.appendChild(pr);
+    if(extra){ const e = document.createElement("div"); e.className = "os"; e.textContent = extra; d.appendChild(e); }
+    const ul = document.createElement("ul"); ul.style.cssText = "margin:8px 0 0;padding-left:18px;font-size:13.5px;line-height:1.5";
+    ul.style.cssText = "margin:8px 0 0;padding:0;list-style:none;font-size:13.5px;line-height:1.5";
+    lines.forEach(t => { const li = document.createElement("li"); if(/:$/.test(t)){ li.textContent = t; li.style.cssText = "font-weight:700;margin:4px 0"; } else { li.textContent = "✓ " + t; li.style.cssText = "padding-left:18px;text-indent:-18px"; } ul.appendChild(li); }); d.appendChild(ul); box.appendChild(d);
+  };
+  if(plTab === "kisisel"){
+    const f = pi.plans.find(p => p.id === "ucretsiz");
+    card(f, "Kişisel · Ücretsiz", "Ücretsiz", pi.katalog.kisisel, limLine(f), me === "ucretsiz" || me === "beta");
+    const n = document.createElement("p"); n.className = "nt"; n.textContent = "Finansal asistan için “Finans” moduna geç: Bireysel ve Şirket sekmelerinde plan karşılaştırmasını görürsün."; box.appendChild(n);
+  } else {
+    const list = pi.plans.filter(p => p.id === "ucretsiz" || p.segment === plTab);
+    const fin = pi.katalog.finans; let prev = null;
+    list.forEach(p => {
+      const have = fin.filter(r => planHas(p, r.flag)), prevHave = prev ? fin.filter(r => planHas(prev, r.flag)) : [];
+      const fresh = have.filter(r => !prevHave.includes(r)).map(r => r.ad);
+      const lines = p.id === "ucretsiz" ? ["Finans araçlarından ayda " + p.limits.deneme_aylik + " deneme hakkı", ...fin.filter(r => r.flag === null).map(r => r.ad)] : [(prev && prev.id !== "ucretsiz" ? prev.ad + "’taki her şey, ayrıca:" : "Şunlar dahil:"), ...fresh];
+      card(p, p.ad, p.fiyat.aylik ? "Yakında · " + TL(p.fiyat.aylik) + " / ay (yıllık " + TL(p.fiyat.yillik) + ")" : "Ücretsiz", lines, limLine(p), p.id === me || (me === "beta" && p.id === "ucretsiz" && false));
+      if(p.id !== "ucretsiz") prev = p; else prev = p;
     });
-  });
-  const soon = document.createElement("p"); soon.className = "nt"; soon.textContent = "Ücretli planlar yakında açılacak. Şimdilik beta sürümündesin: Kişisel ve Finans özelliklerinin çoğu ücretsiz ve açık."; box.appendChild(soon);
+  }
+  const soon = document.createElement("p"); soon.className = "nt"; soon.textContent = "Ücretli planlar yakında açılacak. Limitler aylıktır; ücretler KDV dahildir. “Yakında” yazan fiyatlar değişebilir."; box.appendChild(soon);
 }
 async function openPlans(note){ $("plans").hidden = false; $("plList").textContent = "Yükleniyor…"; await loadPlan(); renderPlans(note); track("plans"); }
 $("planBtn").addEventListener("click", () => openPlans());
