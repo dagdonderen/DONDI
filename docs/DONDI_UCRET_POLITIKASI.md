@@ -8,7 +8,7 @@ Tarih: 24 Ekim 2026. Fiyatlar TL, KDV dahil. Yıllık = 10 ay (2 ay hediye).
 | Bireysel Pro | 349 | 3.490 | 600 | 60 | 20 | 60 | 75 | Flash | + Senaryo, belge analizi |
 | Şirket Plus | 599 | 5.990 | 800 | 60 | – | 40 | 90 | Lite | Şirket finans işlemleri |
 | Şirket Pro | 1.199 | 11.990 | 1.500 | 120 | 60 | 150 | 180 | Flash | + gelişmiş işlemler, belge |
-| Şirket Pro Max | 2.499 | 24.990 | 3.000 | 200 | 120 | 300 | 360 | Flash | + FIRDÖNDÜ bağlantısı (cari/proje/çek, e-posta ile belge) |
+| Şirket Pro Plus | 2.499 | 24.990 | 3.000 | 200 | 120 | 300 | 360 | Flash | + FIRDÖNDÜ bağlantısı (cari/proje/çek, e-posta ile belge) |
 
 Beta (BETA_OPEN=1, kodsuz herkes): 300 mesaj/ay, 30/gün, 5 belge, 20 arama, 30 ses/gün; FIRDÖNDÜ hariç özellikler açık.
 
@@ -24,7 +24,7 @@ Beta (BETA_OPEN=1, kodsuz herkes): 300 mesaj/ay, 30/gün, 5 belge, 20 arama, 30 
 - Hak belgesi: HMAC imzalı etkinleştirme kodu (PLAN_SECRET). Ödeme sistemi gelene kadar elle satış/pilot: scripts/issue_token.mjs.
 - Aylık KDV dahil gösterim; yenileme öncesi 7 gün bildirim; fiyat değişikliği 30 gün önceden bildirim; tek tıkla iptal; yıllıkta kıst iade.
 - Cayma: dijital hizmetin açık onayla anında ifası istisnası kullanılacak (onay kutusu ödeme akışında zorunlu) – avukat onayı gerekli.
-- Pro Max: FIRDÖNDÜ lisansıyla paketlenebilir; veri işleyen/sorumlusu rolleri Şirket Hizmet Sözleşmesi'nde özetlendi.
+- Pro Plus: FIRDÖNDÜ lisansıyla paketlenebilir; veri işleyen/sorumlusu rolleri Şirket Hizmet Sözleşmesi'nde özetlendi.
 
 ## Satıcı bilgileri ve ödeme sağlayıcı (24 Ekim 2026)
 - Satıcı: Alaaddin DAĞDÖNDEREN (gerçek kişi), Merkez / Kütahya, 0505 692 6546, yetkili mahkeme Kütahya. Vergi levhası/işletme kaydı henüz yok.
