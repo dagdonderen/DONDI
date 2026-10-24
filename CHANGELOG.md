@@ -1,7 +1,7 @@
 # Değişiklik geçmişi
 
 ## v1.0.0 (ilk genel sürüm, açık beta)
-- Kişisel (mor, ücretsiz) ve Finans (mavi) modları; Finans içinde Bireysel / İşletme ayrımı.
+- Kişisel (mor, ücretsiz) ve Finans modları; Finans içinde Bireysel (mavi) / İşletme (altın-bakır) ayrımı.
 - Her mod kendi talimat, araç, öneri ve sohbet listesine sahip.
 - Finans için aylık ücretsiz hak sayacı (beta'da sınırsız), fiyat anketi sorusu.
 - Çevrimdışı bandı, açılış ekranı, hata bildirimi, geri bildirim, veri indir/sil, anonim istatistik.
