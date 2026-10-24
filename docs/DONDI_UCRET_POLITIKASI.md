@@ -26,8 +26,15 @@ Beta (BETA_OPEN=1, kodsuz herkes): 300 mesaj/ay, 30/gün, 5 belge, 20 arama, 30 
 - Cayma: dijital hizmetin açık onayla anında ifası istisnası kullanılacak (onay kutusu ödeme akışında zorunlu) – avukat onayı gerekli.
 - Pro Max: FIRDÖNDÜ lisansıyla paketlenebilir; veri işleyen/sorumlusu rolleri Şirket Hizmet Sözleşmesi'nde özetlendi.
 
+## Satıcı bilgileri ve ödeme sağlayıcı (24 Ekim 2026)
+- Satıcı: Alaaddin DAĞDÖNDEREN (gerçek kişi), Merkez / Kütahya, 0505 692 6546, yetkili mahkeme Kütahya. Vergi levhası/işletme kaydı henüz yok.
+- Seçilen ödeme sağlayıcı: **PayTR**. Sebep: sanal POS komisyonu 2,19%'dan başlıyor (sektöre/hacme göre teklif), aylık sabit ücret ve kurulum ücreti yok, başvuruda "Bireysel Başvuru (vergi levham yok / muafım)" seçeneği var (PayTR sayfası, Eylül 2026). Komisyon ve vade teklifle belli olur.
+- Yedek: iyzico. Şirketlere sanal POS %4,29 + 0,25 TL; şirketsiz bireyler için Link ürünü %4,49 + 0,25 TL (ideasoft özeti, Ekim 2026). Daha pahalı.
+- Abonelik (otomatik yenileme) için kart saklama/tekrarlı tahsilat PayTR'de ayrıca açılıp açılmadığı başvuruda sorulacak; olmazsa dönemlik (aylık/yıllık) tek seferlik ödeme + yenileme hatırlatması.
+- VERGİ UYARISI (mali müşavir/avukat teyidi şart): Düzenli ücretli yazılım/abonelik satışı ticari kazanç sayılır; vergi mükellefiyeti (şahıs işletmesi kaydı, vergi dairesi) ve fatura/e-arşiv yükümlülüğü doğabilir. Ücretli satışa başlamadan önce şahıs işletmesi kaydı önerilir. O zamana kadar uygulama ücretsiz betada kalır. Vergi dairesi ve vergi no, legal/sirket.json'a eklenince sözleşmelerdeki boşluklar dolar.
+
 ## Lansman öncesi açık işler
-1. legal/sirket.json doldurulacak (unvan, vergi dairesi/no, MERSİS, adres, telefon, KEP, ödeme sağlayıcı, mahkeme şehri).
+1. legal/sirket.json: unvan, adres, telefon, ödeme sağlayıcı (PayTR), mahkeme (Kütahya) dolu. Eksik: vergi dairesi, vergi no (şahıs işletmesi kaydı sonrası); MERSİS gerçek kişide yok, şablondan çıkarılacak; KEP isteğe bağlı.
 2. Avukat incelemesi, sonra `"hazir": true` ve `node scripts/build_legal.mjs --strict`.
 3. Ödeme sağlayıcı seçimi (iyzico / PayTR vb.) ve satın alma + iptal akışı.
 4. Vercel env: PLAN_SECRET, HASH_SALT; beta bitince BETA_OPEN=0.
