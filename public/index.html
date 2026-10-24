@@ -175,6 +175,20 @@ textarea:focus{outline:none;border-color:var(--c)}
 body[data-auto="1"] #micBtn{animation:pulse 1.6s ease-in-out infinite}
 @keyframes pulse{50%{box-shadow:0 0 0 10px color-mix(in srgb,var(--c) 0%,transparent),0 6px 24px color-mix(in srgb,var(--c) 55%,transparent)}}
 .foot{padding-top:0}
+
+#net{position:fixed;left:12px;right:12px;bottom:calc(92px + env(safe-area-inset-bottom));z-index:20;max-width:520px;margin:0 auto;background:#5a2a12;color:#ffe9d6;border:1px solid #d98a4a;border-radius:12px;padding:10px 14px;font-size:14px;text-align:center}
+#toast{position:fixed;left:12px;right:12px;bottom:calc(90px + env(safe-area-inset-bottom));z-index:31;max-width:420px;margin:0 auto;background:var(--pop);border:1px solid var(--line);color:var(--ink);border-radius:14px;padding:12px 14px;font-size:14px;text-align:center;box-shadow:0 10px 40px rgba(0,0,0,.5)}
+#splash{position:fixed;inset:0;z-index:100;background:#0b0907;display:grid;place-content:center;justify-items:center;gap:16px;color:#f0b254;letter-spacing:.3em;transition:opacity .4s}
+#splash.off{opacity:0;pointer-events:none}
+#splash .sp{width:46px;height:46px;border-radius:50%;border:3px solid rgba(240,178,84,.25);border-top-color:#f0b254;animation:spin 1s linear infinite}
+@keyframes spin{to{transform:rotate(360deg)}}
+.modal{position:fixed;inset:0;z-index:40;background:rgba(0,0,0,.6);display:grid;place-items:center;padding:16px}
+.modal[hidden]{display:none}
+.mbox{width:100%;max-width:420px;background:var(--pop);border:1px solid var(--line);border-radius:18px;padding:18px;display:grid;gap:10px}
+.mbox h3{margin:0}.mbox textarea,.mbox input{width:100%;box-sizing:border-box;background:var(--inp);color:var(--ink);border:1px solid var(--line);border-radius:12px;padding:10px;font:inherit}
+.stars{display:flex;gap:6px}.stars button{background:none;border:0;font-size:28px;color:var(--mut);padding:0;cursor:pointer}.stars button.on{color:#f0b254}
+.thinking{opacity:.6}
+@media (prefers-reduced-motion:reduce){#splash .sp{animation:none}}
 </style>
 </head>
 <body>
@@ -191,7 +205,11 @@ body[data-auto="1"] #micBtn{animation:pulse 1.6s ease-in-out infinite}
     <button class="mi" id="setBtn" type="button">Ayarlar</button>
     <button class="mi" id="permBtn" type="button">İzinler</button>
     <hr>
+    <button class="mi" id="fbBtn" type="button">Geri bildirim gönder</button>
+    <button class="mi" id="statBtn" type="button" aria-pressed="true">Anonim istatistik: açık</button>
     <a class="mi sm" href="/gizlilik.html">Gizlilik ve KVKK</a>
+    <a class="mi sm" href="/kullanim-sartlari.html">Kullanım şartları</a>
+    <button class="mi sm" id="expBtn" type="button">Verilerimi indir</button>
     <button class="mi sm" id="wipe" type="button">Verilerimi sil</button>
     <div class="mi sm">Sürüm <span>v<span id="ver"></span></span></div>
   </div>
@@ -263,6 +281,15 @@ body[data-auto="1"] #micBtn{animation:pulse 1.6s ease-in-out infinite}
   </div>
 </div>
 <div id="rbn" role="alert"></div>
+<div id="net" role="status" hidden>İnternet yok. Bağlantı gelince Döndi tekrar cevap verebilir.</div>
+<div id="toast" role="status" hidden></div>
+<div id="splash" aria-hidden="true"><div class="sp"></div><b>DÖNDİ</b></div>
+<div id="fb" class="modal" hidden><div class="mbox"><h3>Geri bildirim</h3>
+  <p class="nt">Ne beğendin, ne çalışmadı? Mesajın içeriği dışında kişisel veri gönderilmez.</p>
+  <div id="fbStars" class="stars" role="radiogroup" aria-label="Puan"></div>
+  <textarea id="fbText" rows="4" maxlength="1000" placeholder="Yorumun…"></textarea>
+  <input id="fbContact" type="text" maxlength="120" placeholder="İstersen e-posta (cevap için)" autocomplete="email">
+  <div class="row"><button class="tbtn" id="fbCancel" type="button">Vazgeç</button><button class="tbtn" id="fbSend" type="button" aria-pressed="true">Gönder</button></div></div></div>
 <div class="onb" id="onb" hidden><div class="card wide">
   <div class="st">BAŞLANGIÇ</div><h2>Döndi'yi ayarlayalım</h2>
   <label class="ck"><input type="checkbox" id="ageCk"><span><b>18 yaşından büyüğüm.</b> Döndi yalnızca 18 yaşını doldurmuş kullanıcılar içindir.</span></label>
@@ -423,6 +450,8 @@ $("micBtn").addEventListener("click", () => { unlockTts(); setAuto(!auto); });
 // Gönderme
 async function send(text, viaVoice, image){
   text = (text || "").trim(); if(!text || busy) return;
+  if(!navigator.onLine){ toast("İnternet yok. Bağlanınca tekrar dene."); return; }
+  track(image ? "camera" : viaVoice ? "voice" : "chat");
   const wasAuto = auto; busy = true; sendBtn.disabled = true; setState("thinking");
   cap.className = "me"; cap.textContent = text;
   if(!history.length) log.innerHTML = "";
@@ -563,7 +592,7 @@ $("voiceBtn").addEventListener("click", e => { voiceOn = !voiceOn; e.currentTarg
 $("autoBtn").addEventListener("click", () => { unlockTts(); setAuto(!auto); });
 function chip(parent, cls, label, text){ const b = document.createElement("button"); b.type = "button"; b.className = cls; b.textContent = label; b.addEventListener("click", () => { unlockTts(); send(text, true); }); parent.appendChild(b); }
 SUG.forEach(([l, t]) => chip($("chips"), "chip", l, t));
-const APP_VERSION = "1.8.0";
+const APP_VERSION = "1.9.0";
 // ---- Ayarlar (v1.1) ----
 function fillVoices(){
   if(!synth) return; const sel = $("sVoice"); sel.innerHTML = "";
@@ -584,10 +613,42 @@ applyTheme();
 $("ver").textContent = APP_VERSION;
 $("wipe").addEventListener("click", () => {
   if(!confirm("Bu cihazdaki sohbet geçmişi, konum, izin tercihleri ve diğer Döndi verileri silinecek. Devam edilsin mi?")) return;
-  stopSpeak(); try { localStorage.clear(); } catch {}
-  location.reload();
+  stopSpeak(); const id = (() => { try { return localStorage.getItem("did"); } catch { return null; } })();
+  Promise.race([id ? fetch("/api/delete", {method:"POST", headers:{"Content-Type":"application/json"}, body: JSON.stringify({deviceId:id})}).catch(()=>{}) : null, new Promise(r => setTimeout(r, 2500))]).then(async () => { try { localStorage.clear(); } catch {} try { const ks = await caches.keys(); await Promise.all(ks.map(k => caches.delete(k))); } catch {} location.reload(); });
 });
 renderLog();
+
+// ---- v1.9: çevrimdışı, hata, istatistik, geri bildirim, veri indirme ----
+const toast = (m, ms=3500) => { const t = $("toast"); t.textContent = m; t.hidden = false; clearTimeout(toast._t); toast._t = setTimeout(() => t.hidden = true, ms); };
+const netUpd = () => { $("net").hidden = navigator.onLine; };
+addEventListener("online", () => { netUpd(); toast("Bağlantı geri geldi."); }); addEventListener("offline", netUpd); netUpd();
+const statsOn = () => settings.stats !== false;
+const track = name => { if(!statsOn()) return; try { fetch("/api/log", {method:"POST", headers:{"Content-Type":"application/json"}, body: JSON.stringify({kind:"event", name, v:APP_VERSION}), keepalive:true}).catch(()=>{}); } catch {} };
+const reportErr = (msg, src) => { if(!statsOn()) return; try { fetch("/api/log", {method:"POST", headers:{"Content-Type":"application/json"}, body: JSON.stringify({kind:"error", msg:String(msg), src:String(src||""), v:APP_VERSION}), keepalive:true}).catch(()=>{}); } catch {} };
+let errN = 0;
+addEventListener("error", e => { if(++errN > 5) return; reportErr(e.message, (e.filename||"") + ":" + (e.lineno||"")); toast("Bir şeyler ters gitti. Sorun sürerse Geri bildirim gönder."); });
+addEventListener("unhandledrejection", e => { if(++errN > 5) return; reportErr(e.reason && e.reason.message || e.reason, "promise"); });
+const statUi = () => { const b = $("statBtn"); b.textContent = "Anonim istatistik: " + (statsOn() ? "açık" : "kapalı"); b.setAttribute("aria-pressed", statsOn()); };
+$("statBtn").addEventListener("click", () => { settings.stats = !statsOn(); saveSettings(); statUi(); toast(statsOn() ? "Anonim istatistik açıldı." : "Anonim istatistik kapatıldı."); });
+statUi(); track("open");
+let fbRate = 0;
+const stars = $("fbStars"); for(let i = 1; i <= 5; i++){ const b = document.createElement("button"); b.type = "button"; b.textContent = "★"; b.setAttribute("aria-label", i + " yıldız"); b.addEventListener("click", () => { fbRate = i; [...stars.children].forEach((x, j) => x.classList.toggle("on", j < i)); }); stars.appendChild(b); }
+$("fbBtn").addEventListener("click", () => { menuClose(); $("fb").hidden = false; });
+$("fbCancel").addEventListener("click", () => $("fb").hidden = true);
+$("fbSend").addEventListener("click", async () => {
+  const text = $("fbText").value.trim(); if(text.length < 3){ toast("Birkaç kelime yaz lütfen."); return; }
+  try { const r = await fetch("/api/feedback", {method:"POST", headers:{"Content-Type":"application/json"}, body: JSON.stringify({text, rating:fbRate, contact:$("fbContact").value.trim(), v:APP_VERSION})}); if(!r.ok) throw 0; $("fb").hidden = true; $("fbText").value = ""; toast("Teşekkürler, iletildi."); }
+  catch { toast("Gönderilemedi. info@dagdonderen.com.tr adresine yazabilirsin."); }
+});
+$("expBtn").addEventListener("click", () => {
+  menuClose(); const d = {}; try { for(let i = 0; i < localStorage.length; i++){ const k = localStorage.key(i); d[k] = localStorage.getItem(k); } } catch {}
+  const blob = new Blob([JSON.stringify({uygulama:"Döndi", surum:APP_VERSION, tarih:new Date().toISOString(), veriler:d}, null, 1)], {type:"application/json"});
+  const a = document.createElement("a"); a.href = URL.createObjectURL(blob); a.download = "dondi-verilerim.json"; a.click(); setTimeout(() => URL.revokeObjectURL(a.href), 4000);
+});
+if("serviceWorker" in navigator) addEventListener("load", () => navigator.serviceWorker.register("/sw.js").catch(() => {}));
+let deferredInstall = null; addEventListener("beforeinstallprompt", e => { e.preventDefault(); deferredInstall = e; });
+addEventListener("appinstalled", () => track("install"));
+setTimeout(() => $("splash").classList.add("off"), 350); setTimeout(() => $("splash").remove(), 900);
 
 // ---- Kamera: soru sorulduğu anda tek kare çekilir ----
 function capture(){
@@ -614,6 +675,7 @@ $("cYes").addEventListener("click", () => {
 });
 $("camRevoke").addEventListener("click", () => { try { localStorage.removeItem("camConsent"); } catch {} logConsent("camera_revoked", {ozel:false, google:false, vercel:false}); closeCam(); cap.className = ""; cap.textContent = "Kamera rızan geri alındı."; });
 function openCam(){
+  if(!navigator.onLine){ toast("Kamera sohbeti için internet gerekir."); return; }
   if(!navigator.mediaDevices || !navigator.mediaDevices.getUserMedia){ cap.textContent = "Bu tarayıcı kamerayı desteklemiyor."; return; }
   if(!consentOk()){ showConsent(); return; }
   beginCam();

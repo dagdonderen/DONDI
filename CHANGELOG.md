@@ -1,5 +1,12 @@
 # Döndi sürüm notları
 
+## v1.9.0 (açık beta hazırlığı)
+- Çevrimdışı bandı, service worker, açılış ekranı, genel hata bildirimi.
+- Geri bildirim formu (/api/feedback), anonim istatistik + hata kaydı (/api/log, kapatılabilir).
+- Verilerimi indir (JSON) ve sil (cihaz + sunucudaki rıza kaydı, /api/delete).
+- Kullanım şartları sayfası, gizlilik metni 1.2.0, güvenlik başlıkları.
+- LANSMAN.md: yayın kararı ve eksik adımlar.
+
 ## v1.8.0
 - Konuşma paneli pencere olmaktan çıktı: ortalanmış, akan yazı; eski satırlar yukarıda silikleşir.
 - Daha büyük küre; cevap metni artık küre altında tekrarlanmıyor.
