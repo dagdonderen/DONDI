@@ -506,8 +506,12 @@ async function speakServer(text, done, onStart){
   setState("speaking");
   try {
     const t0 = Date.now(), reqs = chunks.map(c => { const p = fetchTts(c); p.catch(() => {}); return p; });
+    // İlk ses 3,5 sn içinde hazır değilse bu cevap telefonun kendi sesiyle hemen okunur (bekletmez).
+    const firstUrl = await Promise.race([reqs[0], new Promise(r => setTimeout(() => r("__gec"), 3500))]);
+    if(run !== ttsRun) return;
+    if(firstUrl === "__gec"){ lastTiming.tts = 3500; speakBrowser(text, done, onStart); return; }
     for(let i = 0; i < chunks.length; i++){
-      const url = await reqs[i]; if(run !== ttsRun) return;
+      const url = i === 0 ? firstUrl : await reqs[i]; if(run !== ttsRun) return;
       if(i === 0) lastTiming.tts = Date.now() - t0;
       await new Promise((res, rej) => { ttsAudio.onended = res; ttsAudio.onerror = rej; ttsAudio.onplaying = () => { if(i === 0 && onStart) onStart(); }; ttsAudio.src = url; ttsAudio.play().catch(rej); });
       if(run !== ttsRun) return;
