@@ -1,6 +1,8 @@
 // Döndi erkek sesi: Gemini TTS (Interactions API). Hata olursa istemci tarayıcı sesine döner.
-const TTS_MODEL = process.env.GEMINI_TTS_MODEL || "gemini-3.8-flash-tts";
-const TTS_FALLBACK = process.env.GEMINI_TTS_FALLBACK_MODEL || "gemini-3.8-flash-lite-tts";
+const TTS_MODEL = process.env.GEMINI_TTS_MODEL || "gemini-3.8-flash-lite-tts"; // hız için önce lite
+const TTS_FALLBACK = process.env.GEMINI_TTS_FALLBACK_MODEL || "gemini-3.8-flash-tts";
+const TTS_LEGACY = process.env.GEMINI_TTS_LEGACY_MODEL || "gemini-2.5-flash-preview-tts"; // generateContent yolu (son çare)
+let lastErr = "";
 const VOICE = process.env.GEMINI_TTS_VOICE || "Orus"; // erkek, kararlı ton
 const STYLE = process.env.GEMINI_TTS_STYLE ||
   "kendinden emin, özgüvenli, sıcak ve çekici bir erkek sesiyle; sakin, akıcı ve doğal bir tempoda";
@@ -34,15 +36,42 @@ async function synth(model, key, text, voice) {
       signal: ctrl.signal,
     });
     const data = await r.json().catch(() => ({}));
-    if (!r.ok) { console.error("TTS hata:", model, r.status, JSON.stringify(data).slice(0, 400)); return null; }
+    if (!r.ok) { lastErr = `${model} ${r.status} ${JSON.stringify(data).slice(0, 160)}`; console.error("TTS hata:", lastErr); return null; }
     const blocks = (data.steps || []).filter((s) => s.type === "model_output").flatMap((s) => s.content || []).filter((c) => c.type === "audio");
     const last = blocks[blocks.length - 1];
-    if (!last?.data) { console.error("TTS boş cevap:", model, JSON.stringify(data).slice(0, 300)); return null; }
+    if (!last?.data) { lastErr = `${model} boş`; console.error("TTS boş cevap:", model, JSON.stringify(data).slice(0, 300)); return null; }
     return last.data;
   } catch (e) {
     console.error("TTS istek hatası:", model, e?.name, e?.message);
     return null;
   } finally { clearTimeout(timer); }
+}
+
+function wav(pcmB64) {
+  const pcm = Buffer.from(pcmB64, "base64"), h = Buffer.alloc(44);
+  h.write("RIFF", 0); h.writeUInt32LE(36 + pcm.length, 4); h.write("WAVEfmt ", 8); h.writeUInt32LE(16, 16); h.writeUInt16LE(1, 20); h.writeUInt16LE(1, 22);
+  h.writeUInt32LE(24000, 24); h.writeUInt32LE(48000, 28); h.writeUInt16LE(2, 32); h.writeUInt16LE(16, 34); h.write("data", 36); h.writeUInt32LE(pcm.length, 40);
+  return Buffer.concat([h, pcm]).toString("base64");
+}
+async function synthLegacy(key, text, voice) {
+  const ctrl = new AbortController();
+  const timer = setTimeout(() => ctrl.abort(), 25000);
+  try {
+    const r = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/${TTS_LEGACY}:generateContent`, {
+      method: "POST",
+      headers: { "Content-Type": "application/json", "x-goog-api-key": key },
+      body: JSON.stringify({
+        contents: [{ parts: [{ text: `${STYLE} oku: ${text}` }] }],
+        generationConfig: { responseModalities: ["AUDIO"], speechConfig: { voiceConfig: { prebuiltVoiceConfig: { voiceName: voice } } } },
+      }),
+      signal: ctrl.signal,
+    });
+    const data = await r.json().catch(() => ({}));
+    if (!r.ok) { lastErr = `legacy ${r.status} ${JSON.stringify(data).slice(0, 160)}`; console.error("TTS hata:", TTS_LEGACY, lastErr); return null; }
+    const part = (data.candidates?.[0]?.content?.parts || []).find((p) => p.inlineData?.data);
+    if (!part) { lastErr = "legacy boş"; return null; }
+    return wav(part.inlineData.data);
+  } catch (e) { lastErr = `legacy ${e?.name}`; return null; } finally { clearTimeout(timer); }
 }
 
 export default async function handler(req, res) {
@@ -59,7 +88,9 @@ export default async function handler(req, res) {
   if ((await bump(`tts:${dayKey()}:${sid}`, 90000)) > eff.limits.tts_gunluk) return res.status(429).json({ error: "Günlük sesli cevap hakkın doldu; yazılı cevaplar devam eder." });
   for (const m of [TTS_MODEL, TTS_FALLBACK].filter((x, i, a) => x && a.indexOf(x) === i)) {
     const audio = await synth(m, key, text, voice);
-    if (audio) return res.status(200).json({ audio, mime: "audio/wav" });
+    if (audio) return res.status(200).json({ audio, mime: "audio/wav", model: m });
   }
-  return res.status(502).json({ error: "Ses üretilemedi." });
+  const legacy = await synthLegacy(key, text, voice);
+  if (legacy) return res.status(200).json({ audio: legacy, mime: "audio/wav", model: TTS_LEGACY });
+  return res.status(502).json({ error: "Ses üretilemedi.", detail: lastErr.slice(0, 200) });
 }

@@ -9,7 +9,7 @@ import { FIN_DECLS, FIN_TOOLS, FIN_RULES } from "../lib/fin.js";
 const MODEL = process.env.GEMINI_MODEL || "gemini-flash-latest";
 const FALLBACK_MODEL = process.env.GEMINI_FALLBACK_MODEL || "gemini-3.5-flash-lite";
 const DAILY_LIMIT = 30;
-const MAX_HISTORY = 20;
+const MAX_HISTORY = 12;
 
 const TONES = {
   samimi: "Samimi, sıcak ve arkadaşça bir dille konuş.",
@@ -188,7 +188,7 @@ async function callGemini(model, apiKey, contents, allowTools, ctx) {
       systemInstruction: { parts: [{ text: systemPrompt(ctx) }] },
       contents,
       tools: toolsFor(ctx.app),
-      generationConfig: { maxOutputTokens: 2048 },
+      generationConfig: { maxOutputTokens: ctx.voice ? 700 : 2048 },
     };
     if (!allowTools) body.toolConfig = { functionCallingConfig: { mode: "NONE" } };
     // Hız: düşük düşünme seviyesi (Gemini 3: thinkingLevel). Model desteklemiyorsa bir kez parametresiz tekrar dener.

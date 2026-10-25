@@ -1,5 +1,10 @@
 # Değişiklik geçmişi
 
+## 1.0.1
+- Açılışta otomatik başlar: sistem kontrolü (/api/health: yapay zekâ, TCMB, mikrofon) → "Tüm sistemlerim devrede" → sürekli dinleme. "Sohbet modu" butonu kaldırıldı.
+- Hız: düşünme seviyesi düşük (flash: low, lite: minimal), sesli modda 2-3 cümlelik cevap, geçmiş 12 mesaj, ilk ses parçası kısa, sessizlik süresi kısaldı, yazı cevap hemen görünür.
+- Ses: TTS için lite model önce, ardından flash, ardından generateContent yedek yolu; hata sebebi Ayarlar'daki "Ses çıkışı" satırında görünür. Otomatik ses engellenirse ilk dokunuşta konuşur.
+
 ## v1.0.0 (ilk genel sürüm, açık beta)
 - Planlar: Ücretsiz, Bireysel Plus/Pro, Şirket Plus/Pro/Pro Plus. İmzalı etkinleştirme kodu, sunucuda kısıtlar (araç, aylık mesaj, belge, web arama, sesli cevap), plan başına model, Planlar ekranı, beta bayrağı.
 - Yasal belge şablonları: abonelik şartları, ön bilgilendirme, mesafeli satış, iptal/iade, şirket hizmet sözleşmesi (legal/ + scripts/build_legal.mjs). Şirket bilgisi girilene kadar TASLAK bandıyla yayınlanır.

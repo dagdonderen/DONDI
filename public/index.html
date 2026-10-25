@@ -226,7 +226,6 @@ html[data-embed] .top,html[data-embed] .modes,html[data-embed] .foot{display:non
   <button class="ibtn" id="menuBtn" type="button" aria-label="Menü" aria-expanded="false" aria-controls="menu"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M4 7h16M4 12h16M4 17h16"/></svg></button>
   <div class="menu" id="menu" hidden>
     <button class="mi" id="voiceBtn" type="button" aria-pressed="true">Sesli cevap</button>
-    <button class="mi" id="autoBtn" type="button" aria-pressed="false">Sohbet modu (sürekli dinle)</button>
     <button class="mi" id="wakeBtn" type="button" aria-pressed="true">Uyanma kelimesi “Döndi”: açık</button>
     <button class="mi" id="pipBtn" type="button" hidden>Yüzen pencere</button>
     <button class="mi" id="mNew" type="button">Yeni sohbet</button>
@@ -271,7 +270,7 @@ html[data-embed] .top,html[data-embed] .modes,html[data-embed] .foot{display:non
   </section>
 </main>
 <footer class="foot">Döndi hata yapabilir. Tıbbi, hukuki veya finansal tavsiye değildir.</footer>
-<div class="hint" id="hint" hidden role="status"><button class="hx" id="hintX" type="button" aria-label="Kapat">×</button><b>BAŞLARKEN</b><p>Küreye <b>bir kere dokun</b>: Döndi seni sürekli dinler ve cevap verir. <b>Tekrar dokunursan</b> durur.</p><p>Aşağıdaki kutudan yazabilir, kamerayla da gösterebilirsin.</p><p class="sys"><span id="sMic">Mikrofon: bekleniyor</span> · <span id="sTts">Ses çıkışı: bekleniyor</span></p><i class="bar"></i></div>
+<div class="hint" id="hint" hidden role="status"><button class="hx" id="hintX" type="button" aria-label="Kapat">×</button><b>BAŞLARKEN</b><p>Döndi açılınca <b>kendiliğinden dinler</b>. “<b>Döndi</b>” diye seslen, sorunu sor. Durdurmak için küreye dokun, devam için tekrar dokun.</p><p>Aşağıdaki kutudan yazabilir, kamerayla da gösterebilirsin.</p><p class="sys"><span id="sMic">Mikrofon: bekleniyor</span> · <span id="sTts">Ses çıkışı: bekleniyor</span></p><i class="bar"></i></div>
 <div class="onb" id="consent" hidden><div class="card">
   <div class="st">AÇIK RIZA METNİ · KAMERA</div>
   <h2>Kamerayı kullanmadan önce</h2>
@@ -385,9 +384,9 @@ const wakeOn = () => settings.wake !== false;
 async function holdScreen(on){ try { if(on && navigator.wakeLock && !wl){ wl = await navigator.wakeLock.request("screen"); wl.addEventListener("release", () => { wl = null; }); } else if(!on && wl){ await wl.release(); wl = null; } } catch {} }
 document.addEventListener("visibilitychange", () => { if(auto && document.visibilityState === "visible"){ holdScreen(true); if(state === "idle" && !busy) setTimeout(() => { if(auto && state === "idle" && !busy) listen(); }, 300); } });
 function setAuto(on){
-  auto = on; $("autoBtn").setAttribute("aria-pressed", String(on)); autoFails = 0; holdScreen(on); if(on) awakeUntil = Date.now() + 15000;
+  auto = on; autoFails = 0; holdScreen(on); if(on) awakeUntil = Date.now() + 15000;
   if(on){ if(state === "idle") listen(); else setState(state); }
-  else { stopSpeak(); clearTimeout(silT); try { if(rec) rec.abort(); } catch {} setState("idle"); cap.className = ""; cap.textContent = "Sohbet durdu. Başlatmak için küreye dokun."; }
+  else { stopSpeak(); clearTimeout(silT); try { if(rec) rec.abort(); } catch {} setState("idle"); cap.className = ""; cap.textContent = "Duraklatıldı. Devam için küreye dokun."; }
 }
 
 // Saat
@@ -463,18 +462,22 @@ function speakBrowser(text, done, onStart){
     synth.speak(u);
   });
 }
-let ttsAudio = null, ttsRun = 0;
+let ttsAudio = null, ttsRun = 0, pendingSpeak = null, ttsFail = "";
+try { ttsAudio = new Audio(); ttsAudio.preload = "auto"; } catch {}
 function stopSpeak(){ ttsRun++; if(synth) synth.cancel(); if(ttsAudio){ try { ttsAudio.pause(); } catch {} } }
 function chunksOf(text){
   const plain = text.replace(/\*\*/g,"").replace(/^\s*[-*•]\s+/gm,"").replace(/[#`_|]/g,"").replace(/\s+/g," ").trim();
   const sents = plain.match(/[^.!?]+[.!?]*/g) || [plain]; const out = []; let cur = "";
-  for(const s of sents){ const lim = out.length ? 380 : 170; if((cur + s).length > lim && cur){ out.push(cur.trim()); cur = ""; } cur += s + " "; }
+  for(const s of sents){ const lim = out.length ? 380 : 110; if((cur + s).length > lim && cur){ out.push(cur.trim()); cur = ""; } cur += s + " "; }
   if(cur.trim()) out.push(cur.trim()); return out.slice(0, 3);
 }
+let ttsModelUsed = "";
+const ttsPre = {};
 async function fetchTts(t){
   if(!gemOk()) throw new Error("rıza yok");
+  const pk = t.replace(/\s+/g, " ").trim(); if(ttsPre[pk]){ const p = ttsPre[pk]; delete ttsPre[pk]; return p; }
   const r = await fetch("/api/tts", {method:"POST", headers:{"Content-Type":"application/json"}, body: JSON.stringify({text:t, voice: settings.ttsVoice || "Orus", ent: getEnt() || undefined, app: settings.app, fsub: settings.fsub})});
-  const d = await r.json().catch(() => ({})); if(!r.ok || !d.audio) throw new Error("tts");
+  const d = await r.json().catch(() => ({})); if(!r.ok || !d.audio) throw new Error(d.detail || d.error || ("tts " + r.status)); ttsModelUsed = d.model || "";
   const bin = atob(d.audio), arr = new Uint8Array(bin.length); for(let i = 0; i < bin.length; i++) arr[i] = bin.charCodeAt(i);
   return URL.createObjectURL(new Blob([arr], {type: d.mime || "audio/wav"}));
 }
@@ -489,9 +492,18 @@ async function speakServer(text, done, onStart){
       await new Promise((res, rej) => { ttsAudio.onended = res; ttsAudio.onerror = rej; ttsAudio.onplaying = () => { if(i === 0 && onStart) onStart(); }; ttsAudio.src = url; ttsAudio.play().catch(rej); });
       if(run !== ttsRun) return;
     }
+    if(ttsModelUsed) $("sTts").textContent = "Ses çıkışı: Döndi sesi hazır (" + ttsModelUsed + ")";
     done && done();
-  } catch { if(run !== ttsRun) return; speakBrowser(text, done, onStart); }
+  } catch(e) {
+    if(run !== ttsRun) return;
+    if(e && e.name === "NotAllowedError"){ // tarayıcı otomatik sesi engelledi: ilk dokunuşta söyle, o arada dinlemeye devam et
+      pendingSpeak = () => { try { if(rec) rec.abort(); } catch {} speakServer(text, () => { if(auto) setTimeout(listen, 300); }, null); }; onStart && onStart(); setState("idle"); cap.className = ""; cap.textContent = "Sesimi açmak için ekrana bir kez dokun."; done && done(); return;
+    }
+    ttsFail = (e && e.message) || "tts"; $("sTts").textContent = "Ses çıkışı: yedek tarayıcı sesi (Gemini sesi alınamadı: " + ttsFail.slice(0, 90) + ")"; speakBrowser(text, done, onStart);
+  }
 }
+function gestureUnlock(){ unlockTts(); if(pendingSpeak){ const f = pendingSpeak; pendingSpeak = null; f(); } }
+["pointerdown","keydown","touchstart"].forEach(ev => document.addEventListener(ev, gestureUnlock, {passive:true}));
 
 // Ses girişi
 const SR = window.SpeechRecognition || window.webkitSpeechRecognition; let rec = null, heard = "", silT = 0;
@@ -529,7 +541,7 @@ function listen(){
   stopSpeak(); heard = ""; rec = new SR(); rec.lang = "tr-TR"; rec.interimResults = true; rec.continuous = false; rec.maxAlternatives = 5;
   rec.onstart = () => { setState("listening"); cap.className = "me"; cap.textContent = "…"; };
   rec.onresult = e => { let t = "", fin = false; for(const r of e.results){ t += bestAlt(r); if(r.isFinal) fin = true; } t = fixName(t); heard = t; cap.textContent = t; clearTimeout(silT); silT = setTimeout(() => { try { rec.stop(); } catch {} }, fin ? 120 : 900); };
-  rec.onspeechend = () => { clearTimeout(silT); silT = setTimeout(() => { try { rec.stop(); } catch {} }, 350); };
+  rec.onspeechend = () => { clearTimeout(silT); silT = setTimeout(() => { try { rec.stop(); } catch {} }, 250); };
   rec.onerror = e => { if(e.error === "not-allowed" || e.error === "service-not-allowed"){ cap.className = ""; cap.textContent = (navigator.standalone ? "iPhone'da ana ekrandan açılan uygulamada ses tanıma çalışmıyor (Apple kısıtı). Döndi'yi Safari'de aç ya da yazarak kullan." : "Mikrofon izni verilmedi. Adres çubuğundaki kilit simgesinden izin ver. iPhone'da Ayarlar > Genel > Klavye > Dikte'yi Aç'ın da açık olması gerekir."); $("sMic").textContent = "Mikrofon: izin yok"; setAuto(false); } };
   rec.onend = () => { clearTimeout(silT); if(state !== "listening") return; if(heard.trim()){ autoFails = 0; const g = wakeGate(heard);
       if(g.ignore){ setState("idle"); cap.className = ""; cap.textContent = "“Döndi” diye seslen, dinleyeyim."; setTimeout(() => { if(auto && state === "idle" && !busy) listen(); }, 250); return; }
@@ -543,7 +555,7 @@ function listen(){
 }
 // iOS/Safari: konuşma çıkışı ancak kullanıcı dokunuşuyla açılır; ilk dokunuşta sessiz bir cümleyle kilidi aç
 let ttsUnlocked = false;
-function unlockTts(){ if(ttsUnlocked) return; ttsUnlocked = true; try { ttsAudio = new Audio(); ttsAudio.src = "data:audio/wav;base64,UklGRiQAAABXQVZFZm10IBAAAAABAAEAQB8AAEAfAAABAAgAZGF0YQAAAAA="; ttsAudio.play().catch(() => {}); } catch {} if(!synth) return; try { const u = new SpeechSynthesisUtterance(" "); u.volume = 0; u.lang = "tr-TR"; synth.speak(u); } catch {} }
+function unlockTts(){ if(ttsUnlocked) return; ttsUnlocked = true; try { if(!ttsAudio) ttsAudio = new Audio(); ttsAudio.src = "data:audio/wav;base64,UklGRiQAAABXQVZFZm10IBAAAAABAAEAQB8AAEAfAAABAAgAZGF0YQAAAAA="; ttsAudio.play().catch(() => {}); } catch {} if(!synth) return; try { const u = new SpeechSynthesisUtterance(" "); u.volume = 0; u.lang = "tr-TR"; synth.speak(u); } catch {} }
 $("orb").addEventListener("click", () => { unlockTts(); setAuto(!auto); });
 $("micBtn").addEventListener("click", () => { unlockTts(); setAuto(!auto); });
 
@@ -568,8 +580,8 @@ async function send(text, viaVoice, image){
     let shown = false;
     const reveal = () => { if(shown) return; shown = true; clearTimeout(revT); wait.remove(); const botEl = addMsg("assistant", data.reply); handleResults(data.results, botEl); cap.className = ""; cap.textContent = ""; };
     const revT = setTimeout(reveal, 14000);
-    busy = false;
-    if(viaVoice && voiceOn && (synth || ttsAudio) && (!wasAuto || auto)) speak(data.reply, () => { reveal(); awakeUntil = Date.now() + 15000; setState("idle"); if(auto) setTimeout(listen, 400); }, reveal);
+    busy = false; if(viaVoice) reveal();
+    if(viaVoice && voiceOn && (synth || ttsAudio) && (!wasAuto || auto)) speak(data.reply, () => { reveal(); awakeUntil = Date.now() + 15000; setState("idle"); if(auto) setTimeout(listen, 400); }, null);
     else { reveal(); setState("idle"); if(auto) setTimeout(() => { if(auto && state === "idle" && !busy) listen(); }, 400); }
   }catch(err){
     wait.remove(); history.pop(); userEl.remove(); syncChips(); busy = false; setState("idle");
@@ -763,10 +775,9 @@ function showHint(){
 }
 function syncChips(){ $("chips").style.display = history.length ? "none" : "flex"; }
 $("voiceBtn").addEventListener("click", e => { voiceOn = !voiceOn; e.currentTarget.setAttribute("aria-pressed", voiceOn); if(!voiceOn) stopSpeak(); });
-$("autoBtn").addEventListener("click", () => { unlockTts(); setAuto(!auto); });
 function chip(parent, cls, label, text){ const b = document.createElement("button"); b.type = "button"; b.className = cls; b.textContent = label; b.addEventListener("click", () => { unlockTts(); send(text, true); }); parent.appendChild(b); }
 function renderChips(){ const c = $("chips"); c.innerHTML = ""; SUGS[sugKey()].forEach(([l, t]) => chip(c, "chip", l, t)); }
-const APP_VERSION = "1.0.0";
+const APP_VERSION = "1.0.1";
 // ---- Ayarlar (v1.1) ----
 function fillVoices(){
   if(!synth) return; const sel = $("sVoice"); sel.innerHTML = "";
@@ -774,7 +785,7 @@ function fillVoices(){
   synth.getVoices().filter(x => /^tr/i.test(x.lang)).forEach(x => { const op = document.createElement("option"); op.value = x.name; op.textContent = x.name; sel.appendChild(op); });
   sel.value = settings.voice;
 }
-function chosenVoice(){ if(synth && settings.voice){ const f = synth.getVoices().find(x => x.name === settings.voice); if(f) return f; } if(synth){ const m = synth.getVoices().find(x => /^tr/i.test(x.lang) && /tolga|cem|erkek|male/i.test(x.name)); if(m) return m; } return trVoice; }
+function chosenVoice(){ if(synth && settings.voice){ const f = synth.getVoices().find(x => x.name === settings.voice); if(f) return f; } if(synth){ const m = synth.getVoices().find(x => /^tr/i.test(x.lang) && /tolga|cem|ahmet|yusuf|erkek|male/i.test(x.name)); if(m) return m; } return trVoice; }
 function readFin(){ const n = id => { const v = String($(id).value).replace(/[^\d]/g,""); return v ? Number(v) : null; }; return {sektor: $("fSek").value.replace(/[^\p{L}\p{N} ,.&/-]/gu,"").trim().slice(0,60), gelir:n("fGel"), gider:n("fGid"), nakit:n("fNak"), borc:n("fBor"), kdv:n("fKdv")}; }
 function applyTheme(){ document.documentElement.dataset.mode = settings.mode || "dark"; document.documentElement.dataset.big = settings.big || "0"; document.querySelector('meta[name=theme-color]').content = settings.mode === "light" ? "#f6f1e8" : "#0b0907"; document.documentElement.dataset.app = settings.app; const t = (settings.mode === "light" ? APPC_LIGHT : APPC)[colorKey()] || APPC.kisisel; document.documentElement.style.setProperty("--c", t[0]); document.documentElement.style.setProperty("--v", t[1]); }
 function themeBtns(){ document.querySelectorAll("#sTheme button").forEach(b => b.setAttribute("aria-pressed", String(b.dataset.t === settings.theme))); }
@@ -1069,7 +1080,7 @@ $("oOk").addEventListener("click", () => {
   else if(!$("gemCk").checked && gemOk()){ logConsent("gemini_revoked", {google:false}, GEM_V); lsSet("gem", null); }
   if(!lsGet("onb3")){ logConsent("age18", {over18:true}); lsSet("onb3", "1"); }
   $("onb").hidden = true;
-  if(gemOk() && !greeted) greet();
+  if(gemOk() && !greeted) boot();
 });
 $("permBtn").addEventListener("click", openPanel);
 // ---- Her açılışta sesli karşılama; durdurulana kadar sesli sohbet sürer ----
@@ -1088,14 +1099,27 @@ function greeting(){
   const tanit = lsGet("introDone") ? "" : " Ben Döndi."; lsSet("introDone", "1");
   return `${sel}${ad}.${tanit}${bolum}${ek} Dinliyorum.`;
 }
-function greet(){
-  greeted = true; $("go").hidden = true; unlockTts();
-  const t = greeting(); cap.className = ""; cap.textContent = t; setState("speaking");
+// Açılışta otomatik: sistem kontrolü → "Tüm sistemlerim devrede" + karşılama → sürekli dinleme (buton yok)
+async function boot(){
+  if(EMBED || greeted) return; greeted = true; $("go").hidden = true; unlockTts();
+  cap.className = ""; cap.textContent = "Sistemler kontrol ediliyor…"; setState("thinking");
+  const issues = []; let micDenied = false;
+  if(!SR) issues.push("bu tarayıcı sesli komutu desteklemiyor");
+  if(!navigator.onLine) issues.push("internet bağlantısı yok");
+  try { const st = await navigator.permissions.query({name:"microphone"}); if(st.state === "denied"){ micDenied = true; issues.push("mikrofon izni kapalı"); } } catch {}
+  const ok1 = "Tüm sistemlerim devrede. " + greeting();
+  const first = chunksOf(ok1)[0];
+  if(voiceOn && settings.voiceKind !== "telefon" && navigator.onLine && !issues.length){ const pr = fetchTts(first); pr.catch(() => {}); ttsPre[first.replace(/\s+/g, " ").trim()] = pr; }
+  let h = null; try { const r = await fetch("/api/health"); h = await r.json(); } catch { if(navigator.onLine) issues.push("sunucuya ulaşamıyorum"); }
+  if(h){ if(!h.ai) issues.push("yapay zekâ bağlantım eksik"); if(h.tcmb === false) issues.push("Merkez Bankası kurlarına şu an ulaşamıyorum"); }
+  const msg = issues.length ? "Çoğu sistemim devrede ama " + issues.join(", ") + ". Dinliyorum." : ok1;
+  cap.textContent = msg; setState("speaking");
+  if(!SR || micDenied){ speak(msg, () => { setState("idle"); }, null); return; }
   let go = false; const start = () => { if(go) return; go = true; setState("idle"); setAuto(true); };
-  setTimeout(start, 2500 + t.length * 85); speak(t, start, null);
+  setTimeout(start, 3000 + msg.length * 85); speak(msg, start, null);
 }
-$("goBtn").addEventListener("click", greet);
-if(!lsGet("onb3") || lsGet("ayd") !== AYD_V || !gemOk()) openPanel(); else $("go").hidden = false;
+$("goBtn").addEventListener("click", boot);
+if(!lsGet("onb3") || lsGet("ayd") !== AYD_V || !gemOk()) openPanel(); else { $("go").hidden = true; boot(); }
 </script>
 </body>
 </html>
