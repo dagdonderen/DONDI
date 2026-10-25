@@ -102,6 +102,12 @@ main{position:relative;z-index:1;width:100%;max-width:760px;margin:0 auto;flex:1
 #orb:active{transform:scale(.94)}
 #orb svg{width:44%;height:44%;stroke:#fff;fill:none;stroke-width:1.9;stroke-linecap:round}
 .core[data-auto="1"]::after{content:"";position:absolute;inset:4%;border-radius:50%;border:2px solid var(--c);opacity:.55;pointer-events:none}
+.core{transition:color .3s}
+.core[data-s=listening]{--c:#34d399;--v:#059669}
+.core[data-s=thinking]{--c:#a78bfa;--v:#6d28d9}
+.core[data-s=speaking]{--c:#fbbf24;--v:#ea580c}
+.core[data-s=idle]{--c:#7dd3fc;--v:#2563eb}
+.core[data-s=idle][data-auto="0"]{--c:#94a3b8;--v:#475569}
 .core[data-s=listening] .r1,.core[data-s=listening] .r2{animation-duration:1.4s}
 .core[data-s=listening] .r2{animation-delay:.7s}
 .core[data-s=thinking] .r3{animation-duration:1.2s;opacity:.9}
@@ -109,6 +115,7 @@ main{position:relative;z-index:1;width:100%;max-width:760px;margin:0 auto;flex:1
 @keyframes ping{0%{transform:scale(.8);opacity:.7}100%{transform:scale(1.45);opacity:0}}
 @keyframes breathe{50%{transform:scale(1.18);opacity:.75}}
 #capSlot{display:flex;flex-direction:column;align-items:center;gap:2px;max-width:100%}
+#status[data-s=listening]{color:#34d399}#status[data-s=thinking]{color:#a78bfa}#status[data-s=speaking]{color:#fbbf24}#status[data-s=idle]{color:#7dd3fc}
 #status{font-size:11px;letter-spacing:.28em;text-transform:uppercase;color:var(--c)}
 #cap{max-width:560px;text-align:center;color:var(--ink);font-size:15px;overflow:hidden;display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;min-height:1.5em}
 #cap.me{color:var(--mut)}
@@ -378,7 +385,7 @@ if(EMBED){ origApp = settings.app; settings.app = "finans"; document.documentEle
 const saveSettings = () => { try { localStorage.setItem("settings", JSON.stringify(EMBED && origApp ? {...settings, app:origApp} : settings)); } catch {} };
 const cleanName = s => String(s || "").replace(/[^\p{L}\p{N} '’.-]/gu, "").trim().slice(0, 30);
 const LABEL = {idle:"HAZIR", listening:"DİNLİYORUM", thinking:"DÜŞÜNÜYORUM", speaking:"KONUŞUYORUM"};
-function setState(s){ document.body.dataset.auto = auto ? "1" : "0"; const cm = $("camMic"); if(cm) cm.textContent = auto ? "Durdur" : "Konuş"; state = s; core.dataset.s = s; core.dataset.auto = auto ? "1" : "0"; status.textContent = (s === "idle" && auto) ? (wakeOn() ? "“DÖNDİ” DİYE SESLEN" : "SOHBET AÇIK") : LABEL[s]; }
+function setState(s){ document.body.dataset.auto = auto ? "1" : "0"; const cm = $("camMic"); if(cm) cm.textContent = auto ? "Durdur" : "Konuş"; state = s; core.dataset.s = s; status.dataset.s = s; core.dataset.auto = auto ? "1" : "0"; status.textContent = (s === "idle" && auto) ? (wakeOn() ? "“DÖNDİ” DİYE SESLEN" : "SOHBET AÇIK") : LABEL[s]; }
 let autoFails = 0, awakeUntil = 0, wl = null;
 const wakeOn = () => settings.wake !== false;
 async function holdScreen(on){ try { if(on && navigator.wakeLock && !wl){ wl = await navigator.wakeLock.request("screen"); wl.addEventListener("release", () => { wl = null; }); } else if(!on && wl){ await wl.release(); wl = null; } } catch {} }
@@ -532,7 +539,7 @@ function fixName(t){
 function voiceCmd(t){
   const n = t.toLocaleLowerCase("tr").replace(/[.,!?]/g, "").trim();
   if(/^(dur|sus|yeter|kes|sessiz ol)$/.test(n)){ stopSpeak(); setState("idle"); cap.className = ""; cap.textContent = "Tamam."; if(auto) setTimeout(listen, 300); return true; }
-  if(/^(kapat|görüşürüz|görüşmek üzere|hoşça kal|hoşçakal|güle güle|sohbeti kapat|sohbeti bitir|uyu)$/.test(n)){ setAuto(false); cap.textContent = "Görüşürüz."; return true; }
+  if(/^(döndi )?(kendini (kapat|durdur|uyut)|dinlemeyi (bırak|kapat|durdur|bitir)|dinlemeyi kes|artık dinleme|beni dinleme|mikrofonu kapat)/.test(n) || /^(kapat|görüşürüz|görüşmek üzere|hoşça kal|hoşçakal|güle güle|sohbeti kapat|sohbeti bitir|uyu)$/.test(n)){ setAuto(false); cap.textContent = "Görüşürüz."; return true; }
   return false;
 }
 function listen(){
@@ -777,7 +784,7 @@ function syncChips(){ $("chips").style.display = history.length ? "none" : "flex
 $("voiceBtn").addEventListener("click", e => { voiceOn = !voiceOn; e.currentTarget.setAttribute("aria-pressed", voiceOn); if(!voiceOn) stopSpeak(); });
 function chip(parent, cls, label, text){ const b = document.createElement("button"); b.type = "button"; b.className = cls; b.textContent = label; b.addEventListener("click", () => { unlockTts(); send(text, true); }); parent.appendChild(b); }
 function renderChips(){ const c = $("chips"); c.innerHTML = ""; SUGS[sugKey()].forEach(([l, t]) => chip(c, "chip", l, t)); }
-const APP_VERSION = "1.0.1";
+const APP_VERSION = "1.0.2";
 // ---- Ayarlar (v1.1) ----
 function fillVoices(){
   if(!synth) return; const sel = $("sVoice"); sel.innerHTML = "";
@@ -1103,6 +1110,7 @@ function greeting(){
 async function boot(){
   if(EMBED || greeted) return; greeted = true; $("go").hidden = true; unlockTts();
   cap.className = ""; cap.textContent = "Sistemler kontrol ediliyor…"; setState("thinking");
+  try { if(navigator.storage && navigator.storage.persist) navigator.storage.persist(); } catch {}
   const issues = []; let micDenied = false;
   if(!SR) issues.push("bu tarayıcı sesli komutu desteklemiyor");
   if(!navigator.onLine) issues.push("internet bağlantısı yok");
