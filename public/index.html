@@ -187,11 +187,7 @@ body[data-auto="1"] #micBtn{animation:pulse 1.6s ease-in-out infinite}
 #toast{position:fixed;left:12px;right:12px;bottom:calc(90px + env(safe-area-inset-bottom));z-index:31;max-width:420px;margin:0 auto;background:var(--pop);border:1px solid var(--line);color:var(--ink);border-radius:14px;padding:12px 14px;font-size:14px;text-align:center;box-shadow:0 10px 40px rgba(0,0,0,.5)}
 #splash{position:fixed;inset:0;z-index:100;background:#0b0907;display:grid;place-content:center;justify-items:center;gap:16px;color:#f0b254;letter-spacing:.3em;transition:opacity .4s}
 #splash.off{opacity:0;pointer-events:none}
-#go{position:fixed;inset:0;z-index:40;background:rgba(10,8,6,.86);display:grid;place-items:center;padding:24px}#go[hidden]{display:none}
-#goBtn{background:none;border:0;color:var(--ink);display:grid;justify-items:center;gap:14px;font:inherit}
-#goBtn .orb{width:132px;height:132px;border-radius:50%;background:radial-gradient(circle at 35% 30%,#fff6,transparent 45%),var(--c);box-shadow:0 0 60px var(--c);animation:goP 2.2s ease-in-out infinite}
-#goBtn b{font-size:20px;letter-spacing:.08em}#goBtn small{color:var(--mut);font-size:14px}
-@keyframes goP{50%{transform:scale(1.06);box-shadow:0 0 90px var(--c)}}
+.core.boot{animation:bootP 1.5s ease-out}@keyframes bootP{0%{transform:scale(.6);filter:brightness(2.2)}55%{transform:scale(1.12)}100%{transform:scale(1)}}
 #splash .sp{width:46px;height:46px;border-radius:50%;border:3px solid rgba(240,178,84,.25);border-top-color:#f0b254;animation:spin 1s linear infinite}
 @keyframes spin{to{transform:rotate(360deg)}}
 .modal{position:fixed;inset:0;z-index:40;background:rgba(0,0,0,.6);display:grid;place-items:center;padding:16px}
@@ -330,7 +326,6 @@ html[data-embed] .top,html[data-embed] .modes,html[data-embed] .foot{display:non
 </div></div>
 <div id="net" role="status" hidden>İnternet yok. Bağlantı gelince Döndi tekrar cevap verebilir.</div>
 <div id="toast" role="status" hidden></div>
-<div id="go" hidden><button id="goBtn" type="button" aria-label="Döndi ile sesli sohbeti başlat"><span class="orb"></span><b>Döndi'yi başlat</b><small>Dokun, sesli sohbet başlasın</small></button></div>
 <div id="splash" aria-hidden="true"><div class="sp"></div><b>DÖNDİ</b></div>
 <div id="fb" class="modal" hidden><div class="mbox"><h3>Geri bildirim</h3>
   <p class="nt">Ne beğendin, ne çalışmadı? Mesajın içeriği dışında kişisel veri gönderilmez.</p>
@@ -355,6 +350,7 @@ html[data-embed] .top,html[data-embed] .modes,html[data-embed] .foot{display:non
 </div></div>
 <script>
 let pip = null;
+let greeted = false, actx = null, amb = null; // açılış/ortam sesleri
 const EMBED = new URLSearchParams(location.search).has("embed");
 const $ = id => document.getElementById(id) || (pip && !pip.closed ? pip.document.getElementById(id) : null);
 const core = $("core"), status = $("status"), cap = $("cap"), log = $("log"), input = $("t"), sendBtn = $("send");
@@ -385,12 +381,13 @@ if(EMBED){ origApp = settings.app; settings.app = "finans"; document.documentEle
 const saveSettings = () => { try { localStorage.setItem("settings", JSON.stringify(EMBED && origApp ? {...settings, app:origApp} : settings)); } catch {} };
 const cleanName = s => String(s || "").replace(/[^\p{L}\p{N} '’.-]/gu, "").trim().slice(0, 30);
 const LABEL = {idle:"HAZIR", listening:"DİNLİYORUM", thinking:"DÜŞÜNÜYORUM", speaking:"KONUŞUYORUM"};
-function setState(s){ document.body.dataset.auto = auto ? "1" : "0"; const cm = $("camMic"); if(cm) cm.textContent = auto ? "Durdur" : "Konuş"; state = s; core.dataset.s = s; status.dataset.s = s; core.dataset.auto = auto ? "1" : "0"; status.textContent = (s === "idle" && auto) ? (wakeOn() ? "“DÖNDİ” DİYE SESLEN" : "SOHBET AÇIK") : LABEL[s]; }
+function setState(s){ ambient(s === "listening"); document.body.dataset.auto = auto ? "1" : "0"; const cm = $("camMic"); if(cm) cm.textContent = auto ? "Durdur" : "Konuş"; state = s; core.dataset.s = s; status.dataset.s = s; core.dataset.auto = auto ? "1" : "0"; status.textContent = (s === "idle" && auto) ? (wakeOn() ? "“DÖNDİ” DİYE SESLEN" : "SOHBET AÇIK") : LABEL[s]; }
 let autoFails = 0, awakeUntil = 0, wl = null;
 const wakeOn = () => settings.wake !== false;
 async function holdScreen(on){ try { if(on && navigator.wakeLock && !wl){ wl = await navigator.wakeLock.request("screen"); wl.addEventListener("release", () => { wl = null; }); } else if(!on && wl){ await wl.release(); wl = null; } } catch {} }
 document.addEventListener("visibilitychange", () => { if(auto && document.visibilityState === "visible"){ holdScreen(true); if(state === "idle" && !busy) setTimeout(() => { if(auto && state === "idle" && !busy) listen(); }, 300); } });
 function setAuto(on){
+  if(greeted && on !== auto){ try { actx = actx || new (window.AudioContext || window.webkitAudioContext)(); actx.resume && actx.resume(); } catch {} on ? chime() : powerDown(); }
   auto = on; autoFails = 0; holdScreen(on); if(on) awakeUntil = Date.now() + 15000;
   if(on){ if(state === "idle") listen(); else setState(state); }
   else { stopSpeak(); clearTimeout(silT); try { if(rec) rec.abort(); } catch {} setState("idle"); cap.className = ""; cap.textContent = "Duraklatıldı. Devam için küreye dokun."; }
@@ -1091,32 +1088,60 @@ $("oOk").addEventListener("click", () => {
   if(gemOk() && !greeted) boot();
 });
 $("permBtn").addEventListener("click", openPanel);
-// ---- Her açılışta sesli karşılama; durdurulana kadar sesli sohbet sürer ----
-let greeted = false;
+// ---- Açılış: animasyon sesi + "Tüm sistemler devrede. Sizi dinliyorum." ve sürekli açık mikrofon ----
+// Tarayıcılar dokunuş olmadan ses çalmayı engelleyebilir; o durumda mikrofon yine açılır, ses ilk dokunuşta çalar.
 function greeting(){
-  // Ad yalnızca kullanıcının kendi Ayarlar'da yazdığı addır; boşsa adsız selamlanır.
-  const now = Date.now(), last = Number(lsGet("lastGreet") || 0); lsSet("lastGreet", String(now));
-  if(now - last < 60 * 60 * 1000) return "Tekrar hoş geldin. Dinliyorum.";
-  const h = new Date().getHours(), sel = h < 5 ? "İyi geceler" : h < 12 ? "Günaydın" : h < 18 ? "İyi günler" : "İyi akşamlar";
-  const ad = settings.name ? ", " + settings.name : "";
-  const bolum = settings.app === "finans" ? (settings.fsub === "isletme" ? " Şirket finansı bölümündeyiz." : " Bireysel finans bölümündeyiz.") : "";
-  const end = new Date(); end.setHours(23, 59, 59, 999);
+  const now = Date.now(), end = new Date(); end.setHours(23, 59, 59, 999);
   const bugun = rems.filter(r => r.at > now && r.at <= end.getTime()).length;
-  const ek = bugun ? ` Bugün ${bugun} hatırlatıcın var.` : "";
-  // Kendini yalnızca ilk açılışta tanıtır.
-  const tanit = lsGet("introDone") ? "" : " Ben Döndi."; lsSet("introDone", "1");
-  return `${sel}${ad}.${tanit}${bolum}${ek} Dinliyorum.`;
+  return "Tüm sistemler devrede." + (bugun ? ` Bugün ${bugun} hatırlatıcınız var.` : "") + " Sizi dinliyorum.";
+}
+function chime(){
+  try {
+    actx = actx || new (window.AudioContext || window.webkitAudioContext)();
+    if(actx.state !== "running") return false;
+    const t0 = actx.currentTime, g = actx.createGain(); g.connect(actx.destination);
+    g.gain.setValueAtTime(0.0001, t0); g.gain.exponentialRampToValueAtTime(0.18, t0 + 0.05); g.gain.exponentialRampToValueAtTime(0.0001, t0 + 0.9);
+    [523.25, 659.25, 783.99, 1046.5].forEach((f, i) => { const o = actx.createOscillator(); o.type = "sine"; o.frequency.value = f; o.connect(g); o.start(t0 + i * 0.09); o.stop(t0 + 0.9); });
+    return true;
+  } catch { return false; }
+}
+function powerDown(){
+  try {
+    if(!actx || actx.state !== "running") return;
+    const t0 = actx.currentTime, g = actx.createGain(); g.connect(actx.destination);
+    g.gain.setValueAtTime(0.0001, t0); g.gain.exponentialRampToValueAtTime(0.16, t0 + 0.04); g.gain.exponentialRampToValueAtTime(0.0001, t0 + 0.75);
+    [1046.5, 783.99, 523.25, 392].forEach((f, i) => { const o = actx.createOscillator(); o.type = "triangle"; o.frequency.value = f; o.connect(g); o.start(t0 + i * 0.08); o.stop(t0 + 0.75); });
+  } catch {}
+}
+// Dinlerken: çok kısık, yumuşak "sistem çalışıyor" sesi (süzgeçli alçak uğultu + yavaş nabız + seyrek ince tıkırtı).
+function ambient(on){
+  try {
+    if(on && !amb){
+      if(!actx || actx.state !== "running") return;
+      const t0 = actx.currentTime, out = actx.createGain(); out.gain.setValueAtTime(0.0001, t0); out.gain.exponentialRampToValueAtTime(0.022, t0 + 0.6); out.connect(actx.destination);
+      const lp = actx.createBiquadFilter(); lp.type = "lowpass"; lp.frequency.value = 420; lp.connect(out);
+      const o1 = actx.createOscillator(), o2 = actx.createOscillator(); o1.type = "sine"; o2.type = "sine"; o1.frequency.value = 110; o2.frequency.value = 164.8; o1.connect(lp); o2.connect(lp);
+      const lfo = actx.createOscillator(), lg = actx.createGain(); lfo.frequency.value = 0.35; lg.gain.value = 0.012; lfo.connect(lg); lg.connect(out.gain);
+      [o1, o2, lfo].forEach(o => o.start());
+      const tick = setInterval(() => { try { const t = actx.currentTime, g = actx.createGain(), o = actx.createOscillator(); o.type = "sine"; o.frequency.value = 1800 + Math.random() * 900; g.gain.setValueAtTime(0.0001, t); g.gain.exponentialRampToValueAtTime(0.012, t + 0.01); g.gain.exponentialRampToValueAtTime(0.0001, t + 0.12); o.connect(g); g.connect(actx.destination); o.start(t); o.stop(t + 0.13); } catch {} }, 1400);
+      amb = {out, nodes: [o1, o2, lfo], tick};
+    } else if(!on && amb){
+      const a = amb; amb = null; clearInterval(a.tick); const t = actx.currentTime;
+      a.out.gain.cancelScheduledValues(t); a.out.gain.setValueAtTime(Math.max(0.0002, a.out.gain.value), t); a.out.gain.exponentialRampToValueAtTime(0.0001, t + 0.35);
+      a.nodes.forEach(o => { try { o.stop(t + 0.4); } catch {} });
+    }
+  } catch {}
 }
 // Açılışta otomatik: sistem kontrolü → "Tüm sistemlerim devrede" + karşılama → sürekli dinleme (buton yok)
 async function boot(){
-  if(EMBED || greeted) return; greeted = true; $("go").hidden = true; unlockTts();
+  if(EMBED || greeted) return; greeted = true; core.classList.add("boot"); setTimeout(() => core.classList.remove("boot"), 1600); try { actx = actx || new (window.AudioContext || window.webkitAudioContext)(); } catch {} chime(); if(!actx || actx.state !== "running"){ const f = () => { document.removeEventListener("pointerdown", f, true); unlockTts(); try { actx.resume().then(() => { chime(); if(state === "listening") ambient(true); }); } catch {} }; document.addEventListener("pointerdown", f, true); } unlockTts();
   cap.className = ""; cap.textContent = "Sistemler kontrol ediliyor…"; setState("thinking");
   try { if(navigator.storage && navigator.storage.persist) navigator.storage.persist(); } catch {}
   const issues = []; let micDenied = false;
   if(!SR) issues.push("bu tarayıcı sesli komutu desteklemiyor");
   if(!navigator.onLine) issues.push("internet bağlantısı yok");
   try { const st = await navigator.permissions.query({name:"microphone"}); if(st.state === "denied"){ micDenied = true; issues.push("mikrofon izni kapalı"); } } catch {}
-  const ok1 = "Tüm sistemlerim devrede. " + greeting();
+  const ok1 = greeting();
   const first = chunksOf(ok1)[0];
   if(voiceOn && settings.voiceKind !== "telefon" && navigator.onLine && !issues.length){ const pr = fetchTts(first); pr.catch(() => {}); ttsPre[first.replace(/\s+/g, " ").trim()] = pr; }
   let h = null; try { const r = await fetch("/api/health"); h = await r.json(); } catch { if(navigator.onLine) issues.push("sunucuya ulaşamıyorum"); }
@@ -1127,8 +1152,7 @@ async function boot(){
   let go = false; const start = () => { if(go) return; go = true; setState("idle"); setAuto(true); };
   setTimeout(start, 3000 + msg.length * 85); speak(msg, start, null);
 }
-$("goBtn").addEventListener("click", boot);
-if(!lsGet("onb3") || lsGet("ayd") !== AYD_V || !gemOk()) openPanel(); else { $("go").hidden = true; boot(); }
+if(!lsGet("onb3") || lsGet("ayd") !== AYD_V || !gemOk()) openPanel(); else { boot(); }
 </script>
 </body>
 </html>
