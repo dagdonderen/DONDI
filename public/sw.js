@@ -1,5 +1,5 @@
 // Çevrimdışı kabuk: yalnızca sayfa dosyaları önbelleğe alınır, /api asla.
-const V = "dondi-v1.0.2";
+const V = "dondi-v1.0.3";
 const SHELL = ["/", "/manifest.json", "/icon-192.png", "/gizlilik.html", "/kullanim-sartlari.html", "/yasal.html"];
 self.addEventListener("install", e => { e.waitUntil(caches.open(V).then(c => c.addAll(SHELL)).then(() => self.skipWaiting())); });
 self.addEventListener("activate", e => { e.waitUntil(caches.keys().then(ks => Promise.all(ks.filter(k => k !== V).map(k => caches.delete(k)))).then(() => self.clients.claim())); });

@@ -384,7 +384,7 @@ export default async function handler(req, res) {
   if (pdfData) lastParts.unshift({ inlineData: { mimeType: "application/pdf", data: pdfData } });
   if (img) base[base.length - 1].parts.unshift({ inlineData: { mimeType: "image/jpeg", data: img } });
 
-  const models = (eff.limits.model === "lite" ? [FALLBACK_MODEL, MODEL] : [MODEL, FALLBACK_MODEL]).filter((m, i, a) => m && a.indexOf(m) === i);
+  const models = (eff.limits.model === "lite" || (voice === true && app === "kisisel") ? [FALLBACK_MODEL, MODEL] : [MODEL, FALLBACK_MODEL]).filter((m, i, a) => m && a.indexOf(m) === i);
   const t0 = Date.now();
   for (const model of models) {
     if (Date.now() - t0 > 35000) break; // zaman sınırına yaklaşıldı
