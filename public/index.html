@@ -547,7 +547,7 @@ function listen(){
   if(busy) return;
   stopSpeak(); heard = ""; rec = new SR(); rec.lang = "tr-TR"; rec.interimResults = true; rec.continuous = false; rec.maxAlternatives = 5;
   rec.onstart = () => { setState("listening"); cap.className = "me"; cap.textContent = "…"; };
-  rec.onresult = e => { let t = "", fin = false; for(const r of e.results){ t += bestAlt(r); if(r.isFinal) fin = true; } t = fixName(t); heard = t; cap.textContent = t; clearTimeout(silT); silT = setTimeout(() => { try { rec.stop(); } catch {} }, fin ? 120 : 900); };
+  rec.onresult = e => { let t = "", fin = false; for(const r of e.results){ t += bestAlt(r); if(r.isFinal) fin = true; } t = fixName(t); heard = t; cap.textContent = t; clearTimeout(silT); silT = setTimeout(() => { try { rec.stop(); } catch {} }, fin ? 100 : 650); };
   rec.onspeechend = () => { clearTimeout(silT); silT = setTimeout(() => { try { rec.stop(); } catch {} }, 250); };
   rec.onerror = e => { if(e.error === "not-allowed" || e.error === "service-not-allowed"){ cap.className = ""; cap.textContent = (navigator.standalone ? "iPhone'da ana ekrandan açılan uygulamada ses tanıma çalışmıyor (Apple kısıtı). Döndi'yi Safari'de aç ya da yazarak kullan." : "Mikrofon izni verilmedi. Adres çubuğundaki kilit simgesinden izin ver. iPhone'da Ayarlar > Genel > Klavye > Dikte'yi Aç'ın da açık olması gerekir."); $("sMic").textContent = "Mikrofon: izin yok"; setAuto(false); } };
   rec.onend = () => { clearTimeout(silT); if(state !== "listening") return; if(heard.trim()){ autoFails = 0; const g = wakeGate(heard);
