@@ -469,11 +469,27 @@ function speakBrowser(text, done, onStart){
 let ttsAudio = null, ttsRun = 0, pendingSpeak = null, ttsFail = "";
 try { ttsAudio = new Audio(); ttsAudio.preload = "auto"; } catch {}
 function stopSpeak(){ ttsRun++; if(synth) synth.cancel(); if(ttsAudio){ try { ttsAudio.pause(); } catch {} } }
+// Ses üretimi metin uzunluğuyla orantılı sürer: ilk parça çok kısa tutulur (hemen konuşmaya başlar),
+// sonraki parçalar paralel üretilir ve ilk parça çalarken hazır olur.
 function chunksOf(text){
   const plain = text.replace(/\*\*/g,"").replace(/^\s*[-*•]\s+/gm,"").replace(/[#`_|]/g,"").replace(/\s+/g," ").trim();
-  const sents = plain.match(/[^.!?]+[.!?]*/g) || [plain]; const out = []; let cur = "";
-  for(const s of sents){ const lim = out.length ? 380 : 110; if((cur + s).length > lim && cur){ out.push(cur.trim()); cur = ""; } cur += s + " "; }
-  if(cur.trim()) out.push(cur.trim()); return out.slice(0, 3);
+  if(!plain) return [];
+  const sents = plain.match(/[^.!?]+[.!?]*/g) || [plain];
+  const out = []; let rest = sents.slice();
+  // 1. parça: ilk cümle; uzunsa ilk virgülde ya da ~60 karakterde kelime sınırında böl.
+  let first = rest.shift().trim();
+  if(first.length > 70){
+    let cut = first.slice(0, 70).search(/[,;:](?=[^,;:]*$)/);
+    if(cut < 20) cut = first.lastIndexOf(" ", 60);
+    if(cut > 15){ rest.unshift(first.slice(cut + 1)); first = first.slice(0, cut + 1).trim(); }
+  }
+  out.push(first);
+  // Plan limiti parça sayısıyla ölçüldüğü için en fazla 3 parça.
+  const lims = [160, 900]; let cur = "";
+  for(const sn of rest){ const lim = lims[Math.min(out.length - 1, lims.length - 1)]; if((cur + sn).length > lim && cur.trim()){ out.push(cur.trim()); cur = ""; } cur += sn + " "; }
+  if(cur.trim()) out.push(cur.trim());
+  if(out.length > 3) out.splice(2, out.length - 2, out.slice(2).join(" "));
+  return out.filter(Boolean);
 }
 let ttsModelUsed = ""; const lastTiming = {};
 const ttsPre = {};
