@@ -13,7 +13,8 @@ export default async function handler(req, res) {
     T(getExchangeRates({ currencies: ["USD"] }).then((r) => ({ ok: !r.error, why: r.error ? "ulaşılamadı" : "" })).catch(() => ({ ok: false })), 4000).then((r) => { out.tcmb = r.ok; }),
     T(hasRedis() ? bump("health:ping", 60).then(() => ({ ok: true })).catch(() => ({ ok: false })) : Promise.resolve({ ok: true }), 2500).then((r) => { out.redisOk = r.ok; }),
   ];
-  if (req.query?.tts === "1" && key) {
+  // Ücretli ses denemesi yalnız sunucunun kendisinden (nginx üzerinden gelmeyen) isteklerde yapılır.
+  if (req.query?.tts === "1" && key && !req.headers["x-forwarded-for"]) {
     jobs.push(T((async () => {
       const t0 = Date.now();
       const r = await fetch(`${req.headers["x-forwarded-proto"] || "https"}://${req.headers.host}/api/tts`, { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ text: "Tamam.", voice: "Orus" }) });
