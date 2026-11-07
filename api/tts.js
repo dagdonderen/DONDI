@@ -95,7 +95,7 @@ export default async function handler(req, res) {
   if (!allow(ip)) return res.status(429).json({ error: "Sesli cevap limiti doldu." });
   const eff = resolvePlan(req.body?.ent, { app: req.body?.app === "finans" ? "finans" : "kisisel", fsub: req.body?.fsub === "isletme" ? "isletme" : "bireysel" });
   const sid = eff.sub || createHash("sha256").update(ip).digest("hex").slice(0, 24);
-  if ((await bump(`tts:${dayKey()}:${sid}`, 90000)) > eff.limits.tts_gunluk) return res.status(429).json({ error: "Günlük sesli cevap hakkın doldu; yazılı cevaplar devam eder." });
+  if ((await bump(`tts:${dayKey()}:${sid}`, 90000)) > eff.limits.tts_gunluk) return res.status(429).json({ error: "Günlük sesli cevap hakkın doldu; yazılı cevaplar devam eder.", upgrade: "ses" });
   for (const m of [TTS_MODEL, TTS_FALLBACK].filter((x, i, a) => x && a.indexOf(x) === i && usable(x))) {
     const audio = await synth(m, key, text, voice);
     if (audio) return res.status(200).json({ audio, mime: "audio/wav", model: m });

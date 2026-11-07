@@ -349,10 +349,10 @@ export default async function handler(req, res) {
   const sid = eff.sub || createHash("sha256").update(ip).digest("hex").slice(0, 24);
   const mAy = await bump(`mm:${monthKey()}:${sid}`, 40 * 86400);
   if (mAy > eff.limits.mesaj_aylik) {
-    return res.status(429).json({ error: "Bu ayki mesaj hakkın doldu." + (eff.beta ? "" : " Planlar bölümünden planını yükseltebilirsin."), upgrade: "mesaj" });
+    return res.status(429).json({ error: "Bu ayki mesaj hakkın doldu. Devam etmek için bir plan seç.", upgrade: "mesaj" });
   }
   if (!(await checkLimit(eff.sub || ip, eff.limits.gunluk_mesaj))) {
-    return res.status(429).json({ error: "Günlük mesaj limitine ulaştın. Yarın tekrar dene" + (eff.beta ? "." : " ya da Planlar bölümünden planını yükselt."), upgrade: eff.beta ? undefined : "limit" });
+    return res.status(429).json({ error: "Günlük mesaj limitine ulaştın. Yarın tekrar deneyebilir ya da hemen devam etmek için bir plan seçebilirsin.", upgrade: "limit" });
   }
   if (docText || pdfData) {
     if (!eff.features.belge) return res.status(402).json({ error: "Belge analizi Pro planlarda. Menüdeki Planlar bölümüne bak.", upgrade: "belge" });
