@@ -157,8 +157,8 @@ textarea:focus{outline:none;border-color:var(--c)}
 #capSlot #cap{font-size:13px;color:var(--mut);-webkit-line-clamp:1;min-height:0}
 #capSlot #cap:empty{display:none}
 .chat{background:none;border:0;border-radius:0;backdrop-filter:none;-webkit-backdrop-filter:none;overflow:visible;margin:0;min-height:120px;position:relative}
-#log{padding:8px 4px 6px;gap:12px;-webkit-mask-image:linear-gradient(transparent 0,#000 38%);mask-image:linear-gradient(transparent 0,#000 38%);scrollbar-width:none;justify-content:flex-end}
-#log::-webkit-scrollbar{display:none}
+#log{padding:8px 4px 6px;gap:12px;-webkit-mask-image:linear-gradient(transparent 0,#000 22px);mask-image:linear-gradient(transparent 0,#000 22px);scrollbar-width:thin}
+#log>:first-child{margin-top:auto} /* kısa sohbet altta durur; flex-end uzun cevabın başını kaydırılamaz yapıyordu */
 #log>*{flex:none}
 .msg{max-width:96%;border:0;border-radius:0;background:none;text-align:center;align-self:center;padding:0 6px}
 .me{background:none;border:0;color:var(--mut);font-size:15px;white-space:pre-wrap}
@@ -416,10 +416,15 @@ function fmt(t){
     else { close(); if(l.trim()) h += "<p>"+l+"</p>"; }
   } close(); return h;
 }
+// Pencereye sığmayan cevap başından gösterilir, kullanıcı aşağı kaydırarak okur; sığan cevapta sohbetin sonuna gidilir.
+function showMsg(d){
+  const box = log.getBoundingClientRect(), r = d.getBoundingClientRect();
+  if(r.height > box.height - 34) log.scrollTop += r.top - box.top - 28; else log.scrollTop = log.scrollHeight;
+}
 function addMsg(role, text){
   const d = document.createElement("div"); d.className = "msg " + (role==="user" ? "me" : "bot");
   if(role==="user") d.textContent = text; else d.innerHTML = fmt(text);
-  log.appendChild(d); log.scrollTop = log.scrollHeight; return d;
+  log.appendChild(d); showMsg(d); return d;
 }
 function renderLog(){ syncChips(); log.innerHTML = ""; if(!history.length){ log.innerHTML = '<div class="empty">Yaz ya da küreye dokunup konuş.</div>'; return; } history.forEach(m => addMsg(m.role, m.content)); }
 
