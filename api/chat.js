@@ -5,6 +5,7 @@ import { RATES_DECL, getExchangeRates } from "../lib/rates.js";
 import { resolvePlan, gateTool, bump, monthKey } from "../lib/plans.js";
 import { CFO_DECLS, CFO_TOOLS, CFO_RULES, ACTION_DECLS, ACTION_TOOLS } from "../lib/cfo.js";
 import { FIN_DECLS, FIN_TOOLS, FIN_RULES } from "../lib/fin.js";
+import { userKey, NEED_KEY, BAD_KEY, isKeyError } from "../lib/key.js";
 
 const MODEL = process.env.GEMINI_MODEL || "gemini-flash-latest";
 const FALLBACK_MODEL = process.env.GEMINI_FALLBACK_MODEL || "gemini-3.5-flash-lite";
@@ -237,6 +238,7 @@ async function tryModel(model, apiKey, base, ctx) {
     }
     const { r, data } = res;
     if (!r.ok) {
+      if (isKeyError(r.status, data)) { console.error("Gemini: kullanıcı anahtarı geçersiz/yetkisiz", model, r.status); return { badKey: true }; }
       console.error("Gemini hata:", model, r.status, JSON.stringify(data).slice(0, 600));
       return [404, 429, 500, 503].includes(r.status) ? { retry: true } : { fatal: true };
     }
@@ -327,6 +329,9 @@ function cleanFin(f) {
 
 export default async function handler(req, res) {
   if (req.method !== "POST") return res.status(405).json({ error: "Yalnızca POST." });
+  // Yalnız kullanıcının kendi anahtarı. Anahtarı yoksa hiçbir ücretli çağrı yapılmaz, kota da sayılmaz.
+  const apiKey = userKey(req);
+  if (!apiKey) return res.status(401).json(NEED_KEY);
 
   const { messages, location, image, profile, doc, pdf, app: appIn, fsub: fsubIn, ent } = req.body ?? {};
   const app = appIn === "finans" ? "finans" : "kisisel";
@@ -368,12 +373,6 @@ export default async function handler(req, res) {
   while (clean.length && clean[0].role !== "user") clean.shift();
   if (!clean.length) return res.status(400).json({ error: "Geçersiz mesaj." });
 
-  const apiKey = process.env.GEMINI_API_KEY;
-  if (!apiKey) {
-    console.error("GEMINI_API_KEY tanımlı değil.");
-    return res.status(500).json({ error: "Sunucu ayarı eksik (anahtar bulunamadı)." });
-  }
-
   const base = clean.map((m) => ({
     role: m.role === "assistant" ? "model" : "user",
     parts: [{ text: m.content }],
@@ -384,12 +383,13 @@ export default async function handler(req, res) {
   if (pdfData) lastParts.unshift({ inlineData: { mimeType: "application/pdf", data: pdfData } });
   if (img) base[base.length - 1].parts.unshift({ inlineData: { mimeType: "image/jpeg", data: img } });
 
-  const models = (eff.limits.model === "lite" || (voice === true && app === "kisisel") ? [FALLBACK_MODEL, MODEL] : [MODEL, FALLBACK_MODEL]).filter((m, i, a) => m && a.indexOf(m) === i);
+  const models = (eff.limits.model === "lite" || (req.body?.voice === true && app === "kisisel") ? [FALLBACK_MODEL, MODEL] : [MODEL, FALLBACK_MODEL]).filter((m, i, a) => m && a.indexOf(m) === i);
   const t0 = Date.now();
   for (const model of models) {
     if (Date.now() - t0 > 35000) break; // zaman sınırına yaklaşıldı
     const out = await tryModel(model, apiKey, base, { eff, sid, app, fsub, loc, hasImage: !!img, voice: !!(req.body && req.body.voice), doc: !!(docText || pdfData), profile: prof });
     if (out.text) return res.status(200).json({ reply: out.text, results: out.collected || [] });
+    if (out.badKey) return res.status(401).json(BAD_KEY);
     if (out.fatal) break;
   }
   return res.status(500).json({ error: "Şu an cevap veremiyorum. Biraz sonra tekrar dene." });

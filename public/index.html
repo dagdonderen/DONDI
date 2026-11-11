@@ -287,6 +287,9 @@ html[data-embed] .top,html[data-embed] .modes,html[data-embed] .foot{display:non
 </div></div>
 <div class="onb" id="set" hidden><div class="card wide">
   <div class="st">AYARLAR · v1.1</div><h2>Döndi'yi sana göre ayarla</h2>
+  <div class="fld" id="keyBox"><b>Gemini API anahtarın</b><br><span style="font-size:12px">Döndi senin kendi Google Gemini anahtarınla çalışır; kullanım ücreti senin Google hesabına yansır. Anahtar yalnız bu cihazda saklanır, sunucumuzda kaydedilmez. <a href="https://aistudio.google.com/apikey" target="_blank" rel="noopener" style="color:var(--c)">Ücretsiz anahtar al</a></span>
+    <input id="sKey" type="password" autocomplete="off" spellcheck="false" autocapitalize="off" placeholder="AIza…" style="width:100%;margin-top:6px">
+    <span style="font-size:12px">Güvenlik için Google Cloud'da anahtarına harcama sınırı koy; anahtarını kimseyle paylaşma.</span></div>
   <label class="fld">Adın<input id="sName" maxlength="30" placeholder="İstersen yaz" autocomplete="off"></label>
   <label class="fld">Konuşma tonu<select id="sTone"><option value="samimi">Samimi</option><option value="resmi">Resmi</option><option value="enerjik">Enerjik</option><option value="kisa">Kısa ve net</option></select></label>
   <label class="fld">Konuşma sesi<select id="sVoiceKind"><option value="dondi">Döndi sesi (erkek, yapay zekâ)</option><option value="telefon">Telefonun kendi sesi</option></select></label>
@@ -342,11 +345,25 @@ html[data-embed] .top,html[data-embed] .modes,html[data-embed] .foot{display:non
   <label class="ck"><input type="checkbox" id="aydCk"><span><b>Aydınlatma Metni'ni okudum, bilgi edindim.</b> (Bu bir rıza değil, bilgilendirildiğine dair beyandır.)</span></label>
   <label class="ck"><input type="checkbox" id="ageCk"><span><b>18 yaşından büyüğüm.</b> Döndi yalnızca 18 yaşını doldurmuş kullanıcılar içindir.</span></label>
   <div class="st" style="margin-top:12px">AÇIK RIZA METNİ · YURT DIŞINA AKTARIM</div>
-  <p class="nt">Döndi'nin cevapları ve sesi, Google LLC'nin Gemini yapay zekâ servisiyle üretilir; Google'ın sunucuları Türkiye dışındadır. Aktarılanlar: yazdığın ve söylediğin mesajlar, sohbetin son mesajları, eklediğin belgelerin ilgili bölümleri, (izin verirsen) yaklaşık konumun ve seslendirilecek cevap metinleri. Amaç: cevap üretmek ve seslendirmek. Ücretsiz katmanda Google içeriği ürün geliştirmede kullanabilir. Bu rızayı vermek zorunda değilsin; vermezsen Döndi'nin sohbet, ses ve belge özellikleri çalışmaz. Rızanı istediğin zaman <b>İzinler</b> bölümünden geri alabilirsin.</p>
+  <p class="nt">Döndi'nin cevapları ve sesi, Google LLC'nin Gemini yapay zekâ servisiyle üretilir; Google'ın sunucuları Türkiye dışındadır. Aktarılanlar: yazdığın ve söylediğin mesajlar, sohbetin son mesajları, eklediğin belgelerin ilgili bölümleri, (izin verirsen) yaklaşık konumun ve seslendirilecek cevap metinleri. Amaç: cevap üretmek ve seslendirmek. Aktarım senin kendi Gemini API anahtarınla yapılır; anahtarın sunucumuzda saklanmaz. Ücretsiz katmanda Google içeriği ürün geliştirmede kullanabilir. Bu rızayı vermek zorunda değilsin; vermezsen Döndi'nin sohbet, ses ve belge özellikleri çalışmaz. Rızanı istediğin zaman <b>İzinler</b> bölümünden geri alabilirsin.</p>
   <label class="ck"><input type="checkbox" id="gemCk"><span><b>Açık rızam:</b> Yukarıda belirtilen verilerimin, cevap üretilmesi ve seslendirilmesi amacıyla Google LLC'nin (Gemini API) Türkiye dışındaki sunucularına aktarılmasına açık rıza veriyorum.</span></label>
   <div class="plist" id="pList"></div>
   <p class="nt">İzinleri sonradan <b>İzinler</b> butonundan değiştirebilirsin. <a href="/gizlilik.html" target="_blank" rel="noopener" style="color:var(--c)">Gizlilik ve KVKK metni</a></p>
   <div class="row"><button class="tbtn" id="oAll" type="button">Mikrofon ve konumu iste</button><button class="tbtn" id="oOk" type="button" aria-pressed="true" disabled>Başla</button></div>
+</div></div>
+<div class="onb" id="keyOnb" hidden><div class="card wide">
+  <div class="st">SON ADIM · 1-2 DAKİKA</div><h2>Gemini anahtarını al</h2>
+  <p class="nt">Döndi, Google'ın Gemini yapay zekâsıyla <b>senin kendi anahtarınla</b> çalışır. Anahtar ücretsiz alınır; Google'ın ücretsiz kullanım hakkı aşılırsa ücreti senin Google hesabına yansır. Anahtarın yalnız bu cihazda saklanır, sunucumuzda kaydedilmez.</p>
+  <div class="fld"><b>1.</b> Google hesabınla giriş yap ve anahtar oluştur.<br><span style="font-size:12px">Açılan sayfada <b>“Create API key”</b> (API anahtarı oluştur) butonuna bas, çıkan anahtarın yanındaki <b>kopyala</b> simgesine dokun, sonra buraya dön.</span>
+    <button class="tbtn" id="kGet" type="button" aria-pressed="true" style="width:100%;margin-top:8px">Google'da anahtar al ↗</button></div>
+  <div class="fld"><b>2.</b> Kopyaladığın anahtarı yapıştır.
+    <button class="tbtn" id="kPaste" type="button" style="width:100%;margin-top:8px">Panodan yapıştır</button>
+    <input id="kIn" type="password" autocomplete="off" spellcheck="false" autocapitalize="off" placeholder="ya da buraya yapıştır: AIza…" style="width:100%;margin-top:6px"></div>
+  <div class="fld"><b>3.</b> Kaydet; anahtarın çalışıp çalışmadığını hemen kontrol ederim.
+    <button class="tbtn" id="kSave" type="button" aria-pressed="true" style="width:100%;margin-top:8px">Kaydet ve başla</button>
+    <span id="kMsg" style="font-size:12px;display:block;margin-top:6px"></span></div>
+  <p class="nt">Güvenlik: Anahtarını kimseyle paylaşma. İstersen Google Cloud'da anahtarına bütçe uyarısı koyabilirsin. Anahtarı sonra <b>Ayarlar</b>'dan değiştirebilir ya da silebilirsin.</p>
+  <div class="row"><button class="tbtn" id="kLater" type="button">Sonra</button></div>
 </div></div>
 <script>
 let pip = null;
@@ -379,6 +396,11 @@ let settings = {name:"", tone:"samimi", voice:"", rate:1, theme:"altin", voiceKi
 try { Object.assign(settings, JSON.parse(localStorage.getItem("settings") || "{}")); } catch {}
 if(!settings.wakeMig){ settings.wake = false; settings.wakeMig = 1; try { localStorage.setItem("settings", JSON.stringify(settings)); } catch {} }
 if(EMBED){ origApp = settings.app; settings.app = "finans"; document.documentElement.dataset.embed = "1"; }
+// Kullanıcının kendi Gemini anahtarı: yalnız bu cihazda (ayrı anahtar altında) durur, her istekte başlıkla gönderilir.
+const KEY_RE = /^AIza[0-9A-Za-z_-]{35}$/;
+const getKey = () => { try { return localStorage.getItem("gk") || ""; } catch { return ""; } };
+const setKey = (k) => { try { k ? localStorage.setItem("gk", k) : localStorage.removeItem("gk"); } catch {} };
+const aiHeaders = () => { const h = {"Content-Type":"application/json"}; const k = getKey(); if(k) h["X-Gemini-Key"] = k; return h; };
 const saveSettings = () => { try { localStorage.setItem("settings", JSON.stringify(EMBED && origApp ? {...settings, app:origApp} : settings)); } catch {} };
 const cleanName = s => String(s || "").replace(/[^\p{L}\p{N} '’.-]/gu, "").trim().slice(0, 30);
 const LABEL = {idle:"HAZIR", listening:"DİNLİYORUM", thinking:"DÜŞÜNÜYORUM", speaking:"KONUŞUYORUM"};
@@ -503,7 +525,8 @@ let ttsQuotaSaid = false;
 async function fetchTts(t){
   if(!gemOk()) throw new Error("rıza yok");
   const pk = t.replace(/\s+/g, " ").trim(); if(ttsPre[pk]){ const p = ttsPre[pk]; delete ttsPre[pk]; return p; }
-  const r = await fetch("/api/tts", {method:"POST", headers:{"Content-Type":"application/json"}, body: JSON.stringify({text:t, voice: settings.ttsVoice || "Orus", ent: getEnt() || undefined, app: settings.app, fsub: settings.fsub})});
+  if(!getKey()) throw new Error("anahtar yok");
+  const r = await fetch("/api/tts", {method:"POST", headers:aiHeaders(), body: JSON.stringify({text:t, voice: settings.ttsVoice || "Orus", ent: getEnt() || undefined, app: settings.app, fsub: settings.fsub})});
   const d = await r.json().catch(() => ({})); if(d.upgrade && !ttsQuotaSaid){ ttsQuotaSaid = true; toast("Günlük sesli cevap hakkın doldu. Devam etmek için menüden Planlar'a bak."); } if(!r.ok || !d.audio) throw new Error(d.detail || d.error || ("tts " + r.status)); ttsModelUsed = d.model || "";
   const bin = atob(d.audio), arr = new Uint8Array(bin.length); for(let i = 0; i < bin.length; i++) arr[i] = bin.charCodeAt(i);
   return URL.createObjectURL(new Blob([arr], {type: d.mime || "audio/wav"}));
@@ -595,6 +618,7 @@ $("micBtn").addEventListener("click", () => { unlockTts(); setAuto(!auto); });
 async function send(text, viaVoice, image){
   text = (text || "").trim(); if(!text || busy) return;
   if(!gemOk()){ toast("Sohbet için Google'a aktarım rızası gerekiyor. İzinler bölümünden verebilirsin."); openPanel(); return; }
+  if(!getKey()){ openKeyOnb(); return; }
   if(!navigator.onLine){ toast("İnternet yok. Bağlanınca tekrar dene."); return; }
   track(image ? "camera" : viaVoice ? "voice" : "chat");
   const wasAuto = auto; busy = true; sendBtn.disabled = true; setState("thinking");
@@ -604,10 +628,11 @@ async function send(text, viaVoice, image){
   let wait = document.createElement("div"); wait.className = "msg bot"; wait.textContent = "…"; log.appendChild(wait);
   try{
     const tc0 = Date.now();
-    const r = await fetch("/api/chat", {method:"POST", headers:{"Content-Type":"application/json"}, body: JSON.stringify({messages: history, voice: !!viaVoice, image: image || undefined, ent: getEnt() || undefined, app: settings.app, fsub: settings.fsub, profile: {name: settings.name, tone: settings.tone, fin: settings.fin}, doc: docPayload(text), pdf: attached && attached.pdf ? attached.pdf : undefined, location: (()=>{ try { return JSON.parse(localStorage.getItem("loc")||"null"); } catch { return null; } })()})});
+    const r = await fetch("/api/chat", {method:"POST", headers:aiHeaders(), body: JSON.stringify({messages: history, voice: !!viaVoice, image: image || undefined, ent: getEnt() || undefined, app: settings.app, fsub: settings.fsub, profile: {name: settings.name, tone: settings.tone, fin: settings.fin}, doc: docPayload(text), pdf: attached && attached.pdf ? attached.pdf : undefined, location: (()=>{ try { return JSON.parse(localStorage.getItem("loc")||"null"); } catch { return null; } })()})});
     let data = {}; try { data = await r.json(); } catch {} lastTiming.chat = Date.now() - tc0;
     if(r.ok && attached) attached.used = true;
     if(data.upgrade){ if(auto) setAuto(false); setTimeout(() => openPlans(data.error), 400); }
+    if(data.needKey){ if(auto) setAuto(false); setTimeout(() => { $("setBtn").click(); try { $("sKey").focus(); } catch {} }, 400); }
     if(!r.ok || !data.reply) throw new Error(data.error || "Şu an cevap veremiyorum. Biraz sonra tekrar dene.");
     history.push({role:"assistant", content:data.reply}); save();
     let shown = false;
@@ -822,10 +847,10 @@ function chosenVoice(){ if(synth && settings.voice){ const f = synth.getVoices()
 function readFin(){ const n = id => { const v = String($(id).value).replace(/[^\d]/g,""); return v ? Number(v) : null; }; return {sektor: $("fSek").value.replace(/[^\p{L}\p{N} ,.&/-]/gu,"").trim().slice(0,60), gelir:n("fGel"), gider:n("fGid"), nakit:n("fNak"), borc:n("fBor"), kdv:n("fKdv")}; }
 function applyTheme(){ document.documentElement.dataset.mode = settings.mode || "dark"; document.documentElement.dataset.big = settings.big || "0"; document.querySelector('meta[name=theme-color]').content = settings.mode === "light" ? "#f6f1e8" : "#0b0907"; document.documentElement.dataset.app = settings.app; const t = (settings.mode === "light" ? APPC_LIGHT : APPC)[colorKey()] || APPC.kisisel; document.documentElement.style.setProperty("--c", t[0]); document.documentElement.style.setProperty("--v", t[1]); }
 function themeBtns(){ document.querySelectorAll("#sTheme button").forEach(b => b.setAttribute("aria-pressed", String(b.dataset.t === settings.theme))); }
-$("setBtn").addEventListener("click", () => { $("sName").value = settings.name; $("sTone").value = settings.tone; $("sVoiceKind").value = settings.voiceKind || "dondi"; $("sTtsVoice").value = settings.ttsVoice || "Orus"; $("sMode").value = settings.mode || "dark"; $("sBig").value = settings.big || "0"; const F = settings.fin || {}; $("fSek").value = F.sektor || ""; $("fGel").value = F.gelir || ""; $("fGid").value = F.gider || ""; $("fNak").value = F.nakit || ""; $("fBor").value = F.borc || ""; $("fKdv").value = F.kdv != null ? F.kdv : ""; $("sRate").value = settings.rate; $("sRateV").textContent = settings.rate + "x"; fillVoices(); themeBtns(); $("set").hidden = false; });
+$("setBtn").addEventListener("click", () => { $("sKey").value = getKey(); $("sName").value = settings.name; $("sTone").value = settings.tone; $("sVoiceKind").value = settings.voiceKind || "dondi"; $("sTtsVoice").value = settings.ttsVoice || "Orus"; $("sMode").value = settings.mode || "dark"; $("sBig").value = settings.big || "0"; const F = settings.fin || {}; $("fSek").value = F.sektor || ""; $("fGel").value = F.gelir || ""; $("fGid").value = F.gider || ""; $("fNak").value = F.nakit || ""; $("fBor").value = F.borc || ""; $("fKdv").value = F.kdv != null ? F.kdv : ""; $("sRate").value = settings.rate; $("sRateV").textContent = settings.rate + "x"; fillVoices(); themeBtns(); $("set").hidden = false; });
 $("sRate").addEventListener("input", e => { $("sRateV").textContent = e.target.value + "x"; });
 $("sTest").addEventListener("click", () => { settings.voice = $("sVoice").value; settings.voiceKind = $("sVoiceKind").value; settings.ttsVoice = $("sTtsVoice").value; unlockTts(); settings.rate = Number($("sRate").value); const n = cleanName($("sName").value); speak((n ? n + ", " : "") + "merhaba, ben Döndi. Sesimi böyle duyacaksın.", () => setState("idle")); });
-$("sClose").addEventListener("click", () => { settings.name = cleanName($("sName").value); settings.tone = $("sTone").value; settings.voice = $("sVoice").value; settings.voiceKind = $("sVoiceKind").value; settings.ttsVoice = $("sTtsVoice").value; settings.mode = $("sMode").value; settings.big = $("sBig").value; settings.fin = readFin(); applyTheme(); settings.rate = Number($("sRate").value); saveSettings(); $("set").hidden = true; });
+$("sClose").addEventListener("click", () => { const k = $("sKey").value.trim(); if(k && !KEY_RE.test(k)){ toast("Bu bir Gemini API anahtarına benzemiyor (AIza ile başlar, 39 karakter)."); $("sKey").focus(); return; } setKey(k); settings.name = cleanName($("sName").value); settings.tone = $("sTone").value; settings.voice = $("sVoice").value; settings.voiceKind = $("sVoiceKind").value; settings.ttsVoice = $("sTtsVoice").value; settings.mode = $("sMode").value; settings.big = $("sBig").value; settings.fin = readFin(); applyTheme(); settings.rate = Number($("sRate").value); saveSettings(); $("set").hidden = true; });
 document.querySelectorAll("#sTheme button").forEach(b => b.addEventListener("click", () => { settings.theme = b.dataset.t; applyTheme(); saveSettings(); themeBtns(); }));
 applyTheme();
 $("ver").textContent = APP_VERSION;
@@ -1123,8 +1148,37 @@ $("oOk").addEventListener("click", () => {
   else if(!$("gemCk").checked && gemOk()){ logConsent("gemini_revoked", {google:false}, GEM_V); lsSet("gem", null); }
   if(!lsGet("onb3")){ logConsent("age18", {over18:true}); lsSet("onb3", "1"); }
   $("onb").hidden = true;
+  if(gemOk() && !getKey()){ openKeyOnb(); return; }
   if(gemOk() && !greeted) boot();
 });
+// ---- Kendi Gemini anahtarını alma: izinlerden hemen sonra, 3 adım ----
+function openKeyOnb(){ $("kIn").value = ""; $("kMsg").textContent = ""; $("keyOnb").hidden = false; }
+function closeKeyOnb(){ $("keyOnb").hidden = true; if(gemOk() && !greeted) boot(); }
+const kMsg = (t, ok) => { $("kMsg").textContent = t; $("kMsg").style.color = ok ? "#5fd38d" : "#ff8a8a"; };
+const keyFrom = (s) => { const m = String(s || "").match(/AIza[0-9A-Za-z_-]{35}/); return m ? m[0] : ""; };
+$("kGet").addEventListener("click", () => { window.open("https://aistudio.google.com/apikey", "_blank", "noopener"); kMsg("Anahtarı kopyaladıktan sonra buraya dön ve “Panodan yapıştır”a dokun.", true); });
+$("kPaste").addEventListener("click", async () => {
+  try { const k = keyFrom(await navigator.clipboard.readText()); if(k){ $("kIn").value = k; kMsg("Anahtar yapıştırıldı. Şimdi “Kaydet ve başla”ya dokun.", true); } else kMsg("Panoda anahtar bulamadım. Google sayfasında kopyala simgesine dokunup tekrar dene."); }
+  catch { kMsg("Pano okunamadı. Anahtarı kutuya basılı tutup yapıştır."); $("kIn").focus(); }
+});
+// Google'a doğrudan (sunucumuzdan geçmeden) ücretsiz bir liste isteğiyle anahtarı doğrular.
+async function testKey(k){
+  try {
+    const r = await fetch("https://generativelanguage.googleapis.com/v1beta/models?pageSize=1", {headers:{"x-goog-api-key": k}});
+    if(r.ok) return "ok";
+    return [400, 401, 403].includes(r.status) ? "bad" : "unknown";
+  } catch { return "unknown"; }
+}
+$("kSave").addEventListener("click", async () => {
+  const k = keyFrom($("kIn").value);
+  if(!k){ kMsg("Bu bir Gemini anahtarına benzemiyor. Anahtar AIza ile başlar ve 39 karakterdir."); return; }
+  $("kSave").disabled = true; kMsg("Anahtar kontrol ediliyor…", true);
+  const st = await testKey(k); $("kSave").disabled = false;
+  if(st === "bad"){ kMsg("Google bu anahtarı kabul etmedi. Doğru kopyaladığından emin ol ya da yeni anahtar oluştur."); return; }
+  setKey(k); kMsg(st === "ok" ? "Anahtar çalışıyor. Hazırız!" : "Anahtar kaydedildi.", true);
+  setTimeout(closeKeyOnb, 700);
+});
+$("kLater").addEventListener("click", () => { toast("Anahtar girmeden Döndi cevap veremez. Ayarlar'dan istediğin zaman girebilirsin."); closeKeyOnb(); });
 $("permBtn").addEventListener("click", openPanel);
 // ---- Açılış: animasyon sesi + "Tüm sistemler devrede. Sizi dinliyorum." ve sürekli açık mikrofon ----
 // Tarayıcılar dokunuş olmadan ses çalmayı engelleyebilir; o durumda mikrofon yine açılır, ses ilk dokunuşta çalar.
@@ -1183,6 +1237,7 @@ async function boot(){
   const first = chunksOf(ok1)[0];
   if(voiceOn && settings.voiceKind !== "telefon" && navigator.onLine && !issues.length){ const pr = fetchTts(first); pr.catch(() => {}); ttsPre[first.replace(/\s+/g, " ").trim()] = pr; }
   let h = null; try { const r = await fetch("/api/health"); h = await r.json(); } catch { if(navigator.onLine) issues.push("sunucuya ulaşamıyorum"); }
+  if(!getKey()) issues.push("Ayarlar'dan kendi Gemini API anahtarını girmen gerekiyor");
   if(h){ if(!h.ai) issues.push("yapay zekâ bağlantım eksik"); if(h.tcmb === false) issues.push("Merkez Bankası kurlarına şu an ulaşamıyorum"); }
   const msg = issues.length ? "Çoğu sistemim devrede ama " + issues.join(", ") + ". Dinliyorum." : ok1;
   cap.textContent = msg; setState("speaking");
@@ -1190,7 +1245,7 @@ async function boot(){
   let go = false; const start = () => { if(go) return; go = true; if(micHeld){ if(state === "speaking") setState("idle"); return; } setState("idle"); setAuto(true); };
   setTimeout(start, 3000 + msg.length * 85); speak(msg, start, null);
 }
-if(!lsGet("onb3") || lsGet("ayd") !== AYD_V || !gemOk()) openPanel(); else { boot(); }
+if(!lsGet("onb3") || lsGet("ayd") !== AYD_V || !gemOk()) openPanel(); else if(!getKey()) openKeyOnb(); else { boot(); }
 </script>
 </body>
 </html>

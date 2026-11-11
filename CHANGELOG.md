@@ -1,5 +1,11 @@
 # Değişiklik geçmişi
 
+## 1.0.2
+- Her kullanıcı kendi Gemini API anahtarıyla çalışır. Sohbet, ses ve web araması yalnız kullanıcının cihazından gelen anahtarla (X-Gemini-Key) yapılır; sunucudaki GEMINI_API_KEY kullanıcı istekleri için kullanılmaz. Anahtar sunucuda saklanmaz, günlüğe yazılmaz; anahtarsız istek kota saymadan 401 ile reddedilir.
+- İzinlerden hemen sonra 3 adımlı "Gemini anahtarını al" ekranı: Google'da anahtar al, panodan yapıştır, kaydet. Anahtar Google'a doğrudan ücretsiz bir istekle doğrulanır. Ayarlar'da anahtar alanı.
+- Geçersiz/yetkisiz anahtarda kullanıcıya açık mesaj; Ayarlar açılır.
+- Düzeltme: Pro planlarda tanımsız `voice` değişkeni sohbeti hata verdiriyordu.
+
 ## 1.0.1
 - Açılışta otomatik başlar: sistem kontrolü (/api/health: yapay zekâ, TCMB, mikrofon) → "Tüm sistemlerim devrede" → sürekli dinleme. "Sohbet modu" butonu kaldırıldı.
 - Hız: düşünme seviyesi düşük (flash: low, lite: minimal), sesli modda 2-3 cümlelik cevap, geçmiş 12 mesaj, ilk ses parçası kısa, sessizlik süresi kısaldı, yazı cevap hemen görünür.

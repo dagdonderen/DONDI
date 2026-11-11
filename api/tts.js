@@ -19,6 +19,7 @@ const STYLE = process.env.GEMINI_TTS_STYLE ||
 const VOICES = new Set(["Orus","Charon","Algenib","Alnilam","Algieba","Fenrir","Rasalgethi","Sadaltager"]);
 import { createHash } from "node:crypto";
 import { resolvePlan, bump, dayKey } from "../lib/plans.js";
+import { userKey, NEED_KEY } from "../lib/key.js";
 const DAILY = 120;
 const used = new Map();
 
@@ -86,8 +87,9 @@ async function synthLegacy(key, text, voice) {
 
 export default async function handler(req, res) {
   if (req.method !== "POST") return res.status(405).json({ error: "Yalnızca POST." });
-  const key = process.env.GEMINI_API_KEY;
-  if (!key) return res.status(500).json({ error: "Sunucu ayarı eksik." });
+  // Yalnız kullanıcının kendi anahtarı; yoksa istemci telefonun kendi sesine döner.
+  const key = userKey(req);
+  if (!key) return res.status(401).json(NEED_KEY);
   const text = String(req.body?.text || "").replace(/\s+/g, " ").trim().slice(0, 600);
   if (!text) return res.status(400).json({ error: "Metin yok." });
   const voice = VOICES.has(req.body?.voice) ? req.body.voice : VOICE;

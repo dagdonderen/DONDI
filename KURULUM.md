@@ -6,7 +6,7 @@ Bu rehber, sadece sizin hesabınızla yapılabilecek ayarları anlatır. Kod tar
 
 | Ad | Değer | Zorunlu mu |
 |---|---|---|
-| `GEMINI_API_KEY` | Google AI Studio anahtarı | Evet |
+| `GEMINI_API_KEY` | Google AI Studio anahtarı. **Kullanıcı istekleri için kullanılmaz**: her kullanıcı kendi anahtarını uygulamada girer. Yalnız sunucu içi ses testi için; boş bırakılabilir. | Hayır |
 | `GEMINI_MODEL` | `gemini-flash-latest` | Evet |
 | `GEMINI_FALLBACK_MODEL` | `gemini-3.5-flash-lite` | Önerilir |
 | `GEMINI_TTS_MODEL` | `gemini-3.8-flash-tts` | İsteğe bağlı (varsayılan zaten bu) |

@@ -7,8 +7,9 @@ const T = (p, ms) => Promise.race([p, new Promise((r) => setTimeout(() => r({ ok
 
 export default async function handler(req, res) {
   res.setHeader("Cache-Control", "no-store");
+  // Yapay zekâ kullanıcının kendi anahtarıyla çalışır (byok). Sunucu anahtarı yalnız sunucunun kendi ses testinde, varsa, kullanılır.
   const key = process.env.GEMINI_API_KEY;
-  const out = { ai: !!key, redis: hasRedis(), tcmb: null, tts: null };
+  const out = { ai: true, byok: true, redis: hasRedis(), tcmb: null, tts: null };
   const jobs = [
     T(getExchangeRates({ currencies: ["USD"] }).then((r) => ({ ok: !r.error, why: r.error ? "ulaşılamadı" : "" })).catch(() => ({ ok: false })), 4000).then((r) => { out.tcmb = r.ok; }),
     T(hasRedis() ? bump("health:ping", 60).then(() => ({ ok: true })).catch(() => ({ ok: false })) : Promise.resolve({ ok: true }), 2500).then((r) => { out.redisOk = r.ok; }),
@@ -17,7 +18,7 @@ export default async function handler(req, res) {
   if (req.query?.tts === "1" && key && !req.headers["x-forwarded-for"]) {
     jobs.push(T((async () => {
       const t0 = Date.now();
-      const r = await fetch(`${req.headers["x-forwarded-proto"] || "https"}://${req.headers.host}/api/tts`, { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ text: "Tamam.", voice: "Orus" }) });
+      const r = await fetch(`${req.headers["x-forwarded-proto"] || "https"}://${req.headers.host}/api/tts`, { method: "POST", headers: { "Content-Type": "application/json", "X-Gemini-Key": key }, body: JSON.stringify({ text: "Tamam.", voice: "Orus" }) });
       const d = await r.json().catch(() => ({}));
       out.ttsMs = Date.now() - t0; out.ttsModel = d.model || null; out.ttsErr = d.detail || d.error || null;
       return { ok: !!d.audio };
