@@ -288,7 +288,7 @@ html[data-embed] .top,html[data-embed] .modes,html[data-embed] .foot{display:non
 <div class="onb" id="set" hidden><div class="card wide">
   <div class="st">AYARLAR · v1.1</div><h2>Döndi'yi sana göre ayarla</h2>
   <div class="fld" id="keyBox"><b>Gemini API anahtarın</b><br><span style="font-size:12px">Döndi senin kendi Google Gemini anahtarınla çalışır; kullanım ücreti senin Google hesabına yansır. Anahtar yalnız bu cihazda saklanır, sunucumuzda kaydedilmez. <a href="https://aistudio.google.com/apikey" target="_blank" rel="noopener" style="color:var(--c)">Ücretsiz anahtar al</a></span>
-    <input id="sKey" type="password" autocomplete="off" spellcheck="false" autocapitalize="off" placeholder="AIza…" style="width:100%;margin-top:6px">
+    <input id="sKey" type="password" autocomplete="off" spellcheck="false" autocapitalize="off" placeholder="AQ.… ya da AIza…" style="width:100%;margin-top:6px">
     <span style="font-size:12px">Güvenlik için Google Cloud'da anahtarına harcama sınırı koy; anahtarını kimseyle paylaşma.</span></div>
   <label class="fld">Adın<input id="sName" maxlength="30" placeholder="İstersen yaz" autocomplete="off"></label>
   <label class="fld">Konuşma tonu<select id="sTone"><option value="samimi">Samimi</option><option value="resmi">Resmi</option><option value="enerjik">Enerjik</option><option value="kisa">Kısa ve net</option></select></label>
@@ -358,7 +358,7 @@ html[data-embed] .top,html[data-embed] .modes,html[data-embed] .foot{display:non
     <button class="tbtn" id="kGet" type="button" aria-pressed="true" style="width:100%;margin-top:8px">Google'da anahtar al ↗</button></div>
   <div class="fld"><b>2.</b> Kopyaladığın anahtarı yapıştır.
     <button class="tbtn" id="kPaste" type="button" style="width:100%;margin-top:8px">Panodan yapıştır</button>
-    <input id="kIn" type="password" autocomplete="off" spellcheck="false" autocapitalize="off" placeholder="ya da buraya yapıştır: AIza…" style="width:100%;margin-top:6px"></div>
+    <input id="kIn" type="password" autocomplete="off" spellcheck="false" autocapitalize="off" placeholder="ya da buraya yapıştır: AQ.…" style="width:100%;margin-top:6px"></div>
   <div class="fld"><b>3.</b> Kaydet; anahtarın çalışıp çalışmadığını hemen kontrol ederim.
     <button class="tbtn" id="kSave" type="button" aria-pressed="true" style="width:100%;margin-top:8px">Kaydet ve başla</button>
     <span id="kMsg" style="font-size:12px;display:block;margin-top:6px"></span></div>
@@ -397,7 +397,7 @@ try { Object.assign(settings, JSON.parse(localStorage.getItem("settings") || "{}
 if(!settings.wakeMig){ settings.wake = false; settings.wakeMig = 1; try { localStorage.setItem("settings", JSON.stringify(settings)); } catch {} }
 if(EMBED){ origApp = settings.app; settings.app = "finans"; document.documentElement.dataset.embed = "1"; }
 // Kullanıcının kendi Gemini anahtarı: yalnız bu cihazda (ayrı anahtar altında) durur, her istekte başlıkla gönderilir.
-const KEY_RE = /^AIza[0-9A-Za-z_-]{35}$/;
+const KEY_RE = /^(?:AQ\.[0-9A-Za-z._-]{20,300}|AIza[0-9A-Za-z_-]{35})$/;
 const getKey = () => { try { return localStorage.getItem("gk") || ""; } catch { return ""; } };
 const setKey = (k) => { try { k ? localStorage.setItem("gk", k) : localStorage.removeItem("gk"); } catch {} };
 const aiHeaders = () => { const h = {"Content-Type":"application/json"}; const k = getKey(); if(k) h["X-Gemini-Key"] = k; return h; };
@@ -850,7 +850,7 @@ function themeBtns(){ document.querySelectorAll("#sTheme button").forEach(b => b
 $("setBtn").addEventListener("click", () => { $("sKey").value = getKey(); $("sName").value = settings.name; $("sTone").value = settings.tone; $("sVoiceKind").value = settings.voiceKind || "dondi"; $("sTtsVoice").value = settings.ttsVoice || "Orus"; $("sMode").value = settings.mode || "dark"; $("sBig").value = settings.big || "0"; const F = settings.fin || {}; $("fSek").value = F.sektor || ""; $("fGel").value = F.gelir || ""; $("fGid").value = F.gider || ""; $("fNak").value = F.nakit || ""; $("fBor").value = F.borc || ""; $("fKdv").value = F.kdv != null ? F.kdv : ""; $("sRate").value = settings.rate; $("sRateV").textContent = settings.rate + "x"; fillVoices(); themeBtns(); $("set").hidden = false; });
 $("sRate").addEventListener("input", e => { $("sRateV").textContent = e.target.value + "x"; });
 $("sTest").addEventListener("click", () => { settings.voice = $("sVoice").value; settings.voiceKind = $("sVoiceKind").value; settings.ttsVoice = $("sTtsVoice").value; unlockTts(); settings.rate = Number($("sRate").value); const n = cleanName($("sName").value); speak((n ? n + ", " : "") + "merhaba, ben Döndi. Sesimi böyle duyacaksın.", () => setState("idle")); });
-$("sClose").addEventListener("click", () => { const k = $("sKey").value.trim(); if(k && !KEY_RE.test(k)){ toast("Bu bir Gemini API anahtarına benzemiyor (AIza ile başlar, 39 karakter)."); $("sKey").focus(); return; } setKey(k); settings.name = cleanName($("sName").value); settings.tone = $("sTone").value; settings.voice = $("sVoice").value; settings.voiceKind = $("sVoiceKind").value; settings.ttsVoice = $("sTtsVoice").value; settings.mode = $("sMode").value; settings.big = $("sBig").value; settings.fin = readFin(); applyTheme(); settings.rate = Number($("sRate").value); saveSettings(); $("set").hidden = true; });
+$("sClose").addEventListener("click", () => { const k = $("sKey").value.trim(); if(k && !KEY_RE.test(k)){ toast("Bu bir Gemini API anahtarına benzemiyor (AQ. ile başlar)."); $("sKey").focus(); return; } setKey(k); settings.name = cleanName($("sName").value); settings.tone = $("sTone").value; settings.voice = $("sVoice").value; settings.voiceKind = $("sVoiceKind").value; settings.ttsVoice = $("sTtsVoice").value; settings.mode = $("sMode").value; settings.big = $("sBig").value; settings.fin = readFin(); applyTheme(); settings.rate = Number($("sRate").value); saveSettings(); $("set").hidden = true; });
 document.querySelectorAll("#sTheme button").forEach(b => b.addEventListener("click", () => { settings.theme = b.dataset.t; applyTheme(); saveSettings(); themeBtns(); }));
 applyTheme();
 $("ver").textContent = APP_VERSION;
@@ -1155,7 +1155,7 @@ $("oOk").addEventListener("click", () => {
 function openKeyOnb(){ $("kIn").value = ""; $("kMsg").textContent = ""; $("keyOnb").hidden = false; }
 function closeKeyOnb(){ $("keyOnb").hidden = true; if(gemOk() && !greeted) boot(); }
 const kMsg = (t, ok) => { $("kMsg").textContent = t; $("kMsg").style.color = ok ? "#5fd38d" : "#ff8a8a"; };
-const keyFrom = (s) => { const m = String(s || "").match(/AIza[0-9A-Za-z_-]{35}/); return m ? m[0] : ""; };
+const keyFrom = (s) => { const m = String(s || "").match(/AQ\.[0-9A-Za-z._-]{20,300}|AIza[0-9A-Za-z_-]{35}/); return m ? m[0] : ""; };
 $("kGet").addEventListener("click", () => { window.open("https://aistudio.google.com/apikey", "_blank", "noopener"); kMsg("Anahtarı kopyaladıktan sonra buraya dön ve “Panodan yapıştır”a dokun.", true); });
 $("kPaste").addEventListener("click", async () => {
   try { const k = keyFrom(await navigator.clipboard.readText()); if(k){ $("kIn").value = k; kMsg("Anahtar yapıştırıldı. Şimdi “Kaydet ve başla”ya dokun.", true); } else kMsg("Panoda anahtar bulamadım. Google sayfasında kopyala simgesine dokunup tekrar dene."); }
@@ -1171,7 +1171,7 @@ async function testKey(k){
 }
 $("kSave").addEventListener("click", async () => {
   const k = keyFrom($("kIn").value);
-  if(!k){ kMsg("Bu bir Gemini anahtarına benzemiyor. Anahtar AIza ile başlar ve 39 karakterdir."); return; }
+  if(!k){ kMsg("Bu bir Gemini anahtarına benzemiyor. Google AI Studio'daki anahtar AQ. ile başlar; “Copy key” ile kopyala."); return; }
   $("kSave").disabled = true; kMsg("Anahtar kontrol ediliyor…", true);
   const st = await testKey(k); $("kSave").disabled = false;
   if(st === "bad"){ kMsg("Google bu anahtarı kabul etmedi. Doğru kopyaladığından emin ol ya da yeni anahtar oluştur."); return; }
